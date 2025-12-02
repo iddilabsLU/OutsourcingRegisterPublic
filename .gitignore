@@ -57,3 +57,7 @@ next-env.d.ts
 # Backup files
 *.backup
 .settings.local.json
+
+# Electron build outputs
+dist-electron/
+release/
