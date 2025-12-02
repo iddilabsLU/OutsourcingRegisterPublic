@@ -1,0 +1,129 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-poppins);
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  /* Background & text */
+  --background: oklch(0.97 0.00 255.00);           /* #F9FAFB */
+  --foreground: oklch(0.23 0.00 89.88);            /* #1C1C1C */
+
+  /* Cards / popovers */
+  --card: oklch(1.00 0.00 89.88);                  /* #FFFFFF */
+  --card-foreground: oklch(0.23 0.00 89.88);
+  --popover: oklch(1.00 0.00 89.88);               /* #FFFFFF */
+  --popover-foreground: oklch(0.23 0.00 89.88);
+
+  /* Primary (ink blue) */
+  --primary: oklch(0.36 0.04 250.36);              /* #2D3E50 */
+  --primary-foreground: oklch(1.00 0.00 89.88);    /* #FFFFFF */
+
+  /* Secondary (warm grey-beige bridge) */
+  --secondary: oklch(0.91 0.01 84.50);             /* #E6E2DA */
+  --secondary-foreground: oklch(0.36 0.04 250.36); /* #2D3E50 */
+
+  /* Muted neutrals (for strips, inputs) */
+  --muted: oklch(0.95 0.00 255.00);                /* #F3F4F6 */
+  --muted-foreground: oklch(0.54 0.01 261.77);     /* #6B6F76 */
+
+  /* Accent mirrors secondary for cohesion */
+  --accent: oklch(0.91 0.01 84.50);                /* #E6E2DA */
+  --accent-foreground: oklch(0.36 0.04 250.36);    /* #2D3E50 */
+
+  /* Destructive */
+  --destructive: oklch(0.58 0.21 29.48);           /* #D92D20 */
+
+  /* Borders / inputs / focus ring */
+  --border: oklch(0.92 0.00 92.00);                /* #E7E5E0 */
+  --input:  oklch(0.92 0.00 92.00);                /* same as border */
+  --ring:   oklch(0.54 0.05 249.78);               /* #5B728A */
+
+  /* Charts (neutral-friendly set) */
+  --chart-1: oklch(0.42 0.06 253.35);  /* navy */
+  --chart-2: oklch(0.59 0.06 161.41);  /* sage */
+  --chart-3: oklch(0.60 0.10 7.06);    /* terracotta */
+  --chart-4: oklch(0.83 0.11 82.54);   /* amber */
+  --chart-5: oklch(0.50 0.06 311.76);  /* plum */
+
+  /* Sidebar */
+  --sidebar: oklch(0.97 0.00 255.00);              /* #F9FAFB */
+  --sidebar-foreground: oklch(0.23 0.00 89.88);    /* #1C1C1C */
+  --sidebar-primary: oklch(0.36 0.04 250.36);      /* #2D3E50 */
+  --sidebar-primary-foreground: oklch(1.00 0 0);   /* #FFFFFF */
+  --sidebar-accent: oklch(0.95 0.00 255.00);       /* #F3F4F6 */
+  --sidebar-accent-foreground: oklch(0.36 0.04 250.36);
+  --sidebar-border: oklch(0.92 0.00 92.00);        /* #E7E5E0 */
+  --sidebar-ring: oklch(0.54 0.05 249.78);         /* #5B728A */
+
+  /* Fonts, radius, shadows */
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-serif: "Lora", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --radius: 0.625rem;
+
+  --shadow-2xs: 0 1px 3px 0px oklch(0 0 0 / 0.05);
+  --shadow-xs:  0 1px 3px 0px oklch(0 0 0 / 0.05);
+  --shadow-sm:  0 1px 3px 0px oklch(0 0 0 / 0.10), 0 1px 2px -1px oklch(0 0 0 / 0.10);
+  --shadow:     0 1px 3px 0px oklch(0 0 0 / 0.10), 0 1px 2px -1px oklch(0 0 0 / 0.10);
+  --shadow-md:  0 1px 3px 0px oklch(0 0 0 / 0.10), 0 2px 4px -1px oklch(0 0 0 / 0.10);
+  --shadow-lg:  0 1px 3px 0px oklch(0 0 0 / 0.10), 0 4px 6px -1px oklch(0 0 0 / 0.10);
+  --shadow-xl:  0 1px 3px 0px oklch(0 0 0 / 0.10), 0 8px 10px -1px oklch(0 0 0 / 0.10);
+  --shadow-2xl: 0 1px 3px 0px oklch(0 0 0 / 0.25);
+}
+
+/* Optional gentle hovers */
+.btn-primary:hover { background: color-mix(in oklab, var(--primary), white 8%); }
+.tag-secondary:hover { background: color-mix(in oklab, var(--secondary), black 4%); }
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Search highlighting */
+  mark {
+    @apply bg-yellow-200 text-foreground rounded px-0.5 transition-colors duration-200;
+  }
+}
