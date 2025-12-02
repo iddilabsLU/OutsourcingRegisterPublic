@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import path from 'path'
+import { initializeDatabase, closeDatabase, getDatabaseStats } from './database/db'
 
 // __dirname is available in CommonJS (which we're compiling to)
 
@@ -55,6 +56,16 @@ function createWindow() {
 
 // Create window when app is ready
 app.whenReady().then(() => {
+  // Initialize database before creating window
+  try {
+    initializeDatabase()
+    const stats = getDatabaseStats()
+    console.log('📊 Database stats:', stats)
+  } catch (error) {
+    console.error('❌ Failed to initialize database:', error)
+    // Still create window even if database fails (can show error to user)
+  }
+
   createWindow()
 
   // macOS: Re-create window when dock icon is clicked
@@ -70,6 +81,11 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+// Clean up database connection when app is quitting
+app.on('before-quit', () => {
+  closeDatabase()
 })
 
 /**

@@ -9,7 +9,7 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "electron:compile": "tsc electron/main.ts electron/preload.ts --outDir dist-electron --skipLibCheck --esModuleInterop --resolveJsonModule --moduleResolution node --module commonjs --target ES2020",
+    "electron:compile": "tsc -p electron/tsconfig.json && node -e \"require('fs').copyFileSync('electron/database/schema.sql', 'dist-electron/database/schema.sql')\"",
     "electron:dev": "npm run electron:compile && concurrently \"cross-env NODE_ENV=development npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",
     "electron:build": "npm run build && npm run electron:compile && electron-builder"
   },
@@ -53,6 +53,7 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.0.1",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/better-sqlite3": "^7.6.13",
