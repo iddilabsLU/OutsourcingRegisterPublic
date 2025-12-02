@@ -306,34 +306,68 @@ function exportToPDF(suppliers: SupplierOutsourcing[]) {
 
 ---
 
-## Phase 2: Offline Desktop Application (FUTURE)
+## Phase 2: Desktop Application (IN PROGRESS)
 
-**Not started yet. Planned for Q2 2025 or later.**
+**Status:** In Progress
+**Started:** 2025-12-02
 
 ### Goals:
-- Package web app as desktop application
-- Add local SQLite database
+- Package web app as Windows desktop application
+- Add local SQLite database for persistent storage
 - Support full CRUD operations offline
-- Multi-user support with user profiles
-- Data import/export (Excel, CSV)
-- Automatic backups
+- Multi-user support (up to 5 users via shared network drive)
+- Data import from Excel, export to Excel/PDF
+- Database backup/restore functionality
 
 ### Technology Stack:
-- **Tauri** - Rust-based desktop framework
-- **SQLite** - Local database
-- **Prisma** or **Drizzle ORM** - Database access
+- **Electron** - Cross-platform desktop framework
+- **SQLite** - Local database (single file)
+- **better-sqlite3** - Fast, synchronous SQLite binding for Node.js
 - **Existing Next.js frontend** - Reuse 100% of current UI
 
-### Migration Strategy:
-1. Create Tauri project shell
-2. Integrate Next.js build as frontend
-3. Design SQLite schema (1:1 mapping to TypeScript types)
-4. Implement backend API (Rust or Node.js)
-5. Replace sessionStorage with API calls
-6. Add user authentication (optional)
-7. Create installers (Windows, Mac, Linux)
+### Implementation Steps:
 
-### Estimated Effort: 2-3 weeks
+#### Step 1: Project Setup
+- [ ] Install Electron and dependencies
+- [ ] Configure Electron with Next.js (main process + renderer)
+- [ ] Set up development and build scripts
+- [ ] Test basic Electron window with Next.js app
+
+#### Step 2: Database Design
+- [ ] Design SQLite schema (1:1 mapping to `lib/types/supplier.ts`)
+- [ ] Create database initialization script
+- [ ] Implement database connection management
+- [ ] Add database file location configuration (local AppData / network drive)
+
+#### Step 3: API Layer
+- [ ] Create IPC (Inter-Process Communication) handlers for Electron
+- [ ] Implement CRUD operations: Create, Read, Update, Delete suppliers
+- [ ] Add database queries for filtering, searching, sorting
+- [ ] Implement dashboard analytics queries
+
+#### Step 4: Frontend Migration
+- [ ] Replace sessionStorage with Electron IPC calls
+- [ ] Update `app/page.tsx` to fetch data from database
+- [ ] Update `supplier-register-table.tsx` to call Electron API
+- [ ] Test all existing features (Add, Edit, Delete, Duplicate, Export, Filter)
+
+#### Step 5: New Features
+- [ ] Database backup functionality (copy .sqlite file)
+- [ ] Database restore functionality (replace .sqlite file)
+- [ ] Excel import (bulk import suppliers)
+- [ ] Data location configuration UI (choose local or network path)
+
+#### Step 6: Packaging & Distribution
+- [ ] Configure Electron Builder for Windows
+- [ ] Create Windows installer (.exe)
+- [ ] Test installer on clean Windows machine
+- [ ] Write user documentation (installation, backup, network setup)
+
+### Architecture Notes:
+- **Database File:** Single `.sqlite` file (portable, easy to backup)
+- **Multi-User:** Share database file via network drive (Windows file share)
+- **No Authentication:** All users have full access (Phase 2 scope)
+- **No Roles:** Single permission level for all users (Phase 2 scope)
 
 ---
 
@@ -383,21 +417,24 @@ function exportToPDF(suppliers: SupplierOutsourcing[]) {
 
 ## Next Steps (Immediate)
 
-**Phase 1 is COMPLETE!** All planned frontend features implemented and polished.
+**Phase 2: Desktop Application - IN PROGRESS** 🔄
 
-### Completed (2025-11-04)
-✅ Dashboard UI Refinements - Visual improvements, spacing optimization, semantic colors
-✅ Country Selection - Multiple country dropdown with ~195 countries
-✅ Geographic Distribution Redesign - Cleaner EU/Non-EU indicators, country-to-supplier mapping
+### Current Focus:
+1. **Electron Project Setup** - Initialize Electron with Next.js integration
+2. **SQLite Schema Design** - Map TypeScript types to database tables
+3. **IPC Layer** - Create communication bridge between frontend and database
 
-### Step 1: Phase 2 Planning (Future Priority)
-1. Design Tauri desktop app architecture
-2. Plan SQLite database schema
-3. Migrate frontend to desktop
-4. Add local persistence layer
-5. Multi-user support with user profiles
+### Next Milestones:
+- [ ] Step 1: Project Setup (Electron + Next.js)
+- [ ] Step 2: Database Design (SQLite schema)
+- [ ] Step 3: API Layer (IPC handlers, CRUD operations)
+- [ ] Step 4: Frontend Migration (replace sessionStorage)
+- [ ] Step 5: New Features (backup, restore, Excel import)
+- [ ] Step 6: Packaging (Windows installer)
 
-### Optional Backlog Features
+See Phase 2 section above for detailed implementation steps.
+
+### Optional Backlog Features (Phase 3+)
 - Sort table columns by clicking headers
 - Column visibility toggle
 - Bulk actions (select multiple, export/delete in bulk)
@@ -405,10 +442,11 @@ function exportToPDF(suppliers: SupplierOutsourcing[]) {
 - Keyboard shortcuts for power users
 - Audit trail and version history
 - Email reminders for upcoming renewals
+- User authentication and roles
 
 ---
 
-**Last Updated:** 2025-11-04
-**Phase Status:** Phase 1 - 100% Complete ✅
-**Current Priority:** Phase 2 Planning (Desktop Application with SQLite)
-**Related Files:** CLAUDE.md, VALIDATION.md, ARCHITECTURE.md
+**Last Updated:** 2025-12-02
+**Phase Status:** Phase 2 - In Progress 🔄
+**Current Priority:** Electron Setup + SQLite Database Design
+**Related Files:** CLAUDE.md, OFFLINE_SPEC.md, VALIDATION.md, ARCHITECTURE.md

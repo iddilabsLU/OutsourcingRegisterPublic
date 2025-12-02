@@ -7,8 +7,8 @@ A demo application for managing supplier outsourcing arrangements in compliance 
 ## 📋 Quick Overview
 
 **Purpose:** CSSF-compliant supplier outsourcing register for Luxembourg financial institutions
-**Target:** Desktop-first demo (mobile not prioritized)
-**Deployment:** Vercel
+**Target:** Windows desktop application (.exe installer)
+**Deployment:** Electron + SQLite (Phase 2), Vercel demo (Phase 1)
 **User:** Non-technical user relying on Claude Code for all development
 
 ---
@@ -32,12 +32,15 @@ $ npm run lint         # Check code quality
 - **UI:** shadcn/ui (25+ components) + Lucide icons
 - **Forms:** React Hook Form + Zod
 - **Theme:** Light mode only
+- **Desktop:** Electron (Phase 2)
+- **Database:** SQLite + better-sqlite3 (Phase 2)
 
 ---
 
-## ✅ Current Status (Updated: 2025-11-04)
+## ✅ Current Status (Updated: 2025-12-02)
 
 **Phase 1: Frontend Demo - COMPLETE** ✅
+**Phase 2: Desktop Application - IN PROGRESS** 🔄
 
 ### What Works:
 - **Supplier Register Table** - View, filter, search 73 CSSF-compliant fields
@@ -71,19 +74,26 @@ For detailed information, see these files:
 
 - **[ARCHITECTURE.md](context/ARCHITECTURE.md)** - How the app works (components, data flow, file structure)
 - **[VALIDATION.md](context/VALIDATION.md)** - Current validation approach (two-layer system)
-- **[ROADMAP.md](context/ROADMAP.md)** - Next priorities: Edit Supplier → Data Persistence
+- **[ROADMAP.md](context/ROADMAP.md)** - Phase 2 progress and implementation steps
+- **[OFFLINE_SPEC.md](context/OFFLINE_SPEC.md)** - Desktop application requirements (Electron + SQLite)
 - **[Completed Work](context/completed/)** - Archive of finished PRDs and changelogs
 
 ---
 
 ## 🎯 Next Priorities
 
-**Phase 1 is COMPLETE!** All core features implemented. Next phase options:
+**Phase 2: Desktop Application - IN PROGRESS** 🔄
 
-1. **Dashboard UI Refinements** (Low) - Minor visual improvements to dashboard components
-2. **Desktop Application** (Future) - Tauri + SQLite for offline use
+Converting the web demo into a Windows desktop application with SQLite database:
 
-See full roadmap in `context/ROADMAP.md`
+1. **Electron Setup** - Initialize Electron project with Next.js integration
+2. **SQLite Database** - Design schema, implement CRUD operations with better-sqlite3
+3. **Data Migration** - Migrate from sessionStorage to SQLite
+4. **Multi-User Support** - Local or network drive database access (up to 5 users)
+5. **New Features** - Database backup/restore, Excel import, data location configuration
+6. **Packaging** - Build Windows installer (.exe)
+
+See `context/OFFLINE_SPEC.md` for complete requirements and `context/ROADMAP.md` for detailed steps
 
 ---
 
@@ -154,4 +164,4 @@ See `context/workflows/DEPLOY.md` for Vercel checklist
 
 ---
 
-**Created with Claude Code** | Last Updated: 2025-11-07
+**Created with Claude Code** | Last Updated: 2025-12-02
