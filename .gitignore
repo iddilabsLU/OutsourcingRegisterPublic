@@ -61,3 +61,8 @@ next-env.d.ts
 # Electron build outputs
 dist-electron/
 release/
+
+# Database files (generated, not source code)
+data/*.db
+data/*.db-shm
+data/*.db-wal

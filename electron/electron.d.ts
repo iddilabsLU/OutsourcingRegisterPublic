@@ -5,15 +5,24 @@
  * Import this in your React components to get type safety
  */
 
+import type { SupplierOutsourcing } from '../lib/types/supplier'
+
 export interface ElectronAPI {
   // System info
   ping: () => Promise<string>
 
-  // Database operations (to be implemented in next step)
-  // getSuppliers: () => Promise<SupplierOutsourcing[]>
-  // addSupplier: (supplier: SupplierOutsourcing) => Promise<{ id: number }>
-  // updateSupplier: (id: number, supplier: SupplierOutsourcing) => Promise<void>
-  // deleteSupplier: (id: number) => Promise<void>
+  // Database CRUD operations
+  getAllSuppliers: () => Promise<SupplierOutsourcing[]>
+  getSupplierByReference: (referenceNumber: string) => Promise<SupplierOutsourcing | null>
+  addSupplier: (supplier: SupplierOutsourcing) => Promise<{ id: number; referenceNumber: string }>
+  updateSupplier: (supplier: SupplierOutsourcing) => Promise<void>
+  deleteSupplier: (referenceNumber: string) => Promise<void>
+  getNextReferenceNumber: () => Promise<string>
+  getSuppliersCount: () => Promise<number>
+
+  // Backup/restore operations (to be implemented later)
+  // backupDatabase: (path: string) => Promise<{ success: boolean; path: string }>
+  // restoreDatabase: (path: string) => Promise<{ success: boolean }>
 }
 
 export interface Versions {

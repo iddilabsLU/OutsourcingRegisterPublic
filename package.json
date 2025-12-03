@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
-  "main": "dist-electron/main.js",
+  "main": "dist-electron/electron/main.js",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "electron:compile": "tsc -p electron/tsconfig.json && node -e \"require('fs').copyFileSync('electron/database/schema.sql', 'dist-electron/database/schema.sql')\"",
+    "electron:compile": "tsc -p electron/tsconfig.json && node -e \"require('fs').mkdirSync('dist-electron/electron/database', {recursive: true}); require('fs').copyFileSync('electron/database/schema.sql', 'dist-electron/electron/database/schema.sql')\"",
     "electron:dev": "npm run electron:compile && concurrently \"cross-env NODE_ENV=development npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",
     "electron:build": "npm run build && npm run electron:compile && electron-builder"
   },

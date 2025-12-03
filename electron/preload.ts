@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type { SupplierOutsourcing } from '../lib/types/supplier'
 
 /**
  * Preload script - Exposes safe Electron APIs to the renderer process
@@ -15,11 +16,14 @@ export interface ElectronAPI {
   // System info
   ping: () => Promise<string>
 
-  // Database operations (to be implemented in next step)
-  // getSuppliers: () => Promise<SupplierOutsourcing[]>
-  // addSupplier: (supplier: SupplierOutsourcing) => Promise<{ id: number }>
-  // updateSupplier: (id: number, supplier: SupplierOutsourcing) => Promise<void>
-  // deleteSupplier: (id: number) => Promise<void>
+  // Database CRUD operations
+  getAllSuppliers: () => Promise<SupplierOutsourcing[]>
+  getSupplierByReference: (referenceNumber: string) => Promise<SupplierOutsourcing | null>
+  addSupplier: (supplier: SupplierOutsourcing) => Promise<{ id: number; referenceNumber: string }>
+  updateSupplier: (supplier: SupplierOutsourcing) => Promise<void>
+  deleteSupplier: (referenceNumber: string) => Promise<void>
+  getNextReferenceNumber: () => Promise<string>
+  getSuppliersCount: () => Promise<number>
 
   // Backup/restore operations (to be implemented later)
   // backupDatabase: (path: string) => Promise<{ success: boolean; path: string }>
@@ -35,8 +39,14 @@ const electronAPI: ElectronAPI = {
   // Test IPC communication
   ping: () => ipcRenderer.invoke('ping'),
 
-  // Database operations (placeholders for now)
-  // Will be implemented when we add SQLite integration
+  // Database CRUD operations
+  getAllSuppliers: () => ipcRenderer.invoke('db:getAllSuppliers'),
+  getSupplierByReference: (referenceNumber: string) => ipcRenderer.invoke('db:getSupplierByReference', referenceNumber),
+  addSupplier: (supplier: SupplierOutsourcing) => ipcRenderer.invoke('db:addSupplier', supplier),
+  updateSupplier: (supplier: SupplierOutsourcing) => ipcRenderer.invoke('db:updateSupplier', supplier),
+  deleteSupplier: (referenceNumber: string) => ipcRenderer.invoke('db:deleteSupplier', referenceNumber),
+  getNextReferenceNumber: () => ipcRenderer.invoke('db:getNextReferenceNumber'),
+  getSuppliersCount: () => ipcRenderer.invoke('db:getSuppliersCount'),
 }
 
 // Expose the API to the renderer process

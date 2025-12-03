@@ -60,6 +60,7 @@ $ npm run lint         # Check code quality
 - **Build & Deployment** - All TypeScript errors fixed, ready for Vercel
 
 ### Recent Changes:
+- ✅ **Electron + SQLite Database** (Dec 02) - Desktop app scaffolding complete, database schema implemented, seeds 5 suppliers on first run
 - ✅ **Interactive CSSF References** (Nov 07) - Click any CSSF reference to see full Circular 22/806 regulatory text in popover (forms + expanded cards)
 - ✅ **Performance Optimization** (Nov 06) - Faster page load with reduced fonts and loading skeleton animation
 - ✅ **Provider Name Autocomplete** (Nov 04) - Dropdown list of existing supplier names prevents duplicates and ensures data consistency
@@ -86,12 +87,18 @@ For detailed information, see these files:
 
 Converting the web demo into a Windows desktop application with SQLite database:
 
-1. **Electron Setup** - Initialize Electron project with Next.js integration
-2. **SQLite Database** - Design schema, implement CRUD operations with better-sqlite3
-3. **Data Migration** - Migrate from sessionStorage to SQLite
+1. ✅ **Electron Setup** - Electron project initialized, runs in desktop window with Next.js
+2. ✅ **SQLite Database** - Schema designed, CRUD operations implemented, database seeds with 5 suppliers
+3. **Data Migration** - Migrate from sessionStorage to SQLite (IN PROGRESS)
 4. **Multi-User Support** - Local or network drive database access (up to 5 users)
 5. **New Features** - Database backup/restore, Excel import, data location configuration
 6. **Packaging** - Build Windows installer (.exe)
+
+**Electron Configuration Notes:**
+- Main entry: `dist-electron/electron/main.js` (full path required due to tsconfig rootDir)
+- Database location: `data/suppliers.db`
+- Seed data: 5 suppliers copied inline to `electron/database/seed.ts` (avoids frontend import issues)
+- Commands: `npm run electron:dev` (dev), `npm run electron:compile` (compile TS + copy schema)
 
 See `context/OFFLINE_SPEC.md` for complete requirements and `context/ROADMAP.md` for detailed steps
 
