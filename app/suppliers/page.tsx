@@ -12,24 +12,29 @@ import { TipBanner } from "@/components/shared/tip-banner"
 import { DashboardView } from "@/components/shared/dashboard/dashboard-view"
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton"
 import { MobileBlock } from "@/components/shared/mobile-block"
-import { useSessionStorage } from "@/hooks/use-session-storage"
+import { useDatabase } from "@/hooks/use-database"
 import { toast } from "sonner"
 import { AlertCircle } from "lucide-react"
 import type { QuickFilters, CustomFilter } from "@/lib/types/filters"
 import type { SupplierOutsourcing } from "@/lib/types/supplier"
 import { OutsourcingStatus } from "@/lib/types/supplier"
 import { filterSuppliers } from "@/lib/utils/filter-suppliers"
-import { generateNextReferenceNumber } from "@/lib/utils/check-completeness"
 
 export default function SuppliersPage() {
-  // Loading state
-  const [isLoading, setIsLoading] = useState(true)
-
   // View state
   const [activeView, setActiveView] = useState<ViewType>("list")
 
-  // Suppliers state with sessionStorage persistence
-  const [suppliers, setSuppliers] = useSessionStorage()
+  // Suppliers state with database persistence (Electron) or sessionStorage (browser)
+  const {
+    suppliers,
+    isLoading,
+    error,
+    addSupplier: dbAddSupplier,
+    updateSupplier: dbUpdateSupplier,
+    deleteSupplier: dbDeleteSupplier,
+    duplicateSupplier: dbDuplicateSupplier,
+    setSuppliers, // Keep for filtering
+  } = useDatabase()
 
   // Edit state
   const [editingSupplier, setEditingSupplier] = useState<SupplierOutsourcing | null>(null)
@@ -120,10 +125,19 @@ export default function SuppliersPage() {
   }
 
   // Handle saving new supplier
-  const handleSaveSupplier = (supplier: SupplierOutsourcing) => {
-    setSuppliers([...suppliers, supplier])
-    setEditingSupplier(null)
-    setActiveView("list")
+  const handleSaveSupplier = async (supplier: SupplierOutsourcing) => {
+    try {
+      await dbAddSupplier(supplier)
+      setEditingSupplier(null)
+      setActiveView("list")
+      toast.success("Supplier added", {
+        description: `${supplier.referenceNumber} has been added successfully`,
+      })
+    } catch (error) {
+      toast.error("Failed to add supplier", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      })
+    }
   }
 
   // Handle edit supplier click
@@ -133,30 +147,47 @@ export default function SuppliersPage() {
   }
 
   // Handle updating existing supplier
-  const handleUpdateSupplier = (updatedSupplier: SupplierOutsourcing) => {
-    setSuppliers(
-      suppliers.map((s) => (s.referenceNumber === updatedSupplier.referenceNumber ? updatedSupplier : s))
-    )
-    setEditingSupplier(null)
-    setActiveView("list")
+  const handleUpdateSupplier = async (updatedSupplier: SupplierOutsourcing) => {
+    try {
+      await dbUpdateSupplier(updatedSupplier)
+      setEditingSupplier(null)
+      setActiveView("list")
+      toast.success("Supplier updated", {
+        description: `${updatedSupplier.referenceNumber} has been updated successfully`,
+      })
+    } catch (error) {
+      toast.error("Failed to update supplier", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      })
+    }
   }
 
   // Handle delete supplier
-  const handleDeleteSupplier = (supplier: SupplierOutsourcing) => {
-    setSuppliers(suppliers.filter((s) => s.referenceNumber !== supplier.referenceNumber))
+  const handleDeleteSupplier = async (supplier: SupplierOutsourcing) => {
+    try {
+      await dbDeleteSupplier(supplier.referenceNumber)
+      toast.success("Supplier deleted", {
+        description: `${supplier.referenceNumber} has been deleted successfully`,
+      })
+    } catch (error) {
+      toast.error("Failed to delete supplier", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      })
+    }
   }
 
   // Handle duplicate supplier
-  const handleDuplicateSupplier = (supplier: SupplierOutsourcing) => {
-    const duplicatedData: SupplierOutsourcing = {
-      ...supplier,
-      referenceNumber: generateNextReferenceNumber(suppliers),
-      status: OutsourcingStatus.DRAFT,
+  const handleDuplicateSupplier = async (supplier: SupplierOutsourcing) => {
+    try {
+      const duplicatedData = await dbDuplicateSupplier(supplier, OutsourcingStatus.DRAFT)
+      toast.success("Supplier duplicated", {
+        description: `Created ${duplicatedData.referenceNumber} based on ${supplier.referenceNumber}`,
+      })
+    } catch (error) {
+      toast.error("Failed to duplicate supplier", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      })
     }
-    setSuppliers([...suppliers, duplicatedData])
-    toast.success("Supplier duplicated", {
-      description: `Created ${duplicatedData.referenceNumber} based on ${supplier.referenceNumber}`,
-    })
   }
 
   // Handle cancel form
@@ -165,15 +196,15 @@ export default function SuppliersPage() {
     setActiveView("list")
   }
 
-  // Set loading to false after initial mount and data load
+  // Show error toast if there's a database error
   useEffect(() => {
-    // Short delay to allow sessionStorage data to load
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 100)
-
-    return () => clearTimeout(timer)
-  }, [])
+    if (error) {
+      toast.error("Database error", {
+        description: error,
+        icon: <AlertCircle className="h-5 w-5" />,
+      })
+    }
+  }, [error])
 
   // Show loading skeleton during initial load
   if (isLoading) {

@@ -72,10 +72,10 @@ export function toDbRow(supplier: SupplierOutsourcing): Omit<SupplierDbRow, 'id'
     reference_number: supplier.referenceNumber,
 
     // 53 - Status
-    status: supplier.status,
+    status: supplier.status || 'Draft',
 
     // 54.d - Category
-    category: supplier.category,
+    category: supplier.category || 'Other',
 
     // 54.b - Dates (flatten nested object)
     start_date: supplier.dates.startDate,
