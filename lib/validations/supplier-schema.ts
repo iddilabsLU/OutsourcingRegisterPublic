@@ -175,7 +175,11 @@ export const supplierFormSchema = z.object({
       isTimeCritical: z.boolean().optional(),
 
       // 55.k - Cost Information
-      estimatedAnnualCost: z.number().optional(),
+      estimatedAnnualCost: z.union([z.string(), z.number()]).transform((val) => {
+        if (val === "" || val === null || val === undefined) return undefined
+        const num = typeof val === "string" ? parseFloat(val) : val
+        return isNaN(num) ? undefined : num
+      }).optional(),
       costComments: z.string().optional(),
 
       // 55.l - Regulatory Notification

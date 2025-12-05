@@ -135,7 +135,7 @@ export function createEmptyCriticalFields() {
     },
     alternativeProviders: [],
     isTimeCritical: undefined,
-    estimatedAnnualCost: undefined,
+    estimatedAnnualCost: "", // Empty string prevents controlled/uncontrolled error
     costComments: "",
     regulatoryNotification: {
       notificationDate: "",

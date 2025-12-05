@@ -1,3 +1,4 @@
+import { getDatabase } from './db'
 import { getSuppliersCount, addSupplier } from './suppliers'
 import type { SupplierOutsourcing } from '../../lib/types/supplier'
 
@@ -374,36 +375,69 @@ const suppliers: SupplierOutsourcing[] = [
 ]
 
 /**
+ * Check if seeding has already been done (ever)
+ * Uses schema_version table to track if initial seed was completed
+ */
+function hasBeenSeeded(): boolean {
+  const db = getDatabase()
+  try {
+    const result = db
+      .prepare('SELECT version FROM schema_version WHERE version = 2')
+      .get() as { version: number } | undefined
+    return result !== undefined
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Mark seeding as complete
+ * Inserts version 2 into schema_version table
+ */
+function markSeeded(): void {
+  const db = getDatabase()
+  try {
+    db.prepare('INSERT OR IGNORE INTO schema_version (version) VALUES (2)').run()
+  } catch (error) {
+    console.error('Failed to mark seeding as complete:', error)
+  }
+}
+
+/**
  * Seed database with all 5 suppliers
- * Only runs if database is empty (on first run)
+ * Only runs ONCE on first app launch ever
+ * Does NOT re-seed if user deletes all suppliers
  */
 export function seedDatabase(): void {
+  // Check if seeding has already been done
+  if (hasBeenSeeded()) {
+    console.log('✓ Database was already seeded on first launch. Skipping seed.')
+    return
+  }
+
   const count = getSuppliersCount()
+  console.log(`📦 First app launch detected. Seeding database with ${suppliers.length} sample suppliers...`)
 
-  if (count === 0) {
-    console.log(`📦 Database is empty. Seeding with ${suppliers.length} suppliers...`)
+  let successCount = 0
+  let failCount = 0
 
-    let successCount = 0
-    let failCount = 0
-
-    // Loop through all suppliers and add them to the database
-    for (const supplier of suppliers) {
-      try {
-        addSupplier(supplier)
-        console.log(`   ✓ Added supplier: ${supplier.referenceNumber} - ${supplier.serviceProvider.name}`)
-        successCount++
-      } catch (error) {
-        console.error(`   ✗ Failed to add supplier ${supplier.referenceNumber}:`, error)
-        failCount++
-      }
+  // Loop through all suppliers and add them to the database
+  for (const supplier of suppliers) {
+    try {
+      addSupplier(supplier)
+      console.log(`   ✓ Added supplier: ${supplier.referenceNumber} - ${supplier.serviceProvider.name}`)
+      successCount++
+    } catch (error) {
+      console.error(`   ✗ Failed to add supplier ${supplier.referenceNumber}:`, error)
+      failCount++
     }
+  }
 
-    if (failCount === 0) {
-      console.log(`✅ Database seeded successfully. Total suppliers: ${successCount}`)
-    } else {
-      console.log(`⚠️  Database seeded with errors. Success: ${successCount}, Failed: ${failCount}`)
-    }
+  if (failCount === 0) {
+    console.log(`✅ Database seeded successfully. Total suppliers: ${successCount}`)
+    markSeeded()
   } else {
-    console.log(`✓ Database already contains ${count} supplier(s). Skipping seed.`)
+    console.log(`⚠️  Database seeded with errors. Success: ${successCount}, Failed: ${failCount}`)
+    // Don't mark as seeded if there were errors
   }
 }

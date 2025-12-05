@@ -1,7 +1,11 @@
 # Supplier Outsourcing Register
 
-A **demo application** for managing supplier outsourcing arrangements in compliance with **CSSF Circular 22/806 Section 4.2.7**. Built for Luxembourg financial institutions to maintain a comprehensive register of all outsourcing arrangements.
+A **desktop application** for managing supplier outsourcing arrangements in compliance with **CSSF Circular 22/806 Section 4.2.7**. Built for Luxembourg financial institutions to maintain a comprehensive register of all outsourcing arrangements with SQLite database persistence.
 
+> **⚠️ Desktop-Only Application** - Requires Electron. Run with `npm run electron:dev`
+
+![Electron](https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron)
+![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?logo=sqlite)
 ![Next.js](https://img.shields.io/badge/Next.js-15.5.4-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.1.0-blue?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
@@ -28,7 +32,7 @@ This application helps Luxembourg financial institutions comply with **CSSF Circ
 - ✅ **Supplier Register Table** - View, filter, and search 73 CSSF-compliant fields
 - ✅ **Add/Edit/Delete Suppliers** - Full CRUD operations with validation
 - ✅ **Duplicate Suppliers** - Clone existing suppliers with new reference numbers
-- ✅ **Data Persistence** - sessionStorage saves changes across page refreshes
+- ✅ **Data Persistence** - SQLite database with automatic persistence
 - ✅ **Pending Fields** - Mark incomplete fields for later completion
 - ✅ **Smart Validation** - Two-layer system (type safety + business logic)
 
@@ -62,6 +66,7 @@ This application helps Luxembourg financial institutions comply with **CSSF Circ
 ### Prerequisites
 - Node.js 18+ (20.x recommended)
 - npm, yarn, pnpm, or bun
+- Windows 10/11 (desktop application)
 
 ### Installation
 
@@ -76,15 +81,19 @@ This application helps Luxembourg financial institutions comply with **CSSF Circ
    npm install
    ```
 
-3. **Start development server**
+3. **Compile TypeScript for Electron**
    ```bash
-   npm run dev
+   npm run electron:compile
    ```
 
-4. **Open in browser**
+4. **Start desktop application**
+   ```bash
+   npm run electron:dev
    ```
-   http://localhost:3000
-   ```
+
+5. **App opens in desktop window**
+   - Database: `data/suppliers.db`
+   - 5 sample suppliers seeded on first launch
 
 ---
 
@@ -92,10 +101,10 @@ This application helps Luxembourg financial institutions comply with **CSSF Circ
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server with Turbopack |
-| `npm run build` | Build for production |
-| `npm start` | Start production server |
+| `npm run electron:dev` | Start desktop application (Electron + Next.js) |
+| `npm run electron:compile` | Compile TypeScript for Electron |
 | `npm run lint` | Run ESLint (0 errors, 0 warnings) |
+| `npm run build` | Build Next.js (for Electron renderer) |
 
 ---
 
@@ -132,6 +141,8 @@ This application implements **CSSF Circular 22/806 Section 4.2.7** requirements:
 
 | Category | Technology | Purpose |
 |----------|-----------|---------|
+| Desktop | Electron | Cross-platform desktop framework |
+| Database | SQLite + better-sqlite3 | Local database with synchronous operations |
 | Framework | Next.js 15.5.4 | App Router, Server Components, Turbopack |
 | UI Library | React 19.1.0 | Latest React features |
 | Language | TypeScript 5 | 100% type safety coverage |
@@ -231,27 +242,28 @@ Comprehensive documentation is available in the `/context` folder:
 
 ## 🎯 Current Status
 
-**Phase 1: Frontend Demo - 100% COMPLETE** ✅
+**Desktop Application - Core Complete** ✅
 
 All core features are implemented and working:
-- ✅ Supplier CRUD operations
-- ✅ Data persistence (sessionStorage)
-- ✅ Dashboard analytics
-- ✅ Export functionality
-- ✅ Advanced filtering
-- ✅ Pending fields
-- ✅ Form validation
-- ✅ Country selection
+- ✅ Supplier CRUD operations (Add, Edit, Delete, Duplicate)
+- ✅ Data persistence (SQLite database)
+- ✅ Dashboard analytics (7 compliance indicators)
+- ✅ Export functionality (Excel, PDF)
+- ✅ Advanced filtering (Quick filters, custom filters, global search)
+- ✅ Pending fields (Mark incomplete, skip validation)
+- ✅ Form validation (Two-layer system)
+- ✅ Country selection (~195 countries)
 - ✅ Provider autocomplete
+- ✅ Desktop-only architecture (Electron + SQLite)
 
 ### What's Next?
 
-**Phase 2: Desktop Application** (Future Priority)
-- Offline desktop app with Tauri
-- Local SQLite database
-- Multi-user support
-- Enhanced data management
-- Automatic backups
+**Phase 2.5: Additional Features** (Next Priority)
+- Database backup/restore functionality
+- Excel import (bulk import suppliers)
+- Data location configuration (local or network drive)
+- Windows installer (.exe)
+- Multi-user support (shared network database)
 
 See [ROADMAP.md](context/ROADMAP.md) for detailed plans.
 
@@ -265,26 +277,25 @@ Build passes with 0 errors and 0 warnings.
 
 ---
 
-## 🚀 Deployment
+## 📦 Packaging
 
-### Deploy to Vercel
+### Desktop Application
 
-1. **Push to GitHub**
-   ```bash
-   git push origin main
-   ```
+The application runs as a desktop app using Electron. Windows installer (.exe) packaging is planned for Phase 2.5.
 
-2. **Import to Vercel**
-   - Visit [vercel.com](https://vercel.com)
-   - Import GitHub repository
-   - Framework: Next.js (auto-detected)
-   - Click "Deploy"
+**Current Status:**
+- ✅ Runs in development mode with `npm run electron:dev`
+- ✅ SQLite database persists at `data/suppliers.db`
+- ✅ All features working (CRUD, dashboard, export, filtering)
+- ⏳ Windows installer (.exe) - to be implemented
 
-3. **Done!**
-   - Production URL: `https://your-project.vercel.app`
-   - Auto-deploys on every push to main
+**Future Packaging:**
+- Windows 10/11 installer (.exe)
+- Electron Builder for packaging
+- Desktop shortcuts and Start Menu integration
+- Optional network drive database support
 
-See [workflows/DEPLOY.md](context/workflows/DEPLOY.md) for detailed deployment guide.
+See [context/OFFLINE_SPEC.md](context/OFFLINE_SPEC.md) for packaging requirements.
 
 ---
 
@@ -336,11 +347,12 @@ MIT License - Feel free to use this demo for any purpose.
 
 ## 🤝 Contributing
 
-This is a demo application. For production use, consider:
-- Adding user authentication
-- Implementing backend API
-- Adding database persistence
-- Deploying as Tauri desktop app
+This is a desktop application for Luxembourg financial institutions. For production use, consider:
+- Adding user authentication and roles
+- Implementing audit trail (who changed what, when)
+- Adding automatic backup functionality
+- Multi-user conflict resolution
+- Cloud backup integration
 
 ---
 
@@ -362,5 +374,5 @@ This is a demo application. For production use, consider:
 
 ---
 
-**Last Updated:** 2025-11-06
-**Version:** 1.0.0 (Phase 1 Complete)
+**Last Updated:** 2025-12-05
+**Version:** 2.0.0 (Desktop Application - Core Complete)

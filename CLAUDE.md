@@ -1,6 +1,10 @@
 # Supplier Outsourcing Register
 
-A demo application for managing supplier outsourcing arrangements in compliance with **CSSF Circular 22/806 Section 4.2.7**. Built with Next.js 15, React 19, TypeScript, and Tailwind CSS 4.
+A **desktop application** for managing supplier outsourcing arrangements in compliance with **CSSF Circular 22/806 Section 4.2.7**. Built with Electron, Next.js 15, React 19, TypeScript, and SQLite.
+
+> **⚠️ Desktop-Only Application**
+> This app **requires Electron** to run. It uses SQLite for data persistence and cannot run in a browser.
+> **Run with:** `npm run electron:dev`
 
 ---
 
@@ -8,7 +12,7 @@ A demo application for managing supplier outsourcing arrangements in compliance 
 
 **Purpose:** CSSF-compliant supplier outsourcing register for Luxembourg financial institutions
 **Target:** Windows desktop application (.exe installer)
-**Deployment:** Electron + SQLite (Phase 2), Vercel demo (Phase 1)
+**Database:** SQLite (local database file: `data/suppliers.db`)
 **User:** Non-technical user relying on Claude Code for all development
 
 ---
@@ -16,31 +20,32 @@ A demo application for managing supplier outsourcing arrangements in compliance 
 ## 🚀 Quick Start
 
 ```bash
-$ npm run dev          # Start development server (localhost:3000)
-$ npm run build        # Build for production
-$ npm run lint         # Check code quality
+$ npm run electron:dev       # Start desktop app (RECOMMENDED)
+$ npm run electron:compile   # Compile TypeScript for Electron
+$ npm run lint              # Check code quality
 ```
+
+**Note:** The app only works in Electron. Use `npm run electron:dev` to run the desktop application.
 
 ---
 
 ## 🛠 Tech Stack
 
+- **Desktop:** Electron (main + renderer process)
 - **Framework:** Next.js 15.5.4 (App Router, Turbopack)
 - **React:** 19.1.0
 - **Language:** TypeScript 5
+- **Database:** SQLite + better-sqlite3 (synchronous operations)
 - **Styling:** Tailwind CSS 4
 - **UI:** shadcn/ui (25+ components) + Lucide icons
 - **Forms:** React Hook Form + Zod
 - **Theme:** Light mode only
-- **Desktop:** Electron (Phase 2)
-- **Database:** SQLite + better-sqlite3 (Phase 2)
 
 ---
 
-## ✅ Current Status (Updated: 2025-12-02)
+## ✅ Current Status (Updated: 2025-12-05)
 
-**Phase 1: Frontend Demo - COMPLETE** ✅
-**Phase 2: Desktop Application - IN PROGRESS** 🔄
+**Desktop Application - FULLY FUNCTIONAL** ✅
 
 ### What Works:
 - **Supplier Register Table** - View, filter, search 73 CSSF-compliant fields
@@ -48,7 +53,7 @@ $ npm run lint         # Check code quality
 - **Edit Supplier** - Edit existing suppliers, form pre-fills with data, reference locked
 - **Delete Supplier** - Remove suppliers with confirmation dialog
 - **Duplicate Supplier** - Instantly clone suppliers with new reference number and Draft status
-- **Data Persistence** - sessionStorage saves changes across page refreshes (within session)
+- **Data Persistence** - SQLite database (`data/suppliers.db`) with automatic persistence
 - **Export Functionality** - Export to Excel (compact 8 cols / full 52 fields) or PDF (compact 8 cols)
 - **Dashboard Analytics** - CSSF compliance monitoring with 7 indicators, charts, and risk management
 - **Country Selection** - Multiple country dropdown for data location and service performance (~195 countries)
@@ -57,15 +62,17 @@ $ npm run lint         # Check code quality
 - **Validation System** - Two-layer approach (see `context/VALIDATION.md`)
 - **Filtering** - Quick filters, custom filters, global text search with highlighting
 - **Pending Fields** - Mark incomplete fields, auto-mark on draft, skip validation
-- **Build & Deployment** - All TypeScript errors fixed, ready for Vercel
+- **Desktop Packaging** - Electron app runs on Windows with SQLite database
 
 ### Recent Changes:
-- ✅ **Electron + SQLite Database** (Dec 02) - Desktop app scaffolding complete, database schema implemented, seeds 5 suppliers on first run
-- ✅ **Interactive CSSF References** (Nov 07) - Click any CSSF reference to see full Circular 22/806 regulatory text in popover (forms + expanded cards)
+- ✅ **Desktop-Only Architecture** (Dec 05) - Removed browser fallback, app now requires Electron to run
+- ✅ **React + SQLite Integration** (Dec 05) - Connected all React components to SQLite via IPC bridge, removed sessionStorage
+- ✅ **One-Time Database Seeding** (Dec 05) - Database seeds 5 suppliers only on first app launch (uses schema_version tracking)
+- ✅ **Electron + SQLite Database** (Dec 02) - Desktop app scaffolding complete, database schema implemented, IPC handlers
+- ✅ **Interactive CSSF References** (Nov 07) - Click any CSSF reference to see full Circular 22/806 regulatory text in popover
 - ✅ **Performance Optimization** (Nov 06) - Faster page load with reduced fonts and loading skeleton animation
-- ✅ **Provider Name Autocomplete** (Nov 04) - Dropdown list of existing supplier names prevents duplicates and ensures data consistency
-- ✅ **UI Improvements & User Guidance** (Nov 06) - Landing page icon refresh, footer redesign with IDDI Labs branding, warning/tip banners
-- ✅ **Country Selection & Geographic Distribution Redesign** (Nov 04) - Multiple country selection from ~195 countries, cleaner EU/Non-EU dashboard indicators, field rename: dataStorageLocation → otherDataLocationInfo
+- ✅ **Provider Name Autocomplete** (Nov 04) - Dropdown list prevents duplicates and ensures data consistency
+- ✅ **Country Selection Redesign** (Nov 04) - Multiple country selection from ~195 countries, cleaner EU/Non-EU dashboard
 
 ---
 
@@ -83,15 +90,15 @@ For detailed information, see these files:
 
 ## 🎯 Next Priorities
 
-**Phase 2: Desktop Application - IN PROGRESS** 🔄
+**Desktop Application - Core Complete** ✅
 
-Converting the web demo into a Windows desktop application with SQLite database:
+Desktop application with SQLite database is now fully functional:
 
-1. ✅ **Electron Setup** - Electron project initialized, runs in desktop window with Next.js
-2. ✅ **SQLite Database** - Schema designed, CRUD operations implemented, database seeds with 5 suppliers
-3. ✅ **API Layer** - IPC handlers and CRUD operations complete (getAllSuppliers, addSupplier, updateSupplier, deleteSupplier)
-4. **Data Migration** - Connect React components to SQLite database (CURRENT PRIORITY)
-5. **Multi-User Support** - Local or network drive database access (up to 5 users)
+1. ✅ **Electron Setup** - Desktop app runs with Next.js renderer
+2. ✅ **SQLite Database** - Schema implemented, CRUD operations working
+3. ✅ **API Layer** - IPC bridge complete (getAllSuppliers, addSupplier, updateSupplier, deleteSupplier)
+4. ✅ **React Integration** - All components connected to SQLite via useDatabase hook
+5. **Multi-User Support** - Local or network drive database access (up to 5 users) (NEXT)
 6. **New Features** - Database backup/restore, Excel import, data location configuration
 7. **Packaging** - Build Windows installer (.exe)
 
@@ -141,8 +148,11 @@ See `context/workflows/ADD_MANDATORY_FIELD.md` for step-by-step guide
 ### Debugging Forms
 See `context/workflows/DEBUG_FORM.md` for common issues
 
-### Deployment
-See `context/workflows/DEPLOY.md` for Vercel checklist
+### Running the Desktop App
+```bash
+$ npm run electron:dev       # Start in development mode
+$ npm run electron:compile   # Compile TypeScript before running
+```
 
 ---
 
