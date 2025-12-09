@@ -14,7 +14,7 @@ interface ActiveFilterBadgesProps {
   quickFilters: QuickFilters
   customFilters: CustomFilter[]
   onRemoveQuickFilter: (
-    filterType: "critical" | "cloud" | "serviceOutsourcings" | "active" | "draft" | "notYetActive" | "terminated"
+    filterType: "critical" | "nonCritical" | "cloud" | "serviceOutsourcings" | "active" | "draft" | "notYetActive" | "terminated"
   ) => void
   onRemoveCustomFilter: (filterId: string) => void
 }
@@ -27,6 +27,7 @@ export function ActiveFilterBadges({
 }: ActiveFilterBadgesProps) {
   const hasActiveFilters =
     quickFilters.critical ||
+    quickFilters.nonCritical ||
     quickFilters.cloud ||
     quickFilters.serviceOutsourcings ||
     quickFilters.status.active ||
@@ -52,6 +53,21 @@ export function ActiveFilterBadges({
             size="icon"
             className="h-4 w-4 p-0 hover:bg-transparent"
             onClick={() => onRemoveQuickFilter("critical")}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </Badge>
+      )}
+
+      {/* Quick Filter: Non Critical */}
+      {quickFilters.nonCritical && (
+        <Badge variant="secondary" className="gap-1 pr-1">
+          Non Critical
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-4 w-4 p-0 hover:bg-transparent"
+            onClick={() => onRemoveQuickFilter("nonCritical")}
           >
             <X className="h-3 w-3" />
           </Button>

@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertCircle, Cloud, Briefcase, CheckCircle, FileText, Clock, XCircle } from "lucide-react"
+import { AlertCircle, Cloud, Briefcase, CheckCircle, CheckCircle2, FileText, Clock, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { QuickFilters as QuickFiltersType } from "@/lib/types/filters"
 import { cn } from "@/lib/utils/cn"
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils/cn"
 interface QuickFiltersProps {
   filters: QuickFiltersType
   onToggleCritical: () => void
+  onToggleNonCritical: () => void
   onToggleCloud: () => void
   onToggleServiceOutsourcings: () => void
   onToggleActive: () => void
@@ -19,6 +20,7 @@ interface QuickFiltersProps {
 export function QuickFilters({
   filters,
   onToggleCritical,
+  onToggleNonCritical,
   onToggleCloud,
   onToggleServiceOutsourcings,
   onToggleActive,
@@ -39,6 +41,19 @@ export function QuickFilters({
       >
         <AlertCircle className="h-4 w-4" />
         Critical Outsourcings
+      </Button>
+
+      <Button
+        variant={filters.nonCritical ? "default" : "outline"}
+        size="sm"
+        onClick={onToggleNonCritical}
+        className={cn(
+          "gap-2 transition-all",
+          filters.nonCritical && "bg-secondary hover:bg-secondary/90"
+        )}
+      >
+        <CheckCircle2 className="h-4 w-4" />
+        Non Critical Outsourcings
       </Button>
 
       <Button

@@ -37,7 +37,21 @@ export function FilterPanel({
   const activeFilterCount = countActiveFilters(quickFilters, customFilters)
 
   const handleToggleCritical = () => {
-    onQuickFilterChange({ ...quickFilters, critical: !quickFilters.critical })
+    const newCriticalValue = !quickFilters.critical
+    onQuickFilterChange({
+      ...quickFilters,
+      critical: newCriticalValue,
+      nonCritical: newCriticalValue ? false : quickFilters.nonCritical,
+    })
+  }
+
+  const handleToggleNonCritical = () => {
+    const newNonCriticalValue = !quickFilters.nonCritical
+    onQuickFilterChange({
+      ...quickFilters,
+      nonCritical: newNonCriticalValue,
+      critical: newNonCriticalValue ? false : quickFilters.critical,
+    })
   }
 
   const handleToggleCloud = () => {
@@ -127,7 +141,7 @@ export function FilterPanel({
   }
 
   const handleRemoveQuickFilter = (
-    filterType: "critical" | "cloud" | "serviceOutsourcings" | "active" | "draft" | "notYetActive" | "terminated"
+    filterType: "critical" | "nonCritical" | "cloud" | "serviceOutsourcings" | "active" | "draft" | "notYetActive" | "terminated"
   ) => {
     if (filterType === "active" || filterType === "draft" || filterType === "notYetActive" || filterType === "terminated") {
       onQuickFilterChange({
@@ -176,6 +190,7 @@ export function FilterPanel({
                 <QuickFilters
                   filters={quickFilters}
                   onToggleCritical={handleToggleCritical}
+                  onToggleNonCritical={handleToggleNonCritical}
                   onToggleCloud={handleToggleCloud}
                   onToggleServiceOutsourcings={handleToggleServiceOutsourcings}
                   onToggleActive={handleToggleActive}

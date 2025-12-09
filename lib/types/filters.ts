@@ -20,6 +20,7 @@ export interface CustomFilter {
 
 export interface QuickFilters {
   critical: boolean
+  nonCritical: boolean
   cloud: boolean
   serviceOutsourcings: boolean
   status: {

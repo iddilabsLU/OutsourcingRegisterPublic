@@ -41,7 +41,7 @@ function createWindow() {
   const isDev = process.env.NODE_ENV === 'development'
   const url = isDev
     ? 'http://localhost:3000' // Next.js dev server
-    : `file://${path.join(__dirname, '../out/index.html')}` // Production build
+    : `file://${path.join(__dirname, '../../out/index.html')}` // Production build (up 2 levels from dist-electron/electron/)
 
   mainWindow.loadURL(url)
 

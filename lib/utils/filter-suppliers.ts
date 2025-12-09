@@ -16,6 +16,11 @@ export function filterSuppliers(
       return false
     }
 
+    // Quick Filter: Non Critical
+    if (quickFilters.nonCritical && supplier.criticality.isCritical) {
+      return false
+    }
+
     // Quick Filter: Cloud
     if (quickFilters.cloud && supplier.category !== "Cloud") {
       return false
@@ -237,6 +242,7 @@ export function countActiveFilters(
   let count = 0
 
   if (quickFilters.critical) count++
+  if (quickFilters.nonCritical) count++
   if (quickFilters.cloud) count++
   if (quickFilters.serviceOutsourcings) count++
 

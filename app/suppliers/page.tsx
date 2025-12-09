@@ -42,6 +42,7 @@ export default function SuppliersPage() {
   // Filter state
   const [quickFilters, setQuickFilters] = useState<QuickFilters>({
     critical: false,
+    nonCritical: false,
     cloud: false,
     serviceOutsourcings: false,
     status: {
@@ -82,6 +83,7 @@ export default function SuppliersPage() {
   const handleClearAll = () => {
     setQuickFilters({
       critical: false,
+      nonCritical: false,
       cloud: false,
       serviceOutsourcings: false,
       status: {
