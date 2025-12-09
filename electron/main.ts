@@ -37,11 +37,11 @@ function createWindow() {
     show: false, // Don't show until ready
   })
 
-  // Load the Next.js app
+  // Load the Next.js app - opens directly to /suppliers
   const isDev = process.env.NODE_ENV === 'development'
   const url = isDev
-    ? 'http://localhost:3000' // Next.js dev server
-    : `file://${path.join(__dirname, '../../out/index.html')}` // Production build (up 2 levels from dist-electron/electron/)
+    ? 'http://localhost:3000/suppliers' // Next.js dev server - suppliers page
+    : `file://${path.join(__dirname, '../../out/suppliers.html')}` // Production build (up 2 levels from dist-electron/electron/)
 
   mainWindow.loadURL(url)
 

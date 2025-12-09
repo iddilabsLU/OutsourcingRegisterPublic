@@ -152,6 +152,24 @@ export function FormSubContractor<TFieldValues extends FieldValues>({
                 </FormItem>
               )}
             />
+            <FormField
+              control={control}
+              name={`${name}.${index}.otherInformation` as FieldPath<TFieldValues>}
+              render={({ field: inputField }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel className="text-base">Other Sub-Outsourcing Information (if any)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...inputField}
+                      placeholder="Add any other relevant information about this sub-contractor"
+                      rows={2}
+                      className="text-base"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
         </Card>
       ))}
@@ -168,6 +186,7 @@ export function FormSubContractor<TFieldValues extends FieldValues>({
             registrationCountry: "",
             servicePerformanceCountry: "",
             dataStorageLocation: "",
+            otherInformation: "",
           }
           append(newSubContractor)
         }}

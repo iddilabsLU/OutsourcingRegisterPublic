@@ -47,7 +47,7 @@ export const supplierFormSchema = z.object({
     .optional(),
 
   // 54.d - Category
-  category: z.nativeEnum(OutsourcingCategory).optional(),
+  category: z.string().min(1, "Category is required").optional(),
 
   // 54.e - Service Provider Information
   serviceProvider: z
@@ -90,6 +90,7 @@ export const supplierFormSchema = z.object({
       storageLocations: z.array(z.string()).optional(),
       cloudOfficer: z.string().optional(),
       resourceOperator: z.string().optional(),
+      otherInformation: z.string().optional(),
     })
     .optional()
     .nullable(),
@@ -108,7 +109,6 @@ export const supplierFormSchema = z.object({
       groupRelationship: z
         .object({
           isPartOfGroup: z.boolean().optional(),
-          isOwnedByGroup: z.boolean().optional(),
         })
         .optional(),
 
@@ -152,6 +152,7 @@ export const supplierFormSchema = z.object({
                 registrationCountry: z.string().optional(),
                 servicePerformanceCountry: z.string().optional(),
                 dataStorageLocation: z.string().optional(),
+                otherInformation: z.string().optional(),
               })
             )
             .optional(),
@@ -163,7 +164,7 @@ export const supplierFormSchema = z.object({
       substitutability: z
         .object({
           outcome: z.nativeEnum(SubstitutabilityOutcome).optional(),
-          reintegrationAssessment: z.string().optional(),
+          reintegrationSubstitutabilityAssessment: z.string().optional(),
           discontinuationImpact: z.string().optional(),
         })
         .optional(),

@@ -109,13 +109,20 @@ export function SupplierForm({
   const category = form.watch("category")
 
   // Determine tab visibility
-  const showCloudTab = category === OutsourcingCategory.CLOUD
+  const showCloudTab = category?.toLowerCase() === "cloud"
   const showCriticalTab = isCritical === true
 
   // Extract unique provider names for autocomplete dropdown
   const existingProviderNames = useMemo(() => {
     return [...new Set(existingSuppliers.map((s) => s.serviceProvider.name))]
       .filter((name) => name && name.trim() !== "")
+      .sort()
+  }, [existingSuppliers])
+
+  // Extract unique categories for autocomplete dropdown
+  const existingCategories = useMemo(() => {
+    return [...new Set(existingSuppliers.map((s) => s.category))]
+      .filter((cat) => cat && cat.trim() !== "")
       .sort()
   }, [existingSuppliers])
 
@@ -243,14 +250,15 @@ export function SupplierForm({
         },
         criticalityAssessmentDate: data.criticalityAssessmentDate || "",
         cloudService:
-          data.category === OutsourcingCategory.CLOUD && data.cloudService
+          data.category?.toLowerCase() === "cloud"
             ? {
-                serviceModel: data.cloudService.serviceModel!,
-                deploymentModel: data.cloudService.deploymentModel!,
-                dataNature: data.cloudService.dataNature!,
-                storageLocations: data.cloudService.storageLocations!,
-                cloudOfficer: data.cloudService.cloudOfficer,
-                resourceOperator: data.cloudService.resourceOperator,
+                serviceModel: data.cloudService?.serviceModel,
+                deploymentModel: data.cloudService?.deploymentModel,
+                dataNature: data.cloudService?.dataNature || "",
+                storageLocations: data.cloudService?.storageLocations || [],
+                cloudOfficer: data.cloudService?.cloudOfficer,
+                resourceOperator: data.cloudService?.resourceOperator,
+                otherInformation: data.cloudService?.otherInformation,
               }
             : undefined,
         criticalFields:
@@ -261,7 +269,6 @@ export function SupplierForm({
                 },
                 groupRelationship: {
                   isPartOfGroup: data.criticalFields.groupRelationship?.isPartOfGroup ?? undefined,
-                  isOwnedByGroup: data.criticalFields.groupRelationship?.isOwnedByGroup ?? undefined,
                 },
                 riskAssessment: {
                   risk: data.criticalFields.riskAssessment?.risk,
@@ -285,7 +292,7 @@ export function SupplierForm({
                   : undefined,
                 substitutability: {
                   outcome: data.criticalFields.substitutability?.outcome,
-                  reintegrationAssessment: data.criticalFields.substitutability?.reintegrationAssessment || "",
+                  reintegrationSubstitutabilityAssessment: data.criticalFields.substitutability?.reintegrationSubstitutabilityAssessment || "",
                   discontinuationImpact: data.criticalFields.substitutability?.discontinuationImpact || "",
                 },
                 alternativeProviders: data.criticalFields.alternativeProviders || [],
@@ -439,6 +446,7 @@ export function SupplierForm({
                 control={form.control}
                 toggleFieldPending={toggleFieldPending}
                 isFieldPending={isFieldPending}
+                existingCategories={existingCategories}
                 mode={mode}
               />
             </div>

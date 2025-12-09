@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormTextInput } from "./fields/form-text-input"
 import { FormTextarea } from "./fields/form-textarea"
 import { FormSelect } from "./fields/form-select"
-import { FormMultiText } from "./fields/form-multi-text"
+import { FormCountryMultiSelect } from "./fields/form-country-multi-select"
 import { CloudServiceModel, DeploymentModel } from "@/lib/types/supplier"
 import type { Control } from "react-hook-form"
 import type { SupplierFormData } from "@/lib/validations/supplier-schema"
@@ -78,14 +78,12 @@ export function SupplierFormCloud({ control, toggleFieldPending, isFieldPending 
               toggleFieldPending={toggleFieldPending}
               isFieldPending={isFieldPending}
             />
-            <FormMultiText
+            <FormCountryMultiSelect
               control={control}
               name="cloudService.storageLocations"
               label="Storage Locations"
               circularRef="54.h"
-              placeholder="e.g., Luxembourg (primary)"
-              tooltip="Add all data storage locations"
-              addButtonLabel="Add Location"
+              tooltip="Select all data storage countries"
               className="col-span-2"
               toggleFieldPending={toggleFieldPending}
               isFieldPending={isFieldPending}
@@ -105,6 +103,17 @@ export function SupplierFormCloud({ control, toggleFieldPending, isFieldPending 
               label="Resource Operator (if any)"
               circularRef="54.h"
               placeholder="e.g., CloudTech Operations S.A."
+              toggleFieldPending={toggleFieldPending}
+              isFieldPending={isFieldPending}
+            />
+            <FormTextarea
+              control={control}
+              name="cloudService.otherInformation"
+              label="Other Relevant Information (if any)"
+              circularRef="54.h"
+              placeholder="Add any other relevant cloud service information"
+              rows={3}
+              className="col-span-2"
               toggleFieldPending={toggleFieldPending}
               isFieldPending={isFieldPending}
             />

@@ -83,7 +83,7 @@ function matchesCustomFilter(
       return supplier.serviceProvider.name.toLowerCase().includes(normalizedValue)
 
     case "category":
-      return supplier.category === value
+      return supplier.category.toLowerCase() === value.toLowerCase()
 
     case "servicePerformanceCountries":
       // Check if any country in the array matches (case-insensitive partial match)
@@ -215,7 +215,7 @@ function searchAllFields(supplier: SupplierOutsourcing, searchTerm: string): boo
 
     // Substitutability
     if (contains(cf.substitutability.outcome)) return true
-    if (contains(cf.substitutability.reintegrationAssessment)) return true
+    if (contains(cf.substitutability.reintegrationSubstitutabilityAssessment)) return true
     if (contains(cf.substitutability.discontinuationImpact)) return true
     if (containsInArray(cf.alternativeProviders)) return true
 

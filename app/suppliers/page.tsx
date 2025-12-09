@@ -6,7 +6,6 @@ import { SupplierRegisterTable } from "@/components/shared/supplier-register-tab
 import { FilterPanel } from "@/components/shared/filter-panel"
 import { ViewSegmentedControl, type ViewType } from "@/components/shared/view-segmented-control"
 import { SupplierForm } from "@/components/shared/forms/supplier-form"
-import { DemoBanner } from "@/components/shared/demo-banner"
 import { FilterWarningBanner } from "@/components/shared/filter-warning-banner"
 import { TipBanner } from "@/components/shared/tip-banner"
 import { DashboardView } from "@/components/shared/dashboard/dashboard-view"
@@ -225,9 +224,6 @@ export default function SuppliersPage() {
       <div className="space-y-6">
         {/* View Segmented Control */}
         <ViewSegmentedControl activeView={activeView} onViewChange={setActiveView} />
-
-        {/* Demo Banner */}
-        <DemoBanner />
 
         {/* Register List View */}
         {activeView === "list" && (

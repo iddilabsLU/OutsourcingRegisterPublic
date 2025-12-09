@@ -6,7 +6,8 @@ import { FormTextarea } from "./fields/form-textarea"
 import { FormSelect } from "./fields/form-select"
 import { FormRadioGroup } from "./fields/form-radio-group"
 import { FormDatePicker } from "./fields/form-date-picker"
-import { OutsourcingCategory, OutsourcingStatus } from "@/lib/types/supplier"
+import { FormCategoryInput } from "./fields/form-category-input"
+import { OutsourcingStatus } from "@/lib/types/supplier"
 import type { Control } from "react-hook-form"
 import type { SupplierFormData } from "@/lib/validations/supplier-schema"
 
@@ -14,6 +15,7 @@ interface SupplierFormBasicInfoProps {
   control: Control<SupplierFormData>
   toggleFieldPending: (fieldPath: string) => void
   isFieldPending: (fieldPath: string) => boolean
+  existingCategories: string[]
   mode?: "add" | "edit"
 }
 
@@ -25,14 +27,9 @@ export function SupplierFormBasicInfo({
   control,
   toggleFieldPending,
   isFieldPending,
+  existingCategories,
   mode = "add",
 }: SupplierFormBasicInfoProps) {
-  // Category options
-  const categoryOptions = Object.values(OutsourcingCategory).map((cat) => ({
-    value: cat,
-    label: cat,
-  }))
-
   // Status options
   const statusOptions = Object.values(OutsourcingStatus).map((status) => ({
     value: status,
@@ -77,15 +74,15 @@ export function SupplierFormBasicInfo({
               toggleFieldPending={toggleFieldPending}
               isFieldPending={isFieldPending}
             />
-            <FormSelect
+            <FormCategoryInput
               control={control}
               name="category"
               label="Category"
               circularRef="54.d"
-              options={categoryOptions}
-              placeholder="Select category"
+              placeholder="Select or enter category"
               toggleFieldPending={toggleFieldPending}
               isFieldPending={isFieldPending}
+              existingCategories={existingCategories}
             />
           </div>
         </CardContent>

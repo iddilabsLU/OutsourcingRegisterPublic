@@ -77,6 +77,16 @@ export function SupplierCloudServices({ supplier }: SupplierCloudServicesProps) 
               searchTerm={searchTerm}
               isPending={supplier.pendingFields?.includes("cloudService.resourceOperator")}
             />
+            {supplier.cloudService.otherInformation && (
+              <FieldDisplay
+                label="Other Relevant Information (if any)"
+                circularRef="54.h"
+                value={supplier.cloudService.otherInformation}
+                searchTerm={searchTerm}
+                isPending={supplier.pendingFields?.includes("cloudService.otherInformation")}
+                className="col-span-2"
+              />
+            )}
           </div>
         </CardContent>
       </Card>

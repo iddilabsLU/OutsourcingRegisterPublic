@@ -30,9 +30,9 @@ export default function NotFound() {
         </CardContent>
         <CardFooter className="flex justify-center">
           <Button asChild>
-            <Link href="/" className="gap-2">
+            <Link href="/suppliers" className="gap-2">
               <Home className="h-4 w-4" />
-              Back to Home
+              Back to Register
             </Link>
           </Button>
         </CardFooter>

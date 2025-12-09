@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS suppliers (
   cloud_storage_locations TEXT,                -- Nullable JSON array: ["EU-West-1"]
   cloud_officer TEXT,                          -- Nullable (optional within cloud section)
   cloud_resource_operator TEXT,                -- Nullable (optional within cloud section)
+  cloud_other_information TEXT,                -- Nullable: Other relevant cloud information
 
   -- ========================================================================
   -- CRITICAL FIELDS (Point 55) - Conditional: only when is_critical = true

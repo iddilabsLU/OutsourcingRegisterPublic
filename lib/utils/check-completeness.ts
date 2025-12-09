@@ -141,7 +141,7 @@ export function checkIncompleteFields(
   // Only check if category is Cloud
   // ========================================
 
-  if (data.category === OutsourcingCategory.CLOUD) {
+  if (data.category?.toLowerCase() === "cloud") {
     if (!data.cloudService?.serviceModel) {
       addIncomplete("cloudService.serviceModel", "Cloud Service Model (54.h)")
     }
@@ -179,9 +179,6 @@ export function checkIncompleteFields(
     if (cf.groupRelationship?.isPartOfGroup === undefined) {
       addIncomplete("criticalFields.groupRelationship.isPartOfGroup", "Part of Group (55.b)")
     }
-    if (cf.groupRelationship?.isOwnedByGroup === undefined) {
-      addIncomplete("criticalFields.groupRelationship.isOwnedByGroup", "Owned by Group (55.b)")
-    }
 
     // 55.c - Risk Assessment
     if (!cf.riskAssessment?.risk) {
@@ -196,10 +193,10 @@ export function checkIncompleteFields(
 
     // 55.d - Approval
     if (!cf.approval?.approverName || cf.approval.approverName.trim() === "") {
-      addIncomplete("criticalFields.approval.approverName", "Approver Name (55.d)")
+      addIncomplete("criticalFields.approval.approverName", "Approver Name & Role (55.d)")
     }
     if (!cf.approval?.approverRole || cf.approval.approverRole.trim() === "") {
-      addIncomplete("criticalFields.approval.approverRole", "Approver Role (55.d)")
+      addIncomplete("criticalFields.approval.approverRole", "Board Approval (55.d)")
     }
 
     // 55.e - Governing Law
@@ -273,10 +270,10 @@ export function checkIncompleteFields(
       addIncomplete("criticalFields.substitutability.outcome", "Substitutability Outcome (55.h)")
     }
     if (
-      !cf.substitutability?.reintegrationAssessment ||
-      cf.substitutability.reintegrationAssessment.trim() === ""
+      !cf.substitutability?.reintegrationSubstitutabilityAssessment ||
+      cf.substitutability.reintegrationSubstitutabilityAssessment.trim() === ""
     ) {
-      addIncomplete("criticalFields.substitutability.reintegrationAssessment", "Reintegration Assessment (55.h)")
+      addIncomplete("criticalFields.substitutability.reintegrationSubstitutabilityAssessment", "Reintegration/Substitutability Assessment (55.h)")
     }
     if (
       !cf.substitutability?.discontinuationImpact ||

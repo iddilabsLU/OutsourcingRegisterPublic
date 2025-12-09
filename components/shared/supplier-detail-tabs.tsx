@@ -22,7 +22,7 @@ export function SupplierDetailTabs({ supplier, searchTerm = "" }: SupplierDetail
   const [activeTab, setActiveTab] = useState<TabType>("basic-info")
 
   // Determine if cloud and critical tabs are applicable
-  const isCloudApplicable = !!supplier.cloudService
+  const isCloudApplicable = supplier.category?.toLowerCase() === "cloud"
   const isCritical = supplier.criticality.isCritical && !!supplier.criticalFields
 
   // Render active tab content

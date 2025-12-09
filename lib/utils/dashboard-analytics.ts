@@ -626,10 +626,8 @@ export function getCriticalFunctionsAnalysis(
       total: 0,
       groupRelationship: {
         partOfGroup: 0,
-        ownedByGroup: 0,
         independent: 0,
         partOfGroupPercentage: 0,
-        ownedByGroupPercentage: 0,
         independentPercentage: 0,
       },
       substitutability: {
@@ -651,15 +649,13 @@ export function getCriticalFunctionsAnalysis(
 
   // Group Relationship Analysis
   let partOfGroup = 0
-  let ownedByGroup = 0
   let independent = 0
 
   criticalSuppliers.forEach((s) => {
     const gr = s.criticalFields?.groupRelationship
     if (gr) {
       if (gr.isPartOfGroup) partOfGroup++
-      if (gr.isOwnedByGroup) ownedByGroup++
-      if (!gr.isPartOfGroup && !gr.isOwnedByGroup) independent++
+      if (!gr.isPartOfGroup) independent++
     }
   })
 
@@ -692,10 +688,8 @@ export function getCriticalFunctionsAnalysis(
     total,
     groupRelationship: {
       partOfGroup,
-      ownedByGroup,
       independent,
       partOfGroupPercentage: Math.round((partOfGroup / total) * 100),
-      ownedByGroupPercentage: Math.round((ownedByGroup / total) * 100),
       independentPercentage: Math.round((independent / total) * 100),
     },
     substitutability: {

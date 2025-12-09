@@ -48,10 +48,10 @@ export function SupplierFormCritical({
 
   return (
     <div className="space-y-2 max-w-7xl mx-auto">
-      {/* Card 1: Entities, Risk & Approval */}
+      {/* Card 1: Risk Assessment */}
       <Card className="bg-white shadow-sm">
         <CardHeader className="pb-4">
-          <CardTitle className="text-xl">Entities, Risk & Approval</CardTitle>
+          <CardTitle className="text-xl">Risk Assessment</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 grid-cols-2 [&>*]:min-w-0">
@@ -70,14 +70,6 @@ export function SupplierFormCritical({
               control={control}
               name="criticalFields.groupRelationship.isPartOfGroup"
               label="Part of Group"
-              circularRef="55.b"
-              toggleFieldPending={toggleFieldPending}
-              isFieldPending={isFieldPending}
-            />
-            <FormRadioGroup
-              control={control}
-              name="criticalFields.groupRelationship.isOwnedByGroup"
-              label="Owned by Group"
               circularRef="55.b"
               toggleFieldPending={toggleFieldPending}
               isFieldPending={isFieldPending}
@@ -114,18 +106,18 @@ export function SupplierFormCritical({
             <FormTextInput
               control={control}
               name="criticalFields.approval.approverName"
-              label="Approver Name"
+              label="Approver Name & Role"
               circularRef="55.d"
-              placeholder="e.g., Board of Directors"
+              placeholder="e.g., John Smith - Compliance Manager"
               toggleFieldPending={toggleFieldPending}
               isFieldPending={isFieldPending}
             />
             <FormTextInput
               control={control}
               name="criticalFields.approval.approverRole"
-              label="Approver Role"
+              label="Board Approval (Yes/No/Comment)"
               circularRef="55.d"
-              placeholder="e.g., Management Body"
+              placeholder="e.g., Approved by the BoD"
               toggleFieldPending={toggleFieldPending}
               isFieldPending={isFieldPending}
             />
@@ -236,8 +228,8 @@ export function SupplierFormCritical({
             />
             <FormTextarea
               control={control}
-              name="criticalFields.substitutability.reintegrationAssessment"
-              label="Reintegration Assessment"
+              name="criticalFields.substitutability.reintegrationSubstitutabilityAssessment"
+              label="Reintegration/Substitutability Assessment"
               circularRef="55.h"
               placeholder="Assess the feasibility of reintegrating this function"
               rows={3}

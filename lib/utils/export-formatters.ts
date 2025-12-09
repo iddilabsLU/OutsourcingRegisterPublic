@@ -154,8 +154,8 @@ export function formatArrayObject(value: unknown[]): string {
     return ""
   }
 
-  // Subcontractor objects have 5 fields in specific order:
-  // name, activityDescription, registrationCountry, servicePerformanceCountry, dataStorageLocation
+  // Subcontractor objects have 6 fields in specific order:
+  // name, activityDescription, registrationCountry, servicePerformanceCountry, dataStorageLocation, otherInformation
   const formattedObjects = value.map((obj) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const item = obj as any
@@ -165,6 +165,7 @@ export function formatArrayObject(value: unknown[]): string {
       item.registrationCountry || "",
       item.servicePerformanceCountry || "",
       item.dataStorageLocation || "",
+      item.otherInformation || "",
     ]
     return fields.join(" | ")
   })

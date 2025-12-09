@@ -81,7 +81,21 @@ export function initializeDatabase(): Database.Database {
 
   console.log('✅ Database initialized successfully')
 
+  // Run migrations after schema is set up
+  runMigrations()
+
   return db
+}
+
+/**
+ * Run all pending database migrations
+ */
+function runMigrations(): void {
+  // Import migration functions
+  const { migrateAddCloudOtherInformation } = require('./migrate-add-cloud-other-info')
+
+  // Run migrations in order
+  migrateAddCloudOtherInformation()
 }
 
 /**

@@ -15,6 +15,7 @@ export enum OutsourcingCategory {
   MARKETING = "Marketing & Communications",
   COMPLIANCE = "Compliance Services",
   AUDIT = "Audit Services",
+  ACCOUNTING = "Accounting Services",
   OTHER = "Other",
 }
 
@@ -84,7 +85,7 @@ export interface MandatoryOutsourcingFields {
   }
 
   // 54.d - Category of outsourcing
-  category: OutsourcingCategory
+  category: string // Changed from enum to allow custom categories
 
   // 54.e - Service Provider Information
   serviceProvider: {
@@ -120,6 +121,7 @@ export interface MandatoryOutsourcingFields {
     storageLocations: string[]
     cloudOfficer?: string // Optional within cloud section
     resourceOperator?: string // Optional within cloud section
+    otherInformation?: string // Optional: "Other Relevant Information (if any)"
   }
 }
 
@@ -138,7 +140,6 @@ export interface CriticalOutsourcingFields {
   // 55.b - Group Relationship
   groupRelationship: {
     isPartOfGroup: boolean
-    isOwnedByGroup: boolean
   }
 
   // 55.c - Risk Assessment
@@ -172,13 +173,14 @@ export interface CriticalOutsourcingFields {
       registrationCountry: string
       servicePerformanceCountry: string
       dataStorageLocation: string
+      otherInformation?: string // Optional: "Other Sub-Outsourcing Information (if any)"
     }>
   }
 
   // 55.h - Substitutability Assessment
   substitutability: {
     outcome: SubstitutabilityOutcome
-    reintegrationAssessment: string
+    reintegrationSubstitutabilityAssessment: string
     discontinuationImpact: string
   }
 

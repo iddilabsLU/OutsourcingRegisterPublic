@@ -330,6 +330,14 @@ export const FULL_FIELDS: FieldMapping[] = [
     conditional: "cloud",
     width: 30,
   },
+  {
+    path: "cloudService.otherInformation",
+    header: "Other Cloud Information (if any) (54.h)",
+    cssfRef: "54.h",
+    type: "string",
+    conditional: "cloud",
+    width: 30,
+  },
 
   // ====================
   // CRITICAL FUNCTION FIELDS (20 fields) - Point 55 (Conditional)
@@ -345,14 +353,6 @@ export const FULL_FIELDS: FieldMapping[] = [
   {
     path: "criticalFields.groupRelationship.isPartOfGroup",
     header: "Part of Group? (55.b)",
-    cssfRef: "55.b",
-    type: "boolean",
-    conditional: "critical",
-    width: 10,
-  },
-  {
-    path: "criticalFields.groupRelationship.isOwnedByGroup",
-    header: "Owned by Group? (55.b)",
     cssfRef: "55.b",
     type: "boolean",
     conditional: "critical",
@@ -384,7 +384,7 @@ export const FULL_FIELDS: FieldMapping[] = [
   },
   {
     path: "criticalFields.approval.approverName",
-    header: "Approver Name (55.d)",
+    header: "Approver Name & Role (55.d)",
     cssfRef: "55.d",
     type: "string",
     conditional: "critical",
@@ -392,7 +392,7 @@ export const FULL_FIELDS: FieldMapping[] = [
   },
   {
     path: "criticalFields.approval.approverRole",
-    header: "Approver Role (55.d)",
+    header: "Board Approval (55.d)",
     cssfRef: "55.d",
     type: "string",
     conditional: "critical",
@@ -432,11 +432,11 @@ export const FULL_FIELDS: FieldMapping[] = [
   },
   {
     path: "criticalFields.subOutsourcing.subContractors",
-    header: "Sub-Contractors (55.g)",
+    header: "Sub-Contractors (55.g): Name | Activity | Reg. Country | Service Country | Data Storage | Other Info",
     cssfRef: "55.g",
     type: "arrayObject",
     conditional: "critical",
-    width: 30,
+    width: 35,
   },
   {
     path: "criticalFields.substitutability.outcome",
@@ -447,8 +447,8 @@ export const FULL_FIELDS: FieldMapping[] = [
     width: 20,
   },
   {
-    path: "criticalFields.substitutability.reintegrationAssessment",
-    header: "Reintegration Assessment (55.h)",
+    path: "criticalFields.substitutability.reintegrationSubstitutabilityAssessment",
+    header: "Reintegration/Substitutability Assessment (55.h)",
     cssfRef: "55.h",
     type: "string",
     conditional: "critical",

@@ -111,7 +111,6 @@ export function createEmptyCriticalFields() {
     },
     groupRelationship: {
       isPartOfGroup: undefined,
-      isOwnedByGroup: undefined,
     },
     riskAssessment: {
       risk: undefined,
@@ -130,7 +129,7 @@ export function createEmptyCriticalFields() {
     subOutsourcing: undefined,
     substitutability: {
       outcome: undefined,
-      reintegrationAssessment: "",
+      reintegrationSubstitutabilityAssessment: "",
       discontinuationImpact: "",
     },
     alternativeProviders: [],
@@ -157,5 +156,6 @@ export function createEmptyCloudService() {
     storageLocations: [],
     cloudOfficer: "",
     resourceOperator: "",
+    otherInformation: "",
   }
 }

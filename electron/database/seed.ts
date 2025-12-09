@@ -50,7 +50,7 @@ const suppliers: SupplierOutsourcing[] = [
       serviceModel: "IaaS (Infrastructure as a Service)" as any,
       deploymentModel: "Private Cloud" as any,
       dataNature: "Customer personal data, financial transactions, account balances",
-      storageLocations: ["Luxembourg (primary)", "Germany (disaster recovery)"],
+      storageLocations: ["Luxembourg", "Germany"],
       cloudOfficer: "Jean Dupont",
       resourceOperator: "CloudTech Operations S.A.",
     },
@@ -60,7 +60,6 @@ const suppliers: SupplierOutsourcing[] = [
       },
       groupRelationship: {
         isPartOfGroup: false,
-        isOwnedByGroup: false,
       },
       riskAssessment: {
         risk: "High" as any,
@@ -90,7 +89,7 @@ const suppliers: SupplierOutsourcing[] = [
       },
       substitutability: {
         outcome: "Difficult" as any,
-        reintegrationAssessment: "Reintegration would require 18-24 months and significant capital investment (estimated €5M+). Internal IT team lacks specialized expertise.",
+        reintegrationSubstitutabilityAssessment: "Reintegration would require 18-24 months and significant capital investment (estimated €5M+). Internal IT team lacks specialized expertise.",
         discontinuationImpact: "Severe impact. Would result in complete service outage for 6-12 months during migration. Regulatory reporting would be compromised.",
       },
       alternativeProviders: ["Azure Government Cloud", "AWS Financial Services", "IBM Cloud for Financial Services"],
@@ -195,7 +194,6 @@ const suppliers: SupplierOutsourcing[] = [
       },
       groupRelationship: {
         isPartOfGroup: false,
-        isOwnedByGroup: false,
       },
       riskAssessment: {
         risk: "Medium" as any,
@@ -225,7 +223,7 @@ const suppliers: SupplierOutsourcing[] = [
       },
       substitutability: {
         outcome: "Difficult" as any,
-        reintegrationAssessment: "Reintegration feasible but complex. Would require payment license and 12-18 months implementation. Estimated cost €3M.",
+        reintegrationSubstitutabilityAssessment: "Reintegration feasible but complex. Would require payment license and 12-18 months implementation. Estimated cost €3M.",
         discontinuationImpact: "High impact. Would disrupt payment services for 6-9 months. Requires customer notification and regulatory approval for migration.",
       },
       alternativeProviders: ["LuxPayments S.A.", "CETREL S.A.", "SIX Payment Services"],
@@ -320,7 +318,7 @@ const suppliers: SupplierOutsourcing[] = [
       serviceModel: "SaaS (Software as a Service)" as any,
       deploymentModel: "Private Cloud" as any,
       dataNature: "Full customer database, all financial transactions, account balances, credit information, PII",
-      storageLocations: ["Luxembourg (contractually restricted)"],
+      storageLocations: ["Luxembourg"],
       cloudOfficer: "Marie Schmidt",
       resourceOperator: "BankingSoft Cloud Services Ltd.",
     },
@@ -330,7 +328,6 @@ const suppliers: SupplierOutsourcing[] = [
       },
       groupRelationship: {
         isPartOfGroup: false,
-        isOwnedByGroup: false,
       },
       riskAssessment: {
         risk: "High" as any,
@@ -360,7 +357,7 @@ const suppliers: SupplierOutsourcing[] = [
       },
       substitutability: {
         outcome: "Impossible" as any,
-        reintegrationAssessment: "Not feasible. Building an in-house core banking system would require 3-5 years, €20M+ investment, and specialized team of 50+ developers. Regulatory approval would be complex.",
+        reintegrationSubstitutabilityAssessment: "Not feasible. Building an in-house core banking system would require 3-5 years, €20M+ investment, and specialized team of 50+ developers. Regulatory approval would be complex.",
         discontinuationImpact: "Catastrophic. Bank would be unable to operate. All customer services would cease. Migration to alternative provider would take minimum 18-24 months.",
       },
       alternativeProviders: ["Temenos T24 (implementation required)", "Mambu (limited functionality)", "Avaloq Banking Suite"],

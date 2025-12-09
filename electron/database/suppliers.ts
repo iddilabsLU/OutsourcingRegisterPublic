@@ -50,6 +50,7 @@ interface SupplierDbRow {
   cloud_storage_locations: string | null
   cloud_officer: string | null
   cloud_resource_operator: string | null
+  cloud_other_information: string | null
 
   // Critical Fields (Point 55) - JSON blob
   critical_fields: string | null
@@ -118,6 +119,7 @@ export function toDbRow(supplier: SupplierOutsourcing): Omit<SupplierDbRow, 'id'
       : null,
     cloud_officer: supplier.cloudService?.cloudOfficer || null,
     cloud_resource_operator: supplier.cloudService?.resourceOperator || null,
+    cloud_other_information: supplier.cloudService?.otherInformation || null,
 
     // Point 55 - Critical Fields (entire object → JSON)
     critical_fields: supplier.criticalFields ? JSON.stringify(supplier.criticalFields) : null,
@@ -188,7 +190,7 @@ export function fromDbRow(row: SupplierDbRow): SupplierOutsourcing {
 
     // 54.h - Cloud Service (reconstruct nested object, conditional)
     cloudService:
-      row.cloud_service_model || row.cloud_deployment_model
+      row.category?.toLowerCase() === 'cloud'
         ? {
             serviceModel: row.cloud_service_model as any,
             deploymentModel: row.cloud_deployment_model as any,
@@ -196,6 +198,7 @@ export function fromDbRow(row: SupplierDbRow): SupplierOutsourcing {
             storageLocations: row.cloud_storage_locations ? JSON.parse(row.cloud_storage_locations) : [],
             cloudOfficer: row.cloud_officer || undefined,
             resourceOperator: row.cloud_resource_operator || undefined,
+            otherInformation: row.cloud_other_information || undefined,
           }
         : undefined,
 
@@ -246,7 +249,7 @@ export function addSupplier(supplier: SupplierOutsourcing): { id: number; refere
       provider_name, corporate_registration_number, legal_entity_identifier, registered_address, contact_details, parent_company,
       service_performance_countries, data_location_country, other_data_location_info,
       is_critical, criticality_reasons, criticality_assessment_date,
-      cloud_service_model, cloud_deployment_model, cloud_data_nature, cloud_storage_locations, cloud_officer, cloud_resource_operator,
+      cloud_service_model, cloud_deployment_model, cloud_data_nature, cloud_storage_locations, cloud_officer, cloud_resource_operator, cloud_other_information,
       critical_fields, incomplete_fields, pending_fields
     ) VALUES (
       @reference_number, @status, @category,
@@ -255,7 +258,7 @@ export function addSupplier(supplier: SupplierOutsourcing): { id: number; refere
       @provider_name, @corporate_registration_number, @legal_entity_identifier, @registered_address, @contact_details, @parent_company,
       @service_performance_countries, @data_location_country, @other_data_location_info,
       @is_critical, @criticality_reasons, @criticality_assessment_date,
-      @cloud_service_model, @cloud_deployment_model, @cloud_data_nature, @cloud_storage_locations, @cloud_officer, @cloud_resource_operator,
+      @cloud_service_model, @cloud_deployment_model, @cloud_data_nature, @cloud_storage_locations, @cloud_officer, @cloud_resource_operator, @cloud_other_information,
       @critical_fields, @incomplete_fields, @pending_fields
     )
   `)
@@ -307,6 +310,7 @@ export function updateSupplier(supplier: SupplierOutsourcing): void {
       cloud_storage_locations = @cloud_storage_locations,
       cloud_officer = @cloud_officer,
       cloud_resource_operator = @cloud_resource_operator,
+      cloud_other_information = @cloud_other_information,
       critical_fields = @critical_fields,
       incomplete_fields = @incomplete_fields,
       pending_fields = @pending_fields

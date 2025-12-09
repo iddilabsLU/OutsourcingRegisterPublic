@@ -15,12 +15,12 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-primary bg-primary">
       <div className="flex h-12 items-center justify-between px-8">
         {/* Logo/Brand */}
-        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <div className="flex items-center gap-2">
           <Package className="h-5 w-5 text-primary-foreground" />
           <span className="text-base font-bold text-primary-foreground">
             Services & Cloud Outsourcing Register
           </span>
-        </Link>
+        </div>
 
         {/* Navigation & Logo */}
         <div className="flex items-center gap-6">
