@@ -15,6 +15,8 @@ This separation allows for:
 - **Pending Fields Feature** - Mark incomplete fields for later completion
 - **Save as Draft** - Save partially complete suppliers without validation errors
 - **Type Safety** - Prevent runtime errors from invalid data types
+- **Reporting Alignment** - Event generation for the reporting change log skips fields marked as pending, so incomplete/pending data does not create change events
+- **Issue Follow-Ups** - Follow-ups are free-form notes and are not subject to the CSSF completeness checks; they remain optional
 
 ---
 
@@ -446,5 +448,5 @@ const handleSaveSupplier = () => {
 
 ---
 
-**Last Updated:** 2025-10-31
+**Last Updated:** 2025-12-10
 **Related Files:** supplier-schema.ts, check-completeness.ts, supplier-form.tsx

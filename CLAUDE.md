@@ -44,7 +44,7 @@ npm run lint               # Lint
 
 ---
 
-## ✅ Current Status (Updated: 2025-12-09)
+## ✅ Current Status (Updated: 2025-12-12)
 
 **Desktop Application - FULLY FUNCTIONAL**
 
@@ -53,15 +53,17 @@ npm run lint               # Lint
 - Add/Edit/Delete/Duplicate suppliers
 - SQLite persistence
 - Dashboard analytics (7 indicators)
+- Reporting tab (auto-generated change log + manual event add/edit/delete + issue tracker with lifecycle/due dates and follow-ups; filters include 30/90/all/custom range)
 - Export to Excel (compact/full) & PDF (compact)
 - Pending fields + validation layers
 - Desktop packaging: installer generated via `npm run electron:build`
 
 ### Recent Changes
+- Reporting tab added (period filter, change log from supplier updates, issue lifecycle controls)
+- New SQLite tables (`events`, `issues`) via migration; event-builder diff skips pending fields
 - Windows installer & unpacked build (`release/Supplier Outsourcing Register Setup 0.1.0.exe`, `release/win-unpacked/`)
 - Static export served inside Electron with fallback show logic
 - Desktop-only architecture and SQLite integration
-- One-time database seeding (5 suppliers) via schema_version tracking
 
 ---
 
@@ -95,7 +97,7 @@ npm run lint               # Lint
 - Point 54: Mandatory fields for all suppliers (23 fields)
 - Point 54.h: Cloud fields (conditional)
 - Point 55: Critical function fields (conditional)
-- Total tracked fields: 52+ across 4 tabs
+- Total tracked fields: 73 across 4 tabs
 
 ---
 

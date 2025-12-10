@@ -6,6 +6,7 @@
  */
 
 import type { SupplierOutsourcing } from '../lib/types/supplier'
+import type { EventLog, IssueRecord } from '../lib/types/reporting'
 
 export interface ElectronAPI {
   // System info
@@ -19,6 +20,16 @@ export interface ElectronAPI {
   deleteSupplier: (referenceNumber: string) => Promise<void>
   getNextReferenceNumber: () => Promise<string>
   getSuppliersCount: () => Promise<number>
+
+  // Reporting
+  getEvents: () => Promise<EventLog[]>
+  addEvent: (event: EventLog) => Promise<number>
+  updateEvent: (event: EventLog) => Promise<void>
+  deleteEvent: (id: number) => Promise<void>
+  getIssues: () => Promise<IssueRecord[]>
+  addIssue: (issue: IssueRecord) => Promise<number>
+  updateIssue: (issue: IssueRecord) => Promise<void>
+  deleteIssue: (id: number) => Promise<void>
 
   // Backup/restore operations (to be implemented later)
   // backupDatabase: (path: string) => Promise<{ success: boolean; path: string }>

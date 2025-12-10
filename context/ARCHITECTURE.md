@@ -64,6 +64,7 @@ The Supplier Register is a **desktop Electron application** built with Next.js 1
 4. **CSSF Compliance** - Implements Circular 22/806 Section 4.2.7 (Points 53, 54, 55)
 5. **Two-Layer Validation** - Type safety (Zod) + Business logic (Completeness checker)
 6. **Pending Fields** - Mark incomplete fields for later completion
+7. **Reporting & Issues** - Change log auto-generated from supplier updates (pending-safe) plus lightweight issue tracker stored in SQLite
 
 ---
 
@@ -124,29 +125,36 @@ app/page.tsx (Main Supplier Register Page)
     │       ├── FormActions (Cancel, Save as Draft, Save Supplier)
     │       └── IncompleteFieldsDialog (confirmation)
     │
-    └── Dashboard View
-        ├── ComplianceAlerts
-        │   ├── Overdue Reviews Alert
-        │   ├── Upcoming Reviews Alert
-        │   └── Missing Notifications Alert
-        ├── MetricsCards
-        │   ├── Total Suppliers Card
-        │   ├── Critical % Card
-        │   ├── Cloud % Card
-        │   ├── Pending % Card
-        │   └── Completeness Rate Card
-        ├── Charts Section
-        │   ├── StatusPieChart
-        │   └── CategoryBarChart
-        ├── Risk Management Section
-        │   ├── RiskBarChart
-        │   ├── UpcomingReviewsCard
-        │   ├── ProviderConcentrationTable
-        │   └── GeographicDistributionTable
-        └── Deep Dive Analytics Section
-            ├── CriticalFunctionsCard
-            ├── PendingNotificationsList
-            └── DataCompletenessCard
+    ├── Dashboard View
+    │   ├── ComplianceAlerts
+    │   │   ├── Overdue Reviews Alert
+    │   │   ├── Upcoming Reviews Alert
+    │   │   └── Missing Notifications Alert
+    │   ├── MetricsCards
+    │   │   ├── Total Suppliers Card
+    │   │   ├── Critical % Card
+    │   │   ├── Cloud % Card
+    │   │   ├── Pending % Card
+    │   │   └── Completeness Rate Card
+    │   ├── Charts Section
+    │   │   ├── StatusPieChart
+    │   │   └── CategoryBarChart
+    │   ├── Risk Management Section
+    │   │   ├── RiskBarChart
+    │   │   ├── UpcomingReviewsCard
+    │   │   ├── ProviderConcentrationTable
+    │   │   └── GeographicDistributionTable
+    │   └── Deep Dive Analytics Section
+    │       ├── CriticalFunctionsCard
+    │       ├── PendingNotificationsList
+    │       └── DataCompletenessCard
+    │
+    └── Reporting View
+        ├── Summary Cards (events count, open issues, closed in period, risk changes)
+        ├── Events List (change log derived from supplier updates, pending-safe) + manual add/edit/delete
+        ├── Filters (30/90/all + custom date range + text search across events/issues)
+        ├── Issue Composer (title/description/status/severity/owner/dates + optional initial follow-up)
+        └── Issues List (status updates, edit, delete, follow-up history + add follow-up, lifecycle dates)
 ```
 
 ### Reusable Components
@@ -205,7 +213,7 @@ app/page.tsx (Main Supplier Register Page)
 
 4b. If "Mark as Pending & Submit":
    → Adds incomplete fields to pendingFields array
-   → Supplier persisted via IPC ($window.electronAPI.addSupplier) to SQLite
+   → Supplier persisted via IPC (`window.electronAPI.addSupplier`) to SQLite
    → useDatabase hook reloads suppliers from SQLite
    → View switches back to Register List
    → Toast notification shows success
@@ -292,6 +300,38 @@ Dashboard Components (receive calculated data)
 - Calculations happen on each render (suppliers change → metrics recalculate)
 - Respects active filters (uses filteredSuppliers from page)
 - CSSF compliance checks (Points 54.i, 55.c, 55.f, 55.l)
+
+### Reporting Flow (Events + Issues)
+
+```
+Supplier add/update (renderer)
+      ↓
+ipcMain db:addSupplier/db:updateSupplier (electron/main.ts)
+      ↓
+Event builder (electron/database/event-builder.ts)
+  - Diffs previous vs current supplier
+  - Skips fields marked pending
+  - Emits events for status, risk, criticality flag/assessment date, last risk assessment, notification date, start/renewal/end dates, and new supplier creation
+      ↓
+Events table (SQLite, migration migrate-add-events-issues)
+Issues table (SQLite, manual CRUD; follow_ups stored as JSON)
+      ↓
+useReporting hook (hooks/use-reporting.ts)
+  - window.electronAPI.getEvents/getIssues
+  - addEvent/updateEvent/deleteEvent
+  - addIssue/updateIssue/deleteIssue (with follow-ups)
+      ↓
+ReportingView (components/shared/reporting/reporting-view.tsx)
+  - Period filter (30/90/all/custom range) + search
+  - KPI cards (events, open issues, closed-in-period, risk changes)
+  - Event list (pending-safe change log) + manual add/edit/delete
+  - Issue composer + lifecycle controls (status updates, edit, delete, due dates) + follow-up add/view
+```
+
+**Key Points:**
+- No duplicate data entry: events derive from supplier data; issues optionally reference supplier/function names without ref numbers.
+- Pending fields suppress event generation (e.g., pending start date change will not create an event).
+- New tables: `events` and `issues` (with `follow_ups`) created via migration; auto-created at app startup.
 
 ---
 
@@ -394,6 +434,12 @@ Dashboard Components (receive calculated data)
 | `dashboard/tables/geographic-distribution-table.tsx` | EU/Non-EU jurisdiction analysis | ~155 |
 | `dashboard/tables/pending-notifications-list.tsx` | CSSF notification tracker | ~165 |
 
+#### Reporting Components
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `reporting/reporting-view.tsx` | Reporting tab with period filter, change log, KPI cards, and issue lifecycle controls | ~200 |
+
 ### `/lib` - Business Logic & Types
 
 #### `/lib/types` - TypeScript Types
@@ -403,6 +449,7 @@ Dashboard Components (receive calculated data)
 | `supplier.ts` | CSSF-compliant supplier types (SupplierOutsourcing, enums) |
 | `filters.ts` | Filter field types, CustomFilter interface |
 | `dashboard.ts` | Dashboard analytics type definitions (7 indicator types) |
+| `reporting.ts` | EventLog/EventType + IssueRecord/IssueStatus types for reporting tab |
 
 **Key Type:** `SupplierOutsourcing`
 ```typescript
@@ -854,7 +901,3 @@ If managing 100+ suppliers:
 
 **Last Updated:** 2025-10-25
 **Related Files:** VALIDATION.md, ROADMAP.md, supplier.ts, check-completeness.ts
-
-
-
-

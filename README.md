@@ -52,6 +52,12 @@ This application helps Luxembourg financial institutions comply with **CSSF Circ
 - ✅ **Geographic Analysis** - EU/EEA/Non-EU jurisdiction breakdown
 - ✅ **Regulatory Tracking** - CSSF notification status monitoring
 
+### Reporting & Issues
+- ✅ **Change Log** - Auto-generated events (status, risk, criticality, assessment dates, notification/start/renewal/end dates) pulled from the supplier register; manual add/edit/delete supported
+- ✅ **Period Filtering** - 30/90 days, all-time, or custom date range views for management meetings
+- ✅ **Issue Tracker** - Ordered list with status, severity, owner, due date, optional supplier/function tags, follow-ups, and lifecycle timestamps
+- ✅ **Pending-Safe** - Pending fields are ignored when generating change events
+
 ### Data Management
 - ✅ **Export to Excel** - Compact (8 columns) or Full (52 fields) formats
 - ✅ **Export to PDF** - Compact summary view for reports
@@ -194,6 +200,7 @@ supplierregister/
 │       └── search-context.tsx   # Text highlighting
 │
 ├── hooks/                       # Custom React hooks
+│   └── use-reporting.ts         # Reporting bridge (events/issues via Electron)
 ├── public/                      # Static assets
 └── context/                     # Documentation
     ├── CLAUDE.md                # Main project guide
@@ -374,5 +381,5 @@ This is a desktop application for Luxembourg financial institutions. For product
 
 ---
 
-**Last Updated:** 2025-12-05
+**Last Updated:** 2025-12-12
 **Version:** 2.0.0 (Desktop Application - Core Complete)

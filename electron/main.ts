@@ -12,8 +12,12 @@ import {
   getNextReferenceNumber,
   getSuppliersCount,
 } from './database/suppliers'
+import { addEvents, getEvents, addEvent, updateEvent, deleteEvent } from './database/events'
+import { addIssue, updateIssue, deleteIssue, getIssues } from './database/issues'
+import { buildSupplierEvents } from './database/event-builder'
 import { seedDatabase } from './database/seed'
 import type { SupplierOutsourcing } from '../lib/types/supplier'
+import type { EventLog, IssueRecord } from '../lib/types/reporting'
 
 // __dirname is available in CommonJS (which we're compiling to)
 
@@ -186,7 +190,10 @@ ipcMain.handle('db:getSupplierByReference', async (_event, referenceNumber: stri
 // Add new supplier
 ipcMain.handle('db:addSupplier', async (_event, supplier: SupplierOutsourcing): Promise<{ id: number; referenceNumber: string }> => {
   try {
-    return addSupplier(supplier)
+    const result = addSupplier(supplier)
+    const events = buildSupplierEvents(null, supplier)
+    addEvents(events)
+    return result
   } catch (error) {
     console.error('❌ Error adding supplier:', error)
     throw error
@@ -196,7 +203,12 @@ ipcMain.handle('db:addSupplier', async (_event, supplier: SupplierOutsourcing): 
 // Update existing supplier
 ipcMain.handle('db:updateSupplier', async (_event, supplier: SupplierOutsourcing): Promise<void> => {
   try {
+    const existing = getSupplierByReference(supplier.referenceNumber)
     updateSupplier(supplier)
+    if (existing) {
+      const events = buildSupplierEvents(existing, supplier)
+      addEvents(events)
+    }
   } catch (error) {
     console.error('❌ Error updating supplier:', error)
     throw error
@@ -229,6 +241,81 @@ ipcMain.handle('db:getSuppliersCount', async (): Promise<number> => {
     return getSuppliersCount()
   } catch (error) {
     console.error('❌ Error getting suppliers count:', error)
+    throw error
+  }
+})
+
+
+// Events - reporting
+ipcMain.handle('events:get', async (): Promise<EventLog[]> => {
+  try {
+    return getEvents()
+  } catch (error) {
+    console.error('❌ Error getting events:', error)
+    throw error
+  }
+})
+
+ipcMain.handle('events:add', async (_event, event: EventLog): Promise<number> => {
+  try {
+    return addEvent(event)
+  } catch (error) {
+    console.error('❌ Error adding event:', error)
+    throw error
+  }
+})
+
+ipcMain.handle('events:update', async (_event, event: EventLog): Promise<void> => {
+  try {
+    updateEvent(event)
+  } catch (error) {
+    console.error('❌ Error updating event:', error)
+    throw error
+  }
+})
+
+ipcMain.handle('events:delete', async (_event, id: number): Promise<void> => {
+  try {
+    deleteEvent(id)
+  } catch (error) {
+    console.error('❌ Error deleting event:', error)
+    throw error
+  }
+})
+
+// Issues - reporting
+ipcMain.handle('issues:get', async (): Promise<IssueRecord[]> => {
+  try {
+    return getIssues()
+  } catch (error) {
+    console.error('❌ Error getting issues:', error)
+    throw error
+  }
+})
+
+ipcMain.handle('issues:add', async (_event, issue: IssueRecord): Promise<number> => {
+  try {
+    return addIssue(issue)
+  } catch (error) {
+    console.error('❌ Error adding issue:', error)
+    throw error
+  }
+})
+
+ipcMain.handle('issues:update', async (_event, issue: IssueRecord): Promise<void> => {
+  try {
+    updateIssue(issue)
+  } catch (error) {
+    console.error('❌ Error updating issue:', error)
+    throw error
+  }
+})
+
+ipcMain.handle('issues:delete', async (_event, id: number): Promise<void> => {
+  try {
+    deleteIssue(id)
+  } catch (error) {
+    console.error('❌ Error deleting issue:', error)
     throw error
   }
 })

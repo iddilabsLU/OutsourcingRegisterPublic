@@ -2,6 +2,9 @@ import Database from 'better-sqlite3'
 import path from 'path'
 import fs from 'fs'
 import { app } from 'electron'
+import { migrateAddCloudOtherInformation } from './migrate-add-cloud-other-info'
+import { migrateAddEventsAndIssues } from './migrate-add-events-issues'
+import { migrateAddIssueFollowups } from './migrate-add-issue-followups'
 
 /**
  * Database module for CSSF Supplier Outsourcing Register
@@ -91,11 +94,10 @@ export function initializeDatabase(): Database.Database {
  * Run all pending database migrations
  */
 function runMigrations(): void {
-  // Import migration functions
-  const { migrateAddCloudOtherInformation } = require('./migrate-add-cloud-other-info')
-
   // Run migrations in order
   migrateAddCloudOtherInformation()
+  migrateAddEventsAndIssues()
+  migrateAddIssueFollowups()
 }
 
 /**

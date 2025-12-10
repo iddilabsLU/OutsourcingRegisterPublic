@@ -17,11 +17,12 @@ This document outlines the planned features and priorities for the Supplier Regi
 - ✅ **Duplicate Supplier** - Instantly clone suppliers with new reference number and Draft status
 - ✅ **Data Persistence** - SQLite database (`data/suppliers.db`) with automatic persistence
 - ✅ **Dashboard Analytics** - 7 CSSF compliance indicators with charts, tables, and risk management
+- ✅ **Reporting Tab** - Change log auto-built from supplier updates (pending-safe) + issue tracker with status/severity/owner/due dates
 - ✅ **Pending Fields Feature** - Mark incomplete fields, skip validation, amber badges
 - ✅ **Form Validation** - Two-layer system (see `VALIDATION.md`)
 - ✅ **Save as Draft** - Auto-marks empty required fields as pending
 - ✅ **Filtering System** - Quick filters, custom filters, global text search with highlighting
-- ✅ **View Navigation** - Segmented control (Register List / New Entry / Dashboard)
+- ✅ **View Navigation** - Segmented control (Register List / New Entry / Dashboard / Reporting)
 - ✅ **Export Functionality** - Export to Excel (compact/full) or PDF (compact)
 - ✅ **CSSF Compliance** - All 73 fields from Circular 22/806 Points 53, 54, 55
 
@@ -67,6 +68,28 @@ All Phase 1 features have been implemented and are working correctly.
 **Actual Effort:** ~8 hours (phases 1-3 completed)
 **CSSF Coverage:** Points 53, 54.i, 54.f, 54.d, 55.c, 55.f, 55.l
 **Status:** ✅ Core functionality complete, minor UI refinements pending
+
+---
+
+### 1.5 Reporting & Issues ✅ COMPLETED (2025-12-10)
+
+**Goal:** Support management reporting with a curated change log and lightweight issue tracking without duplicating data entry.
+
+**Implemented Features:**
+- New Reporting tab (segmented control) with 30/90/all/custom range filters and KPI cards (events, open issues, closed-in-period, risk changes)
+- Event log auto-generated from supplier updates (status, risk, criticality flag/assessment date, last risk assessment date, notification date, start/renewal/end dates, supplier creation)
+- Pending fields are respected (pending items do not create events)
+- Manual event add/edit/delete
+- Issue tracker with status/severity/owner/due date plus optional supplier/function tags; status updates, edit, delete, and follow-ups supported
+
+**Technical Implementation:**
+- New SQLite tables: `events`, `issues` (migration `migrate-add-events-issues.ts`)
+- Added follow-ups column via migration; stored as JSON
+- Event builder in Electron main process to diff supplier changes (`electron/database/event-builder.ts`), invoked on add/update supplier
+- IPC + preload surface event/issue CRUD; renderer hook `use-reporting` fetches data
+- UI: `components/shared/reporting/reporting-view.tsx` with period filter (including custom range), search, lists, manual event logging, follow-ups, and quick issue composer
+
+**Status:** ✅ Complete
 
 ---
 

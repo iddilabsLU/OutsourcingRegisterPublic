@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { SupplierOutsourcing } from '../lib/types/supplier'
+import type { EventLog, IssueRecord } from '../lib/types/reporting'
 
 /**
  * Preload script - Exposes safe Electron APIs to the renderer process
@@ -25,6 +26,16 @@ export interface ElectronAPI {
   getNextReferenceNumber: () => Promise<string>
   getSuppliersCount: () => Promise<number>
 
+  // Reporting
+  getEvents: () => Promise<EventLog[]>
+  addEvent: (event: EventLog) => Promise<number>
+  updateEvent: (event: EventLog) => Promise<void>
+  deleteEvent: (id: number) => Promise<void>
+  getIssues: () => Promise<IssueRecord[]>
+  addIssue: (issue: IssueRecord) => Promise<number>
+  updateIssue: (issue: IssueRecord) => Promise<void>
+  deleteIssue: (id: number) => Promise<void>
+
   // Backup/restore operations (to be implemented later)
   // backupDatabase: (path: string) => Promise<{ success: boolean; path: string }>
   // restoreDatabase: (path: string) => Promise<{ success: boolean }>
@@ -47,6 +58,16 @@ const electronAPI: ElectronAPI = {
   deleteSupplier: (referenceNumber: string) => ipcRenderer.invoke('db:deleteSupplier', referenceNumber),
   getNextReferenceNumber: () => ipcRenderer.invoke('db:getNextReferenceNumber'),
   getSuppliersCount: () => ipcRenderer.invoke('db:getSuppliersCount'),
+
+  // Reporting
+  getEvents: () => ipcRenderer.invoke('events:get'),
+  addEvent: (event: EventLog) => ipcRenderer.invoke('events:add', event),
+  updateEvent: (event: EventLog) => ipcRenderer.invoke('events:update', event),
+  deleteEvent: (id: number) => ipcRenderer.invoke('events:delete', id),
+  getIssues: () => ipcRenderer.invoke('issues:get'),
+  addIssue: (issue: IssueRecord) => ipcRenderer.invoke('issues:add', issue),
+  updateIssue: (issue: IssueRecord) => ipcRenderer.invoke('issues:update', issue),
+  deleteIssue: (id: number) => ipcRenderer.invoke('issues:delete', id),
 }
 
 // Expose the API to the renderer process

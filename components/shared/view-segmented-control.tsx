@@ -1,10 +1,10 @@
 "use client"
 
-import { List, FileText, BarChart3 } from "lucide-react"
+import { List, FileText, BarChart3, PieChart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils/cn"
 
-export type ViewType = "list" | "new" | "dashboard"
+export type ViewType = "list" | "new" | "dashboard" | "reporting"
 
 interface ViewSegmentedControlProps {
   activeView: ViewType
@@ -19,6 +19,7 @@ export function ViewSegmentedControl({
     { value: "list", label: "Register List", icon: List },
     { value: "new", label: "New Entry", icon: FileText },
     { value: "dashboard", label: "Dashboard", icon: BarChart3 },
+    { value: "reporting", label: "Reporting", icon: PieChart },
   ]
 
   return (

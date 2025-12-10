@@ -9,6 +9,7 @@ import { SupplierForm } from "@/components/shared/forms/supplier-form"
 import { FilterWarningBanner } from "@/components/shared/filter-warning-banner"
 import { TipBanner } from "@/components/shared/tip-banner"
 import { DashboardView } from "@/components/shared/dashboard/dashboard-view"
+import { ReportingView } from "@/components/shared/reporting/reporting-view"
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton"
 import { MobileBlock } from "@/components/shared/mobile-block"
 import { useDatabase } from "@/hooks/use-database"
@@ -220,78 +221,81 @@ export default function SuppliersPage() {
   return (
     <MobileBlock>
       <AppLayout>
-      <div className="space-y-6">
-        {/* View Segmented Control */}
-        <ViewSegmentedControl activeView={activeView} onViewChange={setActiveView} />
+        <div className="space-y-6">
+          {/* View Segmented Control */}
+          <ViewSegmentedControl activeView={activeView} onViewChange={setActiveView} />
 
-        {/* Register List View */}
-        {activeView === "list" && (
-          <>
-            {/* Tip Banner */}
-            <TipBanner />
+          {/* Register List View */}
+          {activeView === "list" && (
+            <>
+              {/* Tip Banner */}
+              <TipBanner />
 
-            {/* Filter Panel */}
-            <FilterPanel
-              quickFilters={quickFilters}
-              customFilters={customFilters}
-              onQuickFilterChange={setQuickFilters}
-              onCustomFiltersChange={handleCustomFiltersChange}
-              onClearAll={handleClearAll}
-            />
-
-            {/* Result Counter */}
-            {filteredCount !== totalCount && (
-              <div className="rounded-lg border bg-muted/50 p-3">
-                <p className="text-sm font-medium text-foreground">
-                  Displaying {filteredCount} of {totalCount} suppliers
-                </p>
-              </div>
-            )}
-
-            {/* Register Table or Empty State */}
-            {filteredCount > 0 ? (
-              <SupplierRegisterTable
-                suppliers={filteredSuppliers}
-                searchTerm={searchTerm}
-                onEdit={handleEditSupplier}
-                onDuplicate={handleDuplicateSupplier}
-                onDelete={handleDeleteSupplier}
-                allSuppliers={suppliers}
+              {/* Filter Panel */}
+              <FilterPanel
+                quickFilters={quickFilters}
+                customFilters={customFilters}
+                onQuickFilterChange={setQuickFilters}
+                onCustomFiltersChange={handleCustomFiltersChange}
+                onClearAll={handleClearAll}
               />
-            ) : (
-              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 p-12 text-center">
-                <AlertCircle className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No suppliers match your filters</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Try adjusting or clearing your filters to see more results.
-                </p>
-              </div>
-            )}
-          </>
-        )}
 
-        {/* New Entry View */}
-        {activeView === "new" && (
-          <SupplierForm
-            existingSuppliers={suppliers}
-            onSave={editingSupplier ? handleUpdateSupplier : handleSaveSupplier}
-            onCancel={handleCancelForm}
-            initialData={editingSupplier || undefined}
-            mode={editingSupplier ? "edit" : "add"}
-          />
-        )}
+              {/* Result Counter */}
+              {filteredCount !== totalCount && (
+                <div className="rounded-lg border bg-muted/50 p-3">
+                  <p className="text-sm font-medium text-foreground">
+                    Displaying {filteredCount} of {totalCount} suppliers
+                  </p>
+                </div>
+              )}
 
-        {/* Dashboard View */}
-        {activeView === "dashboard" && (
-          <>
-            {/* Filter Warning Banner */}
-            <FilterWarningBanner />
+              {/* Register Table or Empty State */}
+              {filteredCount > 0 ? (
+                <SupplierRegisterTable
+                  suppliers={filteredSuppliers}
+                  searchTerm={searchTerm}
+                  onEdit={handleEditSupplier}
+                  onDuplicate={handleDuplicateSupplier}
+                  onDelete={handleDeleteSupplier}
+                  allSuppliers={suppliers}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 p-12 text-center">
+                  <AlertCircle className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No suppliers match your filters</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Try adjusting or clearing your filters to see more results.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
 
-            <DashboardView suppliers={filteredSuppliers} />
-          </>
-        )}
-      </div>
-    </AppLayout>
+          {/* New Entry View */}
+          {activeView === "new" && (
+            <SupplierForm
+              existingSuppliers={suppliers}
+              onSave={editingSupplier ? handleUpdateSupplier : handleSaveSupplier}
+              onCancel={handleCancelForm}
+              initialData={editingSupplier || undefined}
+              mode={editingSupplier ? "edit" : "add"}
+            />
+          )}
+
+          {/* Dashboard View */}
+          {activeView === "dashboard" && (
+            <>
+              {/* Filter Warning Banner */}
+              <FilterWarningBanner />
+
+              <DashboardView suppliers={filteredSuppliers} />
+            </>
+          )}
+
+          {/* Reporting View */}
+          {activeView === "reporting" && <ReportingView />}
+        </div>
+      </AppLayout>
     </MobileBlock>
   )
 }
