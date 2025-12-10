@@ -32,7 +32,6 @@ export default function SuppliersPage() {
     updateSupplier: dbUpdateSupplier,
     deleteSupplier: dbDeleteSupplier,
     duplicateSupplier: dbDuplicateSupplier,
-    setSuppliers, // Keep for filtering
   } = useDatabase()
 
   // Edit state

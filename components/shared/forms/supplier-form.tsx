@@ -212,6 +212,13 @@ export function SupplierForm({
       // Use override if provided, otherwise use state
       const finalPendingFields = pendingFieldsOverride !== undefined ? pendingFieldsOverride : pendingFields
 
+      const rawEstimatedCost = data.criticalFields?.estimatedAnnualCost
+      const parsedEstimatedCost =
+        rawEstimatedCost === "" || rawEstimatedCost === undefined || rawEstimatedCost === null
+          ? undefined
+          : Number(rawEstimatedCost)
+      const estimatedAnnualCost = Number.isNaN(parsedEstimatedCost) ? undefined : parsedEstimatedCost
+
       // Transform form data to SupplierOutsourcing
       const supplier: SupplierOutsourcing = {
         referenceNumber: data.referenceNumber!,
@@ -297,7 +304,7 @@ export function SupplierForm({
                 },
                 alternativeProviders: data.criticalFields.alternativeProviders || [],
                 isTimeCritical: data.criticalFields.isTimeCritical ?? undefined,
-                estimatedAnnualCost: data.criticalFields.estimatedAnnualCost ?? undefined,
+                estimatedAnnualCost: estimatedAnnualCost ?? undefined,
                 costComments: data.criticalFields.costComments || "",
                 regulatoryNotification: {
                   notificationDate: data.criticalFields.regulatoryNotification?.notificationDate || "",

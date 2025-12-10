@@ -1,5 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
+import { createServer, type Server } from 'http'
 import path from 'path'
+import handler from 'serve-handler'
 import { initializeDatabase, closeDatabase, getDatabaseStats } from './database/db'
 import {
   getAllSuppliers,
@@ -16,11 +18,13 @@ import type { SupplierOutsourcing } from '../lib/types/supplier'
 // __dirname is available in CommonJS (which we're compiling to)
 
 let mainWindow: BrowserWindow | null = null
+let staticServer: Server | null = null
+let staticServerPort: number | null = null
 
 /**
  * Create the main application window
  */
-function createWindow() {
+async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -34,16 +38,59 @@ function createWindow() {
     },
     title: 'Supplier Outsourcing Register',
     backgroundColor: '#ffffff',
-    show: false, // Don't show until ready
+    show: false, // Show after load to avoid white flash
   })
 
   // Load the Next.js app - opens directly to /suppliers
   const isDev = process.env.NODE_ENV === 'development'
-  const url = isDev
-    ? 'http://localhost:3000/suppliers' // Next.js dev server - suppliers page
-    : `file://${path.join(__dirname, '../../out/suppliers.html')}` // Production build (up 2 levels from dist-electron/electron/)
+  if (isDev) {
+    await mainWindow.loadURL('http://localhost:3000/suppliers') // Next.js dev server - suppliers page
+  } else {
+    const outDir = app.isPackaged ? path.join(process.resourcesPath, 'out') : path.join(__dirname, '../../out')
 
-  mainWindow.loadURL(url)
+    if (!staticServer) {
+      staticServer = createServer((request, response) =>
+        handler(request, response, {
+          public: outDir,
+        })
+      )
+
+      await new Promise<void>((resolve, reject) => {
+        if (!staticServer) return reject(new Error('Failed to create static server'))
+        staticServer.once('error', reject)
+        staticServer.listen(0, () => resolve())
+      })
+    }
+
+    const address = staticServer.address()
+    const port = typeof address === 'object' && address ? address.port : 0
+    staticServerPort = port
+    console.log(`Static server running at http://localhost:${port}`)
+
+    const prodUrl = `http://localhost:${port}/suppliers/`
+
+    await mainWindow.loadURL(prodUrl)
+  }
+
+  // Helpful load event logging/fallback to ensure the window becomes visible
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('Renderer finished load')
+    if (mainWindow && !mainWindow.isVisible()) {
+      mainWindow.show()
+    }
+  })
+
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+    console.error(`Renderer failed to load (${errorCode}): ${errorDescription} at ${validatedURL}`)
+  })
+
+  // Safety net: if ready-to-show never fires, show after a short delay
+  setTimeout(() => {
+    if (mainWindow && !mainWindow.isVisible()) {
+      console.log('Force-showing main window after timeout')
+      mainWindow.show()
+    }
+  }, 4000)
 
   // Show window when ready (prevents flash of white)
   mainWindow.once('ready-to-show', () => {
@@ -66,7 +113,7 @@ function createWindow() {
  */
 
 // Create window when app is ready
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Initialize database before creating window
   try {
     initializeDatabase()
@@ -80,7 +127,7 @@ app.whenReady().then(() => {
     // Still create window even if database fails (can show error to user)
   }
 
-  createWindow()
+  await createWindow()
 
   // macOS: Re-create window when dock icon is clicked
   app.on('activate', () => {
@@ -100,6 +147,11 @@ app.on('window-all-closed', () => {
 // Clean up database connection when app is quitting
 app.on('before-quit', () => {
   closeDatabase()
+
+  if (staticServer) {
+    staticServer.close()
+    staticServer = null
+  }
 })
 
 /**

@@ -82,15 +82,6 @@ export function CriticalFunctionsCard({ suppliers }: CriticalFunctionsCardProps)
               </div>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span>Owned by Group</span>
-              <div className="flex items-center gap-2">
-                <span className="font-medium w-8 text-right">{analysis.groupRelationship.ownedByGroup}</span>
-                <Badge variant="outline" className="min-w-[3.5rem] justify-center">
-                  {analysis.groupRelationship.ownedByGroupPercentage}%
-                </Badge>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-sm">
               <span>Independent</span>
               <div className="flex items-center gap-2">
                 <span className="font-medium w-8 text-right">{analysis.groupRelationship.independent}</span>

@@ -67,7 +67,6 @@ export const suppliers: SupplierOutsourcing[] = [
       },
       groupRelationship: {
         isPartOfGroup: false,
-        isOwnedByGroup: false,
       },
       riskAssessment: {
         risk: RiskLevel.HIGH,
@@ -97,7 +96,7 @@ export const suppliers: SupplierOutsourcing[] = [
       },
       substitutability: {
         outcome: SubstitutabilityOutcome.DIFFICULT,
-        reintegrationAssessment: "Reintegration would require 18-24 months and significant capital investment (estimated €5M+). Internal IT team lacks specialized expertise.",
+        reintegrationSubstitutabilityAssessment: "Reintegration would require 18-24 months and significant capital investment (estimated €5M+). Internal IT team lacks specialized expertise.",
         discontinuationImpact: "Severe impact. Would result in complete service outage for 6-12 months during migration. Regulatory reporting would be compromised.",
       },
       alternativeProviders: ["Azure Government Cloud", "AWS Financial Services", "IBM Cloud for Financial Services"],
@@ -202,7 +201,6 @@ export const suppliers: SupplierOutsourcing[] = [
       },
       groupRelationship: {
         isPartOfGroup: false,
-        isOwnedByGroup: false,
       },
       riskAssessment: {
         risk: RiskLevel.MEDIUM,
@@ -232,7 +230,7 @@ export const suppliers: SupplierOutsourcing[] = [
       },
       substitutability: {
         outcome: SubstitutabilityOutcome.DIFFICULT,
-        reintegrationAssessment: "Reintegration feasible but complex. Would require payment license and 12-18 months implementation. Estimated cost €3M.",
+        reintegrationSubstitutabilityAssessment: "Reintegration feasible but complex. Would require payment license and 12-18 months implementation. Estimated cost €3M.",
         discontinuationImpact: "High impact. Would disrupt payment services for 6-9 months. Requires customer notification and regulatory approval for migration.",
       },
       alternativeProviders: ["LuxPayments S.A.", "CETREL S.A.", "SIX Payment Services"],
@@ -337,7 +335,6 @@ export const suppliers: SupplierOutsourcing[] = [
       },
       groupRelationship: {
         isPartOfGroup: false,
-        isOwnedByGroup: false,
       },
       riskAssessment: {
         risk: RiskLevel.HIGH,
@@ -367,7 +364,7 @@ export const suppliers: SupplierOutsourcing[] = [
       },
       substitutability: {
         outcome: SubstitutabilityOutcome.IMPOSSIBLE,
-        reintegrationAssessment: "Not feasible. Building an in-house core banking system would require 3-5 years, €20M+ investment, and specialized team of 50+ developers. Regulatory approval would be complex.",
+        reintegrationSubstitutabilityAssessment: "Not feasible. Building an in-house core banking system would require 3-5 years, €20M+ investment, and specialized team of 50+ developers. Regulatory approval would be complex.",
         discontinuationImpact: "Catastrophic. Bank would be unable to operate. All customer services would cease. Migration to alternative provider would take minimum 18-24 months.",
       },
       alternativeProviders: ["Temenos T24 (implementation required)", "Mambu (limited functionality)", "Avaloq Banking Suite"],

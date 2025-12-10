@@ -1,5 +1,4 @@
 import type { SupplierOutsourcing } from "@/lib/types/supplier"
-import { OutsourcingCategory } from "@/lib/types/supplier"
 
 /**
  * Result of completeness check

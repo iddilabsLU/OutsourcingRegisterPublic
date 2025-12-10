@@ -1,12 +1,5 @@
 import { z } from "zod"
-import {
-  OutsourcingCategory,
-  OutsourcingStatus,
-  CloudServiceModel,
-  DeploymentModel,
-  RiskLevel,
-  SubstitutabilityOutcome,
-} from "@/lib/types/supplier"
+import { OutsourcingStatus, CloudServiceModel, DeploymentModel, RiskLevel, SubstitutabilityOutcome } from "@/lib/types/supplier"
 
 /**
  * Zod validation schema for Supplier Outsourcing Form
@@ -176,11 +169,7 @@ export const supplierFormSchema = z.object({
       isTimeCritical: z.boolean().optional(),
 
       // 55.k - Cost Information
-      estimatedAnnualCost: z.union([z.string(), z.number()]).transform((val) => {
-        if (val === "" || val === null || val === undefined) return undefined
-        const num = typeof val === "string" ? parseFloat(val) : val
-        return isNaN(num) ? undefined : num
-      }).optional(),
+      estimatedAnnualCost: z.union([z.string(), z.number()]).optional(),
       costComments: z.string().optional(),
 
       // 55.l - Regulatory Notification

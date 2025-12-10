@@ -95,10 +95,8 @@ export interface CriticalAnalysis {
   total: number
   groupRelationship: {
     partOfGroup: number
-    ownedByGroup: number
     independent: number
     partOfGroupPercentage: number
-    ownedByGroupPercentage: number
     independentPercentage: number
   }
   substitutability: {

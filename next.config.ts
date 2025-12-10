@@ -1,9 +1,14 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Export static assets so Electron can load via file://
+  output: "export",
+  trailingSlash: true,
+  images: {
+    unoptimized: true,
+  },
 
-  // Security headers
+  // Security headers (not applied in static export, kept for dev parity)
   async headers() {
     return [
       {
@@ -40,8 +45,8 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-    ];
+    ]
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

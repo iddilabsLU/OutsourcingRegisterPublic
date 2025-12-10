@@ -6,12 +6,13 @@
   "main": "dist-electron/electron/main.js",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "electron:compile": "tsc -p electron/tsconfig.json && node -e \"require('fs').mkdirSync('dist-electron/electron/database', {recursive: true}); require('fs').copyFileSync('electron/database/schema.sql', 'dist-electron/electron/database/schema.sql')\"",
-    "electron:dev": "npm run electron:compile && concurrently \"cross-env NODE_ENV=development npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",
-    "electron:build": "npm run build && npm run electron:compile && electron-builder"
+    "electron:rebuild": "electron-rebuild -f -w better-sqlite3",
+    "electron:dev": "npm run electron:compile && npm run electron:rebuild && concurrently \"cross-env NODE_ENV=development npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",
+    "electron:build": "npm run build && npm run electron:compile && npm run electron:rebuild && electron-builder"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -47,6 +48,7 @@
     "react-dom": "^19.1.2",
     "react-hook-form": "^7.64.0",
     "recharts": "^3.3.0",
+    "serve-handler": "^6.1.6",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "xlsx": "^0.18.5",
@@ -60,6 +62,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/serve-handler": "^6.1.4",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "electron": "^39.2.4",
@@ -78,10 +81,20 @@
       "output": "release"
     },
     "files": [
-      ".next/**/*",
+      "out/**/*",
       "dist-electron/**/*",
       "public/**/*",
-      "package.json"
+      "package.json",
+      "!node_modules/@img/**"
+    ],
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "extraResources": [
+      {
+        "from": "out",
+        "to": "out"
+      }
     ],
     "win": {
       "target": [
@@ -92,7 +105,7 @@
           ]
         }
       ],
-      "icon": "public/favicon.ico"
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
