@@ -251,8 +251,8 @@ function exportToPDF(suppliers: SupplierOutsourcing[]) {
 - [ ] Data location configuration UI (choose local or network path)
 
 #### Step 6: Packaging & Distribution
-- [ ] Configure Electron Builder for Windows
-- [ ] Create Windows installer (.exe)
+- [x] Configure Electron Builder for Windows
+- [x] Create Windows installer (.exe)
 - [ ] Test installer on clean Windows machine
 - [ ] Write user documentation (installation, backup, network setup)
 
@@ -323,7 +323,7 @@ function exportToPDF(suppliers: SupplierOutsourcing[]) {
 
 ### Next Milestones:
 - [ ] Step 5: New Features (backup, restore, Excel import)
-- [ ] Step 6: Packaging (Windows installer)
+- [x] Step 6: Packaging (Windows installer)
 
 See Phase 2 section above for detailed implementation steps.
 

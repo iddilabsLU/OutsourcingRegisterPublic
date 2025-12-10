@@ -281,21 +281,21 @@ Build passes with 0 errors and 0 warnings.
 
 ### Desktop Application
 
-The application runs as a desktop app using Electron. Windows installer (.exe) packaging is planned for Phase 2.5.
+The application runs as a desktop app using Electron. Windows installer (.exe) packaging is available.
 
 **Current Status:**
 - ✅ Runs in development mode with `npm run electron:dev`
 - ✅ SQLite database persists at `data/suppliers.db`
 - ✅ All features working (CRUD, dashboard, export, filtering)
-- ⏳ Windows installer (.exe) - to be implemented
+- ✅ Windows installer (.exe) produced via `npm run electron:build`
+  - Installer: `release/Supplier Outsourcing Register Setup 0.1.0.exe`
+  - Unpacked: `release/win-unpacked/Supplier Outsourcing Register.exe`
 
-**Future Packaging:**
-- Windows 10/11 installer (.exe)
-- Electron Builder for packaging
-- Desktop shortcuts and Start Menu integration
-- Optional network drive database support
+**How to build:**
+- `npm run electron:dev` (dev)
+- `npm run electron:build` (creates installer + unpacked)
 
-See [context/OFFLINE_SPEC.md](context/OFFLINE_SPEC.md) for packaging requirements.
+See [context/ELECTRON_PACKAGING.md](context/ELECTRON_PACKAGING.md) for packaging details and troubleshooting.
 
 ---
 

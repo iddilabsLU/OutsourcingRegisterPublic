@@ -1,4 +1,4 @@
-# Application Architecture
+﻿# Application Architecture
 
 This document explains how the Supplier Register application is structured and how different parts work together.
 
@@ -19,7 +19,7 @@ This document explains how the Supplier Register application is structured and h
 
 ## High-Level Overview
 
-The Supplier Register is a **client-side React application** built with Next.js 15 (App Router). It currently has no backend - all data lives in memory and resets on page refresh (persistence planned in roadmap).
+The Supplier Register is a **desktop Electron application** built with Next.js 15 (App Router) for the renderer and an Electron main process that serves the exported app and handles persistence. Data is stored locally in SQLite via `better-sqlite3` (synchronous) in the Electron main process, accessed from React through IPC calls exposed in `preload.ts`.
 
 ### Architecture Layers
 
@@ -58,8 +58,8 @@ The Supplier Register is a **client-side React application** built with Next.js 
 
 ### Key Concepts
 
-1. **No Backend** - Currently a frontend-only demo (Phase 1)
-2. **In-Memory Data** - 5 dummy suppliers loaded from `lib/data/suppliers.ts`
+1. **Electron + Next.js** - Renderer is the exported Next.js app; main process hosts a static server for packaged builds.
+2. **Local Persistence** - SQLite database managed in Electron main process (`electron/database/*`, `better-sqlite3`); renderer uses IPC via `window.electronAPI`.
 3. **Type Safety** - 100% TypeScript coverage
 4. **CSSF Compliance** - Implements Circular 22/806 Section 4.2.7 (Points 53, 54, 55)
 5. **Two-Layer Validation** - Type safety (Zod) + Business logic (Completeness checker)
@@ -175,6 +175,12 @@ app/page.tsx (Main Supplier Register Page)
 
 ## Data Flow
 
+### Data Persistence & IPC
+- Renderer: exported Next.js app running inside Electron.
+- Preload: `electron/preload.ts` exposes `window.electronAPI` for CRUD (IPC to main process).
+- Main process: `electron/main.ts` hosts static `out/` (packaged) and handles SQLite via `better-sqlite3` (`electron/database/*`).
+- Database file: `./data/suppliers.db` in dev, `%APPDATA%/SupplierRegister/data.db` in packaged production.
+
 ### Adding a New Supplier
 
 ```
@@ -199,11 +205,12 @@ app/page.tsx (Main Supplier Register Page)
 
 4b. If "Mark as Pending & Submit":
    → Adds incomplete fields to pendingFields array
-   → Supplier added to suppliers array (state)
+   → Supplier persisted via IPC ($window.electronAPI.addSupplier) to SQLite
+   → useDatabase hook reloads suppliers from SQLite
    → View switches back to Register List
    → Toast notification shows success
 
-5. Table re-renders with new supplier
+5. Table re-renders with new supplier (fetched from SQLite)
    → Shows amber badge if pending fields exist
 ```
 
@@ -847,3 +854,7 @@ If managing 100+ suppliers:
 
 **Last Updated:** 2025-10-25
 **Related Files:** VALIDATION.md, ROADMAP.md, supplier.ts, check-completeness.ts
+
+
+
+
