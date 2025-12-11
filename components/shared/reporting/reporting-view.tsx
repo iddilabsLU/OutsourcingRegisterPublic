@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useReporting } from "@/hooks/use-reporting"
 import type { EventLog, IssueRecord, IssueStatus } from "@/lib/types/reporting"
 import { cn } from "@/lib/utils/cn"
+import { exportEventsToExcel, exportIssuesToExcel } from "@/lib/utils/export-reporting"
+import { toast } from "sonner"
 
 type PeriodKey = "last30" | "last90" | "all" | "range"
 type EventFormState = {
@@ -136,6 +138,8 @@ export function ReportingView() {
   const [editingIssueId, setEditingIssueId] = useState<number | null>(null)
   const [editingIssueForm, setEditingIssueForm] = useState<IssueRecord | null>(null)
   const [followUpDrafts, setFollowUpDrafts] = useState<Record<number, string>>({})
+  const [exportType, setExportType] = useState<"events" | "issues">("events")
+  const [exportScope, setExportScope] = useState<"all" | "filtered">("filtered")
 
   const [newIssue, setNewIssue] = useState<IssueRecord>({
     title: "",
@@ -224,6 +228,45 @@ export function ReportingView() {
   const closedInPeriod = filteredIssues.filter((issue) => issue.status === "Closed")
 
   const riskChanges = filteredEvents.filter((ev) => ev.type === "risk_changed")
+
+  const handleExportReporting = () => {
+    const scope = exportScope
+    const exportingEvents = exportType === "events"
+    const dataset =
+      scope === "all"
+        ? exportingEvents
+          ? events
+          : issues
+        : exportingEvents
+          ? filteredEvents
+          : filteredIssues
+
+    if (!dataset.length) {
+      toast.error("Nothing to export", {
+        description: "The current selection contains no records.",
+      })
+      return
+    }
+
+    try {
+      if (exportingEvents) {
+        exportEventsToExcel(dataset as EventLog[], scope)
+        toast.success("Events exported", {
+          description: `Exported ${dataset.length} event(s) to Excel`,
+        })
+      } else {
+        exportIssuesToExcel(dataset as IssueRecord[], scope)
+        toast.success("Issues exported", {
+          description: `Exported ${dataset.length} issue(s) to Excel`,
+        })
+      }
+    } catch (err) {
+      console.error("Reporting export failed:", err)
+      toast.error("Export failed", {
+        description: "An error occurred while generating the Excel file.",
+      })
+    }
+  }
 
   const handleCreateIssue = async () => {
     if (!newIssue.title.trim() || !newIssue.description.trim()) return
@@ -447,6 +490,32 @@ export function ReportingView() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <Select value={exportType} onValueChange={(val) => setExportType(val as "events" | "issues")}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Export type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="events">Events</SelectItem>
+              <SelectItem value="issues">Issues</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={exportScope} onValueChange={(val) => setExportScope(val as "all" | "filtered")}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Scope" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="filtered">Filtered</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button className="self-start sm:self-auto" onClick={handleExportReporting}>
+          Export to Excel
+        </Button>
       </div>
 
       {isLoading && <div className="text-sm text-muted-foreground">Loading reporting data…</div>}
