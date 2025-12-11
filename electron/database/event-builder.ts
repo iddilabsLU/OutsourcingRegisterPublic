@@ -8,12 +8,30 @@ const toStr = (value: unknown): string => {
   return String(value)
 }
 
+const TRACKED_PENDING_FIELDS: Record<string, string> = {
+  status: 'Status',
+  category: 'Category',
+  'criticality.isCritical': 'Criticality',
+  criticalityAssessmentDate: 'Criticality assessment date',
+  'criticalFields.riskAssessment.risk': 'Risk level',
+  'criticalFields.riskAssessment.lastAssessmentDate': 'Risk assessment date',
+  'criticalFields.regulatoryNotification.notificationDate': 'Notification date',
+  'dates.startDate': 'Start date',
+  'dates.nextRenewalDate': 'Next renewal date',
+  'dates.endDate': 'End date',
+}
+
+const getPathValue = (obj: any, path: string): unknown => {
+  return path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj)
+}
+
 export function buildSupplierEvents(
   previous: SupplierOutsourcing | null,
   current: SupplierOutsourcing
 ): EventLog[] {
   const events: EventLog[] = []
   const pending = new Set(current.pendingFields ?? [])
+  const previousPending = new Set(previous?.pendingFields ?? [])
   const now = new Date().toISOString()
   const supplierName = current.serviceProvider?.name
   const functionName = current.functionDescription?.name
@@ -150,6 +168,23 @@ export function buildSupplierEvents(
     current.dates.endDate,
     { summary: `End date: ${previous.dates.endDate || 'n/a'} → ${current.dates.endDate || 'n/a'}` }
   )
+
+  // Pending fields cleared (confirmation events)
+  previousPending.forEach((path) => {
+    if (!pending.has(path) && TRACKED_PENDING_FIELDS[path]) {
+      const currentValue = getPathValue(current, path)
+      const label = TRACKED_PENDING_FIELDS[path]
+      events.push({
+        type: 'pending_cleared',
+        date: now,
+        summary: `Pending cleared. ${label}: ${toStr(currentValue) || 'n/a'}`,
+        oldValue: 'pending',
+        newValue: toStr(currentValue) || undefined,
+        supplierName,
+        functionName,
+      })
+    }
+  })
 
   return events
 }

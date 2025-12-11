@@ -8,6 +8,7 @@ export type EventType =
   | 'start_date_changed'
   | 'renewal_date_changed'
   | 'end_date_changed'
+  | 'pending_cleared'
   | 'supplier_created'
 
 export interface EventLog {

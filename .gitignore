@@ -68,3 +68,5 @@ data/*.db-shm
 data/*.db-wal
 data/
 data/*
+
+new_releasefolder

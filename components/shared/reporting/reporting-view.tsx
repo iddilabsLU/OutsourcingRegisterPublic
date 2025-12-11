@@ -50,6 +50,7 @@ const EVENT_TYPES = [
   "start_date_changed",
   "renewal_date_changed",
   "end_date_changed",
+  "pending_cleared",
   "supplier_created",
   "custom",
 ]
@@ -64,7 +65,28 @@ const formatEventType = (type: EventLog["type"]) =>
 const formatDate = (value?: string | null) => {
   if (!value) return "—"
   const parsed = new Date(value)
-  return isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString()
+  if (isNaN(parsed.getTime())) return value
+  const day = parsed.getUTCDate().toString().padStart(2, "0")
+  const month = (parsed.getUTCMonth() + 1).toString().padStart(2, "0")
+  const year = parsed.getUTCFullYear()
+  return `${day}/${month}/${year}`
+}
+
+const toInputDateValue = (value?: string | null) => {
+  if (!value) return ""
+  const parsed = new Date(value)
+  if (isNaN(parsed.getTime())) return ""
+  return parsed.toISOString().slice(0, 10)
+}
+
+const normalizeDateValue = (value?: string | null, fallbackToNow = true) => {
+  const trimmed = value?.trim() ?? ""
+  if (!trimmed) return fallbackToNow ? new Date().toISOString() : ""
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return new Date(`${trimmed}T00:00:00Z`).toISOString()
+  }
+  const parsed = new Date(trimmed)
+  return isNaN(parsed.getTime()) ? trimmed : parsed.toISOString()
 }
 
 function withinPeriod(dateStr: string, period: PeriodKey): boolean {
@@ -124,6 +146,8 @@ export function ReportingView() {
     supplierName: "",
     functionName: "",
     dateOpened: new Date().toISOString(),
+    dateLastUpdate: new Date().toISOString(),
+    dateClosed: null,
     dueDate: "",
     followUps: [],
   })
@@ -203,11 +227,18 @@ export function ReportingView() {
 
   const handleCreateIssue = async () => {
     if (!newIssue.title.trim() || !newIssue.description.trim()) return
+    const nowIso = new Date().toISOString()
+    const normalizedDateOpened = normalizeDateValue(newIssue.dateOpened, true)
+    const normalizedDateClosed =
+      newIssue.status === "Closed" ? normalizeDateValue(newIssue.dateClosed ?? nowIso, true) : null
+    const normalizedDueDate = newIssue.dueDate ? normalizeDateValue(newIssue.dueDate, false) : ""
+
     const payload: IssueRecord = {
       ...newIssue,
-      dateOpened: newIssue.dateOpened || new Date().toISOString(),
-      dateLastUpdate: newIssue.dateLastUpdate || new Date().toISOString(),
-      dateClosed: newIssue.status === "Closed" ? newIssue.dateClosed || new Date().toISOString() : null,
+      dateOpened: normalizedDateOpened,
+      dateLastUpdate: normalizeDateValue(newIssue.dateLastUpdate ?? nowIso, true),
+      dateClosed: normalizedDateClosed,
+      dueDate: normalizedDueDate,
       followUps: newIssueFollowUp.trim()
         ? [
             {
@@ -227,18 +258,12 @@ export function ReportingView() {
       supplierName: "",
       functionName: "",
       dateOpened: new Date().toISOString(),
+      dateLastUpdate: new Date().toISOString(),
+      dateClosed: null,
       dueDate: "",
       followUps: [],
     })
     setNewIssueFollowUp("")
-  }
-
-  const normalizeDate = (value: string) => {
-    if (!value) return new Date().toISOString()
-    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-      return new Date(value).toISOString()
-    }
-    return value
   }
 
   const resolveEventType = (form: EventFormState) => {
@@ -253,7 +278,7 @@ export function ReportingView() {
     const payload: EventLog = {
       type: eventType,
       summary: newEvent.summary.trim(),
-      date: normalizeDate(newEvent.date || new Date().toISOString()),
+      date: normalizeDateValue(newEvent.date, true),
       severity: newEvent.severity?.trim() || undefined,
       supplierName: newEvent.supplierName?.trim() || undefined,
       functionName: newEvent.functionName?.trim() || undefined,
@@ -305,7 +330,7 @@ export function ReportingView() {
       id: editingEventId,
       type: eventType,
       summary: editingEventForm.summary.trim(),
-      date: normalizeDate(editingEventForm.date || new Date().toISOString()),
+      date: normalizeDateValue(editingEventForm.date, true),
       severity: editingEventForm.severity?.trim() || undefined,
       supplierName: editingEventForm.supplierName?.trim() || undefined,
       functionName: editingEventForm.functionName?.trim() || undefined,
@@ -327,13 +352,19 @@ export function ReportingView() {
 
   const handleSaveIssueEdit = async () => {
     if (!editingIssueId || !editingIssueForm) return
+    const nowIso = new Date().toISOString()
+    const normalizedDateOpened = normalizeDateValue(editingIssueForm.dateOpened, true)
+    const normalizedDueDate = editingIssueForm.dueDate ? normalizeDateValue(editingIssueForm.dueDate, false) : ""
+    const normalizedDateClosed =
+      editingIssueForm.status === "Closed"
+        ? normalizeDateValue(editingIssueForm.dateClosed ?? nowIso, true)
+        : null
     await updateIssue({
       ...editingIssueForm,
-      dateLastUpdate: new Date().toISOString(),
-      dateClosed:
-        editingIssueForm.status === "Closed"
-          ? editingIssueForm.dateClosed ?? new Date().toISOString()
-          : null,
+      dateOpened: normalizedDateOpened,
+      dueDate: normalizedDueDate,
+      dateLastUpdate: nowIso,
+      dateClosed: normalizedDateClosed,
     })
     setEditingIssueId(null)
     setEditingIssueForm(null)
@@ -361,11 +392,12 @@ export function ReportingView() {
   }
 
   const handleStatusChange = async (issue: IssueRecord, status: IssueStatus) => {
+    const closedDate = status === "Closed" ? issue.dateClosed ?? new Date().toISOString() : null
     await updateIssue({
       ...issue,
       status,
       dateLastUpdate: new Date().toISOString(),
-      dateClosed: status === "Closed" ? new Date().toISOString() : null,
+      dateClosed: closedDate,
       followUps: issue.followUps,
     })
   }
@@ -491,7 +523,7 @@ export function ReportingView() {
                     />
                     <Input
                       type="date"
-                      value={editingEventForm.date ? editingEventForm.date.slice(0, 10) : ""}
+                      value={toInputDateValue(editingEventForm.date)}
                       onChange={(e) =>
                         setEditingEventForm((prev) => (prev ? { ...prev, date: e.target.value } : prev))
                       }
@@ -634,7 +666,7 @@ export function ReportingView() {
             <div className="grid grid-cols-2 gap-2">
               <Input
                 type="date"
-                value={newEvent.date ? newEvent.date.slice(0, 10) : ""}
+                value={toInputDateValue(newEvent.date)}
                 onChange={(e) => setNewEvent((prev) => ({ ...prev, date: e.target.value }))}
               />
               <Select
@@ -760,11 +792,29 @@ export function ReportingView() {
                           />
                           <Input
                             type="date"
-                            value={editingIssueForm.dueDate ? editingIssueForm.dueDate.slice(0, 10) : ""}
+                            value={toInputDateValue(editingIssueForm.dueDate)}
                             onChange={(e) =>
                               setEditingIssueForm((prev) => (prev ? { ...prev, dueDate: e.target.value } : prev))
                             }
                           />
+                          <Input
+                            type="date"
+                            value={toInputDateValue(editingIssueForm.dateOpened)}
+                            onChange={(e) =>
+                              setEditingIssueForm((prev) => (prev ? { ...prev, dateOpened: e.target.value } : prev))
+                            }
+                            placeholder="Opened on"
+                          />
+                          {editingIssueForm.status === "Closed" && (
+                            <Input
+                              type="date"
+                              value={toInputDateValue(editingIssueForm.dateClosed)}
+                              onChange={(e) =>
+                                setEditingIssueForm((prev) => (prev ? { ...prev, dateClosed: e.target.value } : prev))
+                              }
+                              placeholder="Closed on"
+                            />
+                          )}
                           <Select
                             value={editingIssueForm.severity ?? ""}
                             onValueChange={(val) =>
@@ -940,10 +990,26 @@ export function ReportingView() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                type="date"
+                placeholder="Opened on"
+                value={toInputDateValue(newIssue.dateOpened)}
+                onChange={(e) => setNewIssue((prev) => ({ ...prev, dateOpened: e.target.value }))}
+              />
+              {newIssue.status === "Closed" && (
+                <Input
+                  type="date"
+                  placeholder="Closed on"
+                  value={toInputDateValue(newIssue.dateClosed)}
+                  onChange={(e) => setNewIssue((prev) => ({ ...prev, dateClosed: e.target.value }))}
+                />
+              )}
+            </div>
             <Input
               type="date"
               placeholder="Due date"
-              value={newIssue.dueDate}
+              value={toInputDateValue(newIssue.dueDate)}
               onChange={(e) => setNewIssue((prev) => ({ ...prev, dueDate: e.target.value }))}
             />
             <Button onClick={handleCreateIssue} disabled={!newIssue.title || !newIssue.description}>

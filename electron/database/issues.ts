@@ -63,6 +63,7 @@ export function updateIssue(issue: IssueRecord): void {
   const db = getDatabase()
   const stmt = db.prepare(`
     UPDATE issues SET
+      date_opened = @date_opened,
       title = @title,
       description = @description,
       status = @status,
@@ -81,6 +82,7 @@ export function updateIssue(issue: IssueRecord): void {
 
   const result = stmt.run({
     id: issue.id,
+    date_opened: issue.dateOpened && issue.dateOpened.trim() ? issue.dateOpened : now,
     title: issue.title,
     description: issue.description,
     status: issue.status,
