@@ -5,6 +5,7 @@ import { app } from 'electron'
 import { migrateAddCloudOtherInformation } from './migrate-add-cloud-other-info'
 import { migrateAddEventsAndIssues } from './migrate-add-events-issues'
 import { migrateAddIssueFollowups } from './migrate-add-issue-followups'
+import { migrateAddIssueCategory } from './migrate-add-issue-category'
 
 /**
  * Database module for CSSF Supplier Outsourcing Register
@@ -98,6 +99,7 @@ function runMigrations(): void {
   migrateAddCloudOtherInformation()
   migrateAddEventsAndIssues()
   migrateAddIssueFollowups()
+  migrateAddIssueCategory()
 }
 
 /**

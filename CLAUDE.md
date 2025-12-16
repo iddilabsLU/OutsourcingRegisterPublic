@@ -10,9 +10,9 @@ A **desktop application** for managing supplier outsourcing arrangements in comp
 
 ## 🚀 Quick Overview
 
-**Purpose:** CSSF-compliant supplier outsourcing register for Luxembourg financial institutions  
-**Target:** Windows desktop application (.exe installer)  
-**Database:** SQLite (local database file: `data/suppliers.db`)  
+**Purpose:** CSSF-compliant supplier outsourcing register for Luxembourg financial institutions
+**Target:** Windows desktop application (.exe installer)
+**Database:** SQLite (local database file: `data/suppliers.db`)
 **User:** Non-technical user relying on Claude Code for all development
 
 ---
@@ -33,8 +33,8 @@ npm run lint               # Lint
 ## 🧰 Tech Stack
 
 - **Desktop:** Electron (main + renderer process)
-- **Framework:** Next.js 15.5.4 (App Router, Turbopack)
-- **React:** 19.1.0
+- **Framework:** Next.js 15.5.9 (App Router, Turbopack)
+- **React:** 19.1.4
 - **Language:** TypeScript 5
 - **Database:** SQLite + better-sqlite3 (synchronous operations)
 - **Styling:** Tailwind CSS 4

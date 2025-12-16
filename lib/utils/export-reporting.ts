@@ -57,10 +57,8 @@ export const exportEventsToExcel = (events: EventLog[], scope: "all" | "filtered
     "Function",
     "Old Value",
     "New Value",
-    "Risk Before",
-    "Risk After",
   ]
-  const widths = [12, 22, 50, 12, 25, 25, 20, 20, 12, 12]
+  const widths = [12, 22, 50, 12, 25, 25, 20, 20]
   const rows = events.map((ev) => ({
     Date: formatDate(ev.date),
     Type: formatEventType(ev.type),
@@ -70,8 +68,6 @@ export const exportEventsToExcel = (events: EventLog[], scope: "all" | "filtered
     Function: ev.functionName ?? "",
     "Old Value": ev.oldValue ?? "",
     "New Value": ev.newValue ?? "",
-    "Risk Before": ev.riskBefore ?? "",
-    "Risk After": ev.riskAfter ?? "",
   }))
 
   const worksheet = createSheet(rows, headers, widths)
@@ -84,6 +80,7 @@ export const exportIssuesToExcel = (issues: IssueRecord[], scope: "all" | "filte
   const headers = [
     "Title",
     "Description",
+    "Category",
     "Status",
     "Severity",
     "Owner",
@@ -95,10 +92,11 @@ export const exportIssuesToExcel = (issues: IssueRecord[], scope: "all" | "filte
     "Due",
     "Follow-ups",
   ]
-  const widths = [30, 50, 14, 12, 18, 25, 25, 12, 12, 12, 12, 40]
+  const widths = [30, 50, 18, 14, 12, 18, 25, 25, 12, 12, 12, 12, 40]
   const rows = issues.map((issue) => ({
     Title: issue.title,
     Description: issue.description,
+    Category: issue.category ?? "",
     Status: issue.status,
     Severity: issue.severity ?? "",
     Owner: issue.owner ?? "",

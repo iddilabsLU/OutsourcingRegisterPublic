@@ -18,8 +18,6 @@ export interface EventLog {
   summary: string
   oldValue?: string
   newValue?: string
-  riskBefore?: string
-  riskAfter?: string
   severity?: string
   supplierName?: string
   functionName?: string
@@ -37,6 +35,7 @@ export interface IssueRecord {
   id?: number
   title: string
   description: string
+  category: string
   status: IssueStatus
   severity?: string
   owner?: string

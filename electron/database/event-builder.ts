@@ -41,7 +41,7 @@ export function buildSupplierEvents(
     path: string,
     oldVal: unknown,
     newVal: unknown,
-    opts?: { severity?: string; summary?: string; riskBefore?: string; riskAfter?: string }
+    opts?: { severity?: string; summary?: string }
   ) => {
     if (pathEqualsPending(pending, path)) return
     const oldStr = toStr(oldVal)
@@ -54,8 +54,6 @@ export function buildSupplierEvents(
       summary: opts?.summary || `${type.replace(/_/g, ' ')}: ${oldStr || 'n/a'} → ${newStr || 'n/a'}`,
       oldValue: oldStr || undefined,
       newValue: newStr || undefined,
-      riskBefore: opts?.riskBefore,
-      riskAfter: opts?.riskAfter,
       severity: opts?.severity,
       supplierName,
       functionName,
@@ -84,8 +82,6 @@ export function buildSupplierEvents(
   const newRisk = current.criticalFields?.riskAssessment?.risk
   pushChange('risk_changed', 'criticalFields.riskAssessment.risk', prevRisk, newRisk, {
     summary: `Risk changed: ${prevRisk ?? 'n/a'} → ${newRisk ?? 'n/a'}`,
-    riskBefore: prevRisk ? String(prevRisk) : undefined,
-    riskAfter: newRisk ? String(newRisk) : undefined,
   })
 
   // Criticality flag

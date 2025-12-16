@@ -13,6 +13,7 @@ export function addIssue(issue: IssueRecord): number {
     INSERT INTO issues (
       title,
       description,
+      category,
       status,
       severity,
       owner,
@@ -26,6 +27,7 @@ export function addIssue(issue: IssueRecord): number {
     ) VALUES (
       @title,
       @description,
+      @category,
       @status,
       @severity,
       @owner,
@@ -43,6 +45,7 @@ export function addIssue(issue: IssueRecord): number {
   const result = stmt.run({
     title: issue.title,
     description: issue.description,
+    category: issue.category,
     status: issue.status,
     severity: cleanNullable(issue.severity),
     owner: cleanNullable(issue.owner),
@@ -66,6 +69,7 @@ export function updateIssue(issue: IssueRecord): void {
       date_opened = @date_opened,
       title = @title,
       description = @description,
+      category = @category,
       status = @status,
       severity = @severity,
       owner = @owner,
@@ -85,6 +89,7 @@ export function updateIssue(issue: IssueRecord): void {
     date_opened: issue.dateOpened && issue.dateOpened.trim() ? issue.dateOpened : now,
     title: issue.title,
     description: issue.description,
+    category: issue.category,
     status: issue.status,
     severity: cleanNullable(issue.severity),
     owner: cleanNullable(issue.owner),
@@ -117,6 +122,7 @@ export function getIssues(): IssueRecord[] {
     id: row.id,
     title: row.title,
     description: row.description,
+    category: row.category ?? '',
     status: row.status,
     severity: row.severity ?? undefined,
     owner: row.owner ?? undefined,

@@ -149,7 +149,7 @@ This application implements **CSSF Circular 22/806 Section 4.2.7** requirements:
 |----------|-----------|---------|
 | Desktop | Electron | Cross-platform desktop framework |
 | Database | SQLite + better-sqlite3 | Local database with synchronous operations |
-| Framework | Next.js 15.5.4 | App Router, Server Components, Turbopack |
+| Framework | Next.js 15.5.9 | App Router, Server Components, Turbopack |
 | UI Library | React 19.1.0 | Latest React features |
 | Language | TypeScript 5 | 100% type safety coverage |
 | Styling | Tailwind CSS 4 | Utility-first CSS with semantic tokens |
