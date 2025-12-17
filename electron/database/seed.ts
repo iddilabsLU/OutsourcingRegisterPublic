@@ -23,7 +23,8 @@ const suppliers: SupplierOutsourcing[] = [
     functionDescription: {
       name: "Cloud Hosting Infrastructure",
       description: "Cloud hosting infrastructure for core banking systems and customer databases",
-      dataDescription: "Customer account data, transaction records, personal identification information",
+      dataDescription:
+        "Customer account data, transaction records, personal identification information",
       personalDataInvolved: true,
       personalDataTransferred: true,
     },
@@ -43,7 +44,8 @@ const suppliers: SupplierOutsourcing[] = [
     },
     criticality: {
       isCritical: true,
-      reasons: "Hosts critical banking infrastructure. Disruption would immediately impact customer-facing services and regulatory reporting capabilities.",
+      reasons:
+        "Hosts critical banking infrastructure. Disruption would immediately impact customer-facing services and regulatory reporting capabilities.",
     },
     criticalityAssessmentDate: "2024-09-15",
     cloudService: {
@@ -64,7 +66,8 @@ const suppliers: SupplierOutsourcing[] = [
       riskAssessment: {
         risk: "High" as any,
         lastAssessmentDate: "2024-09-15",
-        mainResults: "High dependency risk identified. Mitigation: Multi-cloud strategy in progress. Data encryption and access controls adequate. Exit strategy documented.",
+        mainResults:
+          "High dependency risk identified. Mitigation: Multi-cloud strategy in progress. Data encryption and access controls adequate. Exit strategy documented.",
       },
       approval: {
         approverName: "Board of Directors",
@@ -80,7 +83,8 @@ const suppliers: SupplierOutsourcing[] = [
         subContractors: [
           {
             name: "SecureNet Data Centers GmbH",
-            activityDescription: "Physical data center infrastructure and network connectivity services",
+            activityDescription:
+              "Physical data center infrastructure and network connectivity services",
             registrationCountry: "Germany",
             servicePerformanceCountry: "Germany",
             dataStorageLocation: "Frankfurt, Germany",
@@ -89,13 +93,20 @@ const suppliers: SupplierOutsourcing[] = [
       },
       substitutability: {
         outcome: "Difficult" as any,
-        reintegrationSubstitutabilityAssessment: "Reintegration would require 18-24 months and significant capital investment (estimated €5M+). Internal IT team lacks specialized expertise.",
-        discontinuationImpact: "Severe impact. Would result in complete service outage for 6-12 months during migration. Regulatory reporting would be compromised.",
+        reintegrationSubstitutabilityAssessment:
+          "Reintegration would require 18-24 months and significant capital investment (estimated €5M+). Internal IT team lacks specialized expertise.",
+        discontinuationImpact:
+          "Severe impact. Would result in complete service outage for 6-12 months during migration. Regulatory reporting would be compromised.",
       },
-      alternativeProviders: ["Azure Government Cloud", "AWS Financial Services", "IBM Cloud for Financial Services"],
+      alternativeProviders: [
+        "Azure Government Cloud",
+        "AWS Financial Services",
+        "IBM Cloud for Financial Services",
+      ],
       isTimeCritical: true,
       estimatedAnnualCost: 850000,
-      costComments: "Annual cost includes infrastructure hosting, data center services, and 24/7 technical support. Cost reviewed quarterly.",
+      costComments:
+        "Annual cost includes infrastructure hosting, data center services, and 24/7 technical support. Cost reviewed quarterly.",
       regulatoryNotification: {
         notificationDate: "2021-11-10",
       },
@@ -118,7 +129,8 @@ const suppliers: SupplierOutsourcing[] = [
     functionDescription: {
       name: "Office Cleaning & Maintenance",
       description: "Office cleaning and maintenance services for headquarters building",
-      dataDescription: "Access to office spaces during non-business hours. No access to IT systems or documents.",
+      dataDescription:
+        "Access to office spaces during non-business hours. No access to IT systems or documents.",
       personalDataInvolved: false,
       personalDataTransferred: false,
     },
@@ -136,7 +148,8 @@ const suppliers: SupplierOutsourcing[] = [
     },
     criticality: {
       isCritical: false,
-      reasons: "Standard facility management. Multiple alternative providers available. No impact on core business operations or customer services.",
+      reasons:
+        "Standard facility management. Multiple alternative providers available. No impact on core business operations or customer services.",
     },
     criticalityAssessmentDate: "2024-08-10",
   },
@@ -156,8 +169,10 @@ const suppliers: SupplierOutsourcing[] = [
     },
     functionDescription: {
       name: "Payment Processing Services",
-      description: "Payment processing services for SEPA transfers, card payments, and international wire transfers",
-      dataDescription: "Payment transaction data, beneficiary information, IBAN/BIC codes, transaction amounts",
+      description:
+        "Payment processing services for SEPA transfers, card payments, and international wire transfers",
+      dataDescription:
+        "Payment transaction data, beneficiary information, IBAN/BIC codes, transaction amounts",
       personalDataInvolved: true,
       personalDataTransferred: true,
     },
@@ -177,17 +192,10 @@ const suppliers: SupplierOutsourcing[] = [
     },
     criticality: {
       isCritical: true,
-      reasons: "Essential for payment processing operations. Disruption would prevent customers from making payments and receiving funds. Regulatory obligation to maintain payment services.",
+      reasons:
+        "Essential for payment processing operations. Disruption would prevent customers from making payments and receiving funds. Regulatory obligation to maintain payment services.",
     },
     criticalityAssessmentDate: "2024-10-01",
-    cloudService: {
-      serviceModel: "SaaS (Software as a Service)" as any,
-      deploymentModel: "Hybrid Cloud" as any,
-      dataNature: "Payment transaction data, customer identification for AML/KYC",
-      storageLocations: ["Luxembourg", "Belgium"],
-      cloudOfficer: "Pierre Martin",
-      resourceOperator: "EuroPayments Cloud Services S.A.",
-    },
     criticalFields: {
       entitiesUsing: {
         inScopeEntities: ["BankCorp S.A."],
@@ -198,7 +206,8 @@ const suppliers: SupplierOutsourcing[] = [
       riskAssessment: {
         risk: "Medium" as any,
         lastAssessmentDate: "2024-10-01",
-        mainResults: "Medium risk. Provider is financially stable with ISO 27001 certification. Concentration risk noted - provider handles 60% of our payment volume. Business continuity plans tested annually.",
+        mainResults:
+          "Medium risk. Provider is financially stable with ISO 27001 certification. Concentration risk noted - provider handles 60% of our payment volume. Business continuity plans tested annually.",
       },
       approval: {
         approverName: "Executive Committee",
@@ -214,7 +223,8 @@ const suppliers: SupplierOutsourcing[] = [
         subContractors: [
           {
             name: "SWIFT Belgium",
-            activityDescription: "International wire transfer messaging and settlement services via SWIFT network",
+            activityDescription:
+              "International wire transfer messaging and settlement services via SWIFT network",
             registrationCountry: "Belgium",
             servicePerformanceCountry: "Belgium",
             dataStorageLocation: "Brussels, Belgium",
@@ -223,13 +233,16 @@ const suppliers: SupplierOutsourcing[] = [
       },
       substitutability: {
         outcome: "Difficult" as any,
-        reintegrationSubstitutabilityAssessment: "Reintegration feasible but complex. Would require payment license and 12-18 months implementation. Estimated cost €3M.",
-        discontinuationImpact: "High impact. Would disrupt payment services for 6-9 months. Requires customer notification and regulatory approval for migration.",
+        reintegrationSubstitutabilityAssessment:
+          "Reintegration feasible but complex. Would require payment license and 12-18 months implementation. Estimated cost €3M.",
+        discontinuationImpact:
+          "High impact. Would disrupt payment services for 6-9 months. Requires customer notification and regulatory approval for migration.",
       },
       alternativeProviders: ["LuxPayments S.A.", "CETREL S.A.", "SIX Payment Services"],
       isTimeCritical: true,
       estimatedAnnualCost: 420000,
-      costComments: "Includes transaction processing fees, SWIFT network access, and compliance monitoring. Volume-based pricing with annual cap.",
+      costComments:
+        "Includes transaction processing fees, SWIFT network access, and compliance monitoring. Volume-based pricing with annual cap.",
       regulatoryNotification: {
         notificationDate: "2021-04-15",
       },
@@ -251,8 +264,10 @@ const suppliers: SupplierOutsourcing[] = [
     },
     functionDescription: {
       name: "Digital Marketing Services",
-      description: "Digital marketing services including social media management, content creation, and email campaigns",
-      dataDescription: "Marketing contact lists (names, emails, preferences), campaign performance data",
+      description:
+        "Digital marketing services including social media management, content creation, and email campaigns",
+      dataDescription:
+        "Marketing contact lists (names, emails, preferences), campaign performance data",
       personalDataInvolved: true,
       personalDataTransferred: false,
     },
@@ -270,7 +285,8 @@ const suppliers: SupplierOutsourcing[] = [
     },
     criticality: {
       isCritical: false,
-      reasons: "Marketing activities are non-essential to core banking operations. Service interruption would not affect customer service delivery or regulatory compliance. Multiple alternatives available.",
+      reasons:
+        "Marketing activities are non-essential to core banking operations. Service interruption would not affect customer service delivery or regulatory compliance. Multiple alternatives available.",
     },
     criticalityAssessmentDate: "2024-07-15",
   },
@@ -290,8 +306,10 @@ const suppliers: SupplierOutsourcing[] = [
     },
     functionDescription: {
       name: "Core Banking Platform (SaaS)",
-      description: "Core banking platform providing account management, transaction processing, loan management, and regulatory reporting",
-      dataDescription: "Complete customer database including accounts, transactions, loans, personal information, financial history",
+      description:
+        "Core banking platform providing account management, transaction processing, loan management, and regulatory reporting",
+      dataDescription:
+        "Complete customer database including accounts, transactions, loans, personal information, financial history",
       personalDataInvolved: true,
       personalDataTransferred: true,
     },
@@ -311,13 +329,15 @@ const suppliers: SupplierOutsourcing[] = [
     },
     criticality: {
       isCritical: true,
-      reasons: "Entire core banking operations depend on this system. Manages all customer accounts, processes all transactions, generates regulatory reports. No alternative system in place.",
+      reasons:
+        "Entire core banking operations depend on this system. Manages all customer accounts, processes all transactions, generates regulatory reports. No alternative system in place.",
     },
     criticalityAssessmentDate: "2024-09-30",
     cloudService: {
       serviceModel: "SaaS (Software as a Service)" as any,
       deploymentModel: "Private Cloud" as any,
-      dataNature: "Full customer database, all financial transactions, account balances, credit information, PII",
+      dataNature:
+        "Full customer database, all financial transactions, account balances, credit information, PII",
       storageLocations: ["Luxembourg"],
       cloudOfficer: "Marie Schmidt",
       resourceOperator: "BankingSoft Cloud Services Ltd.",
@@ -332,7 +352,8 @@ const suppliers: SupplierOutsourcing[] = [
       riskAssessment: {
         risk: "High" as any,
         lastAssessmentDate: "2024-09-30",
-        mainResults: "Critical dependency risk. Provider is market leader with strong financial position. Single point of failure identified. Exit costs prohibitive (estimated €15M+). Data sovereignty controls adequate.",
+        mainResults:
+          "Critical dependency risk. Provider is market leader with strong financial position. Single point of failure identified. Exit costs prohibitive (estimated €15M+). Data sovereignty controls adequate.",
       },
       approval: {
         approverName: "Board of Directors",
@@ -348,7 +369,8 @@ const suppliers: SupplierOutsourcing[] = [
         subContractors: [
           {
             name: "AWS Europe (Luxembourg) S.à r.l.",
-            activityDescription: "Cloud infrastructure hosting and managed database services for core banking platform",
+            activityDescription:
+              "Cloud infrastructure hosting and managed database services for core banking platform",
             registrationCountry: "Luxembourg",
             servicePerformanceCountry: "Luxembourg",
             dataStorageLocation: "Luxembourg",
@@ -357,13 +379,20 @@ const suppliers: SupplierOutsourcing[] = [
       },
       substitutability: {
         outcome: "Impossible" as any,
-        reintegrationSubstitutabilityAssessment: "Not feasible. Building an in-house core banking system would require 3-5 years, €20M+ investment, and specialized team of 50+ developers. Regulatory approval would be complex.",
-        discontinuationImpact: "Catastrophic. Bank would be unable to operate. All customer services would cease. Migration to alternative provider would take minimum 18-24 months.",
+        reintegrationSubstitutabilityAssessment:
+          "Not feasible. Building an in-house core banking system would require 3-5 years, €20M+ investment, and specialized team of 50+ developers. Regulatory approval would be complex.",
+        discontinuationImpact:
+          "Catastrophic. Bank would be unable to operate. All customer services would cease. Migration to alternative provider would take minimum 18-24 months.",
       },
-      alternativeProviders: ["Temenos T24 (implementation required)", "Mambu (limited functionality)", "Avaloq Banking Suite"],
+      alternativeProviders: [
+        "Temenos T24 (implementation required)",
+        "Mambu (limited functionality)",
+        "Avaloq Banking Suite",
+      ],
       isTimeCritical: true,
       estimatedAnnualCost: 1250000,
-      costComments: "SaaS license includes core banking platform, regulatory reporting modules, customer portal, and dedicated support. Annual increase capped at 3%.",
+      costComments:
+        "SaaS license includes core banking platform, regulatory reporting modules, customer portal, and dedicated support. Annual increase capped at 3%.",
       regulatoryNotification: {
         notificationDate: "2020-06-15",
       },

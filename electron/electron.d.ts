@@ -6,7 +6,7 @@
  */
 
 import type { SupplierOutsourcing } from '../lib/types/supplier'
-import type { EventLog, IssueRecord } from '../lib/types/reporting'
+import type { EventLog, IssueRecord, CriticalMonitorRecord } from '../lib/types/reporting'
 
 export interface ElectronAPI {
   // System info
@@ -30,6 +30,11 @@ export interface ElectronAPI {
   addIssue: (issue: IssueRecord) => Promise<number>
   updateIssue: (issue: IssueRecord) => Promise<void>
   deleteIssue: (id: number) => Promise<void>
+
+  // Critical Monitor
+  getCriticalMonitorRecords: () => Promise<CriticalMonitorRecord[]>
+  upsertCriticalMonitorRecord: (record: CriticalMonitorRecord) => Promise<number>
+  deleteCriticalMonitorRecord: (supplierReferenceNumber: string) => Promise<void>
 
   // Backup/restore operations (to be implemented later)
   // backupDatabase: (path: string) => Promise<{ success: boolean; path: string }>

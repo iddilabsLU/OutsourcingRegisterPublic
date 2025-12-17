@@ -34,16 +34,20 @@ export function DataCompletenessCard({ suppliers }: DataCompletenessCardProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileCheck className="h-5 w-5 text-primary" />
-          Data Completeness
-        </CardTitle>
-        <CardDescription>
-          Pending fields and overall data quality metrics
-        </CardDescription>
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <FileCheck className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Data Completeness</CardTitle>
+            <CardDescription className="text-xs mt-0.5">
+              Pending fields and overall data quality metrics
+            </CardDescription>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-5">
         {/* Summary Metrics */}
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-1 text-center">

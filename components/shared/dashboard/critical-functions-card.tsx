@@ -35,18 +35,23 @@ export function CriticalFunctionsCard({ suppliers }: CriticalFunctionsCardProps)
   if (analysis.total === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            Critical Functions Analysis
-          </CardTitle>
-          <CardDescription>
-            Analysis of critical outsourcing arrangements (Point 55)
-          </CardDescription>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Critical Functions Analysis</CardTitle>
+              <CardDescription className="text-xs mt-0.5">
+                Analysis of critical outsourcing arrangements
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-muted-foreground text-center py-8">
-            No critical suppliers
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-3">
+            <ShieldCheck className="h-10 w-10 text-muted-foreground/50" />
+            <p className="text-sm">No critical suppliers</p>
           </div>
         </CardContent>
       </Card>
@@ -55,16 +60,25 @@ export function CriticalFunctionsCard({ suppliers }: CriticalFunctionsCardProps)
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-primary" />
-          Critical Functions Analysis
-        </CardTitle>
-        <CardDescription>
-          {analysis.total} critical supplier{analysis.total !== 1 ? "s" : ""} (Point 55)
-        </CardDescription>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Critical Functions Analysis</CardTitle>
+              <CardDescription className="text-xs mt-0.5">
+                Analysis of critical outsourcing arrangements
+              </CardDescription>
+            </div>
+          </div>
+          <Badge variant="outline" className="text-xs text-muted-foreground">
+            Point 55
+          </Badge>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-5">
         {/* Group Relationships */}
         <div className="space-y-3">
           <h4 className="text-sm font-semibold flex items-center gap-2">

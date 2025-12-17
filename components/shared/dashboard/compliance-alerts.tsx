@@ -11,12 +11,13 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { AlertCircle, ChevronDown, ChevronRight, Bell, Info } from "lucide-react"
+import { AlertCircle, ChevronDown, ChevronRight, Bell, Info, ShieldCheck, CheckCircle2 } from "lucide-react"
 import type { SupplierOutsourcing } from "@/lib/types/supplier"
 import {
   getOverdueAssessments,
   getRegulatoryNotificationStatus,
 } from "@/lib/utils/dashboard-analytics"
+import { cn } from "@/lib/utils"
 
 interface ComplianceAlertsProps {
   suppliers: SupplierOutsourcing[]
@@ -34,41 +35,77 @@ export function ComplianceAlerts({ suppliers }: ComplianceAlertsProps) {
     overdue.riskCount > 0 ||
     overdue.auditCount > 0
   const hasMissingNotifications = notifications.notNotifiedCount > 0
+  const hasAnyAlerts = hasOverdue || hasMissingNotifications
 
   return (
-    <div className="space-y-3 rounded-lg border-l-4 border-red-500 bg-red-50/50 p-4">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Compliance Alerts</h2>
-        <p className="text-muted-foreground">
-          CSSF Circular 22/806 compliance monitoring
-        </p>
+    <div
+      className={cn(
+        "rounded-xl border p-5 transition-colors",
+        hasAnyAlerts
+          ? "border-destructive/30 bg-destructive/5"
+          : "border-emerald-200 bg-emerald-50/50"
+      )}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <div
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+            hasAnyAlerts ? "bg-destructive/10" : "bg-emerald-100"
+          )}
+        >
+          {hasAnyAlerts ? (
+            <ShieldCheck className="h-5 w-5 text-destructive" />
+          ) : (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+          )}
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-semibold tracking-tight">Compliance Status</h2>
+            {hasAnyAlerts && (
+              <Badge variant="destructive" className="text-xs">
+                {(hasOverdue ? 1 : 0) + (hasMissingNotifications ? 1 : 0)} alert{hasOverdue && hasMissingNotifications ? "s" : ""}
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            CSSF Circular 22/806 compliance monitoring
+          </p>
+        </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         {/* Overdue Assessments */}
-        <Card className={hasOverdue ? "border-destructive" : ""}>
-          <CardHeader>
+        <Card className={cn("transition-colors", hasOverdue && "border-destructive/50 bg-destructive/[0.02]")}>
+          <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-destructive" />
+                <div className={cn(
+                  "h-8 w-8 rounded-lg flex items-center justify-center",
+                  hasOverdue ? "bg-destructive/10" : "bg-muted"
+                )}>
+                  <AlertCircle className={cn("h-4 w-4", hasOverdue ? "text-destructive" : "text-muted-foreground")} />
+                </div>
                 Overdue Reviews
               </CardTitle>
               {hasOverdue && (
-                <Badge variant="destructive">Action Required</Badge>
+                <Badge variant="destructive" className="font-medium">Action Required</Badge>
               )}
             </div>
-            <CardDescription>
+            <CardDescription className="mt-1.5">
               Reviews overdue (&gt;365 days since last assessment)
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {!hasOverdue ? (
-              <div className="text-sm text-muted-foreground">
-                ✅ All reviews are up to date
+              <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 rounded-lg p-3">
+                <CheckCircle2 className="h-4 w-4" />
+                All reviews are up to date
               </div>
             ) : (
               <>
-                <div className="space-y-2">
+                <div className="space-y-2 bg-muted/50 rounded-lg p-3">
                   {overdue.criticalityCount > 0 && (
                     <div className="flex items-center justify-between text-sm">
                       <span>Criticality Assessments</span>
@@ -91,25 +128,26 @@ export function ComplianceAlerts({ suppliers }: ComplianceAlertsProps) {
 
                 <Collapsible open={overdueOpen} onOpenChange={setOverdueOpen}>
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                    <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-foreground">
                       {overdueOpen ? (
                         <ChevronDown className="h-4 w-4 mr-2" />
                       ) : (
                         <ChevronRight className="h-4 w-4 mr-2" />
                       )}
-                      View {overdue.suppliers.length} supplier
-                      {overdue.suppliers.length !== 1 ? "s" : ""}
+                      View {overdue.suppliers.length} affected supplier{overdue.suppliers.length !== 1 ? "s" : ""}
                     </Button>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-1 mt-2">
-                    {overdue.suppliers.map((supplier) => (
-                      <div
-                        key={supplier.referenceNumber}
-                        className="text-xs pl-6 py-1 text-muted-foreground"
-                      >
-                        {supplier.referenceNumber} - {supplier.serviceProvider.name}
-                      </div>
-                    ))}
+                  <CollapsibleContent className="mt-2">
+                    <div className="space-y-1 pl-2 border-l-2 border-muted ml-2">
+                      {overdue.suppliers.map((supplier) => (
+                        <div
+                          key={supplier.referenceNumber}
+                          className="text-xs py-1.5 px-2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <span className="font-medium">{supplier.referenceNumber}</span> — {supplier.serviceProvider.name}
+                        </div>
+                      ))}
+                    </div>
                   </CollapsibleContent>
                 </Collapsible>
               </>
@@ -118,18 +156,23 @@ export function ComplianceAlerts({ suppliers }: ComplianceAlertsProps) {
         </Card>
 
         {/* Missing Notifications */}
-        <Card className={hasMissingNotifications ? "border-destructive" : ""}>
-          <CardHeader>
+        <Card className={cn("transition-colors", hasMissingNotifications && "border-destructive/50 bg-destructive/[0.02]")}>
+          <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <Bell className="h-4 w-4 text-destructive" />
+                <div className={cn(
+                  "h-8 w-8 rounded-lg flex items-center justify-center",
+                  hasMissingNotifications ? "bg-destructive/10" : "bg-muted"
+                )}>
+                  <Bell className={cn("h-4 w-4", hasMissingNotifications ? "text-destructive" : "text-muted-foreground")} />
+                </div>
                 CSSF Notifications
               </CardTitle>
               {hasMissingNotifications && (
-                <Badge variant="destructive">Missing</Badge>
+                <Badge variant="destructive" className="font-medium">Missing</Badge>
               )}
             </div>
-            <CardDescription className="flex items-center gap-1">
+            <CardDescription className="flex items-center gap-1 mt-1.5">
               Critical suppliers requiring CSSF notification
               <TooltipProvider>
                 <Tooltip>
@@ -145,20 +188,23 @@ export function ComplianceAlerts({ suppliers }: ComplianceAlertsProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {!hasMissingNotifications ? (
-              <div className="text-sm text-muted-foreground">
-                ✅ All critical suppliers notified
+              <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 rounded-lg p-3">
+                <CheckCircle2 className="h-4 w-4" />
+                All critical suppliers notified
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between text-sm">
-                  <span>Not yet notified</span>
-                  <Badge variant="destructive">
-                    {notifications.notNotifiedCount}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Already notified</span>
-                  <span>{notifications.notifiedCount}</span>
+                <div className="space-y-2 bg-muted/50 rounded-lg p-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Not yet notified</span>
+                    <Badge variant="destructive">
+                      {notifications.notNotifiedCount}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>Already notified</span>
+                    <span className="font-medium">{notifications.notifiedCount}</span>
+                  </div>
                 </div>
 
                 <Collapsible
@@ -166,7 +212,7 @@ export function ComplianceAlerts({ suppliers }: ComplianceAlertsProps) {
                   onOpenChange={setNotificationsOpen}
                 >
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                    <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-foreground">
                       {notificationsOpen ? (
                         <ChevronDown className="h-4 w-4 mr-2" />
                       ) : (
@@ -175,22 +221,24 @@ export function ComplianceAlerts({ suppliers }: ComplianceAlertsProps) {
                       View pending notifications
                     </Button>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-1 mt-2">
-                    {notifications.pendingNotifications.map((item) => (
-                      <div
-                        key={item.referenceNumber}
-                        className="text-xs pl-6 py-1 flex items-center justify-between"
-                      >
-                        <span className="text-muted-foreground">
-                          {item.referenceNumber} - {item.providerName}
-                        </span>
-                        {item.isNonCompliant && (
-                          <Badge variant="destructive" className="text-xs">
-                            Active
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
+                  <CollapsibleContent className="mt-2">
+                    <div className="space-y-1 pl-2 border-l-2 border-muted ml-2">
+                      {notifications.pendingNotifications.map((item) => (
+                        <div
+                          key={item.referenceNumber}
+                          className="text-xs py-1.5 px-2 flex items-center justify-between text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <span>
+                            <span className="font-medium">{item.referenceNumber}</span> — {item.providerName}
+                          </span>
+                          {item.isNonCompliant && (
+                            <Badge variant="destructive" className="text-xs h-5">
+                              Active
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </CollapsibleContent>
                 </Collapsible>
               </>

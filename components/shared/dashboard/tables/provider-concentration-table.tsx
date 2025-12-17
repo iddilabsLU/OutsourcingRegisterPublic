@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { AlertTriangle, Building2 } from "lucide-react"
+import { AlertTriangle, Building2, CheckCircle2 } from "lucide-react"
 import type { SupplierOutsourcing } from "@/lib/types/supplier"
 import { getProviderConcentration } from "@/lib/utils/dashboard-analytics"
 
@@ -36,14 +36,18 @@ export function ProviderConcentrationTable({ suppliers }: ProviderConcentrationT
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Building2 className="h-5 w-5 text-primary" />
-          Provider Concentration
-        </CardTitle>
-        <CardDescription>
-          Providers with multiple outsourcing arrangements
-        </CardDescription>
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Building2 className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Provider Concentration</CardTitle>
+            <CardDescription className="text-xs mt-0.5">
+              Providers with multiple outsourcing arrangements
+            </CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Warning Banner */}
@@ -63,8 +67,9 @@ export function ProviderConcentrationTable({ suppliers }: ProviderConcentrationT
 
         {/* Table */}
         {data.length === 0 ? (
-          <div className="text-sm text-muted-foreground text-center py-8">
-            No providers with multiple arrangements
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-3">
+            <CheckCircle2 className="h-10 w-10 text-emerald-500/50" />
+            <p className="text-sm">No concentration risk detected</p>
           </div>
         ) : (
           <div className="rounded-md border">

@@ -27,18 +27,23 @@ export function PendingNotificationsList({ suppliers }: PendingNotificationsList
   if (status.total === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-primary" />
-            Regulatory Notification Tracker
-          </CardTitle>
-          <CardDescription>
-            CSSF notification status for critical suppliers (Point 55.l)
-          </CardDescription>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Bell className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Regulatory Notifications</CardTitle>
+              <CardDescription className="text-xs mt-0.5">
+                CSSF notification status for critical suppliers
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-muted-foreground text-center py-8">
-            No critical suppliers
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-3">
+            <Bell className="h-10 w-10 text-muted-foreground/50" />
+            <p className="text-sm">No critical suppliers</p>
           </div>
         </CardContent>
       </Card>
@@ -55,14 +60,23 @@ export function PendingNotificationsList({ suppliers }: PendingNotificationsList
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bell className="h-5 w-5 text-primary" />
-          Regulatory Notification Tracker
-        </CardTitle>
-        <CardDescription>
-          CSSF notification status for critical suppliers (Point 55.l)
-        </CardDescription>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Bell className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Regulatory Notifications</CardTitle>
+              <CardDescription className="text-xs mt-0.5">
+                CSSF notification status for critical suppliers
+              </CardDescription>
+            </div>
+          </div>
+          <Badge variant="outline" className="text-xs text-muted-foreground">
+            Point 55.l
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Summary Metrics */}

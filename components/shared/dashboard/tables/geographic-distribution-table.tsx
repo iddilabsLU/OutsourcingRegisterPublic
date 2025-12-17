@@ -62,16 +62,20 @@ export function GeographicDistributionTable({ suppliers }: GeographicDistributio
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Globe2 className="h-5 w-5 text-primary" />
-          Geographic Distribution
-        </CardTitle>
-        <CardDescription>
-          Data location countries and service performance jurisdictions (Point 54.f)
-        </CardDescription>
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Globe2 className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Geographic Distribution</CardTitle>
+            <CardDescription className="text-xs mt-0.5">
+              Data location and service performance jurisdictions
+            </CardDescription>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-5">
         {/* ============================================================================
             DATA LOCATION COUNTRIES SECTION
             ============================================================================ */}
