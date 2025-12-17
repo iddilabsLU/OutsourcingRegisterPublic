@@ -44,7 +44,7 @@ npm run lint               # Lint
 
 ---
 
-## ✅ Current Status (Updated: 2025-12-12)
+## ✅ Current Status (Updated: 2025-12-17)
 
 **Desktop Application - FULLY FUNCTIONAL**
 
@@ -53,17 +53,19 @@ npm run lint               # Lint
 - Add/Edit/Delete/Duplicate suppliers
 - SQLite persistence
 - Dashboard analytics (7 indicators)
-- Reporting tab (auto-generated change log + manual event add/edit/delete + issue tracker with lifecycle/due dates and follow-ups; filters include 30/90/all/custom range)
-- Export to Excel (compact/full) & PDF (compact)
+- Reporting tab with 3 sections:
+  - Auto-generated change log with manual event add/edit/delete
+  - Issue tracker with categories, lifecycle, due dates, follow-ups
+  - Critical Outsourcing Monitor for critical active suppliers (inline editing, filters, Excel export)
+- Export to Excel (compact/full, events, issues, critical monitor) & PDF (compact)
 - Pending fields + validation layers
 - Desktop packaging: installer generated via `npm run electron:build`
 
 ### Recent Changes
-- Reporting tab added (period filter, change log from supplier updates, issue lifecycle controls)
-- New SQLite tables (`events`, `issues`) via migration; event-builder diff skips pending fields
-- Windows installer & unpacked build (`release/Supplier Outsourcing Register Setup 0.1.0.exe`, `release/win-unpacked/`)
-- Static export served inside Electron with fallback show logic
-- Desktop-only architecture and SQLite integration
+- Critical Outsourcing Monitor (new section in Reporting tab: tracks critical active suppliers with inline editing, provider/category filters, Excel export)
+- Issue category field added to issue tracker (enables better organization and filtering)
+- Excel export for events, issues, and critical monitor data
+- New SQLite table `critical_monitor` with 4 user-input fields (contract, suitability assessment, audit reports, CO & RO assessment)
 
 ---
 
@@ -122,4 +124,4 @@ Artifacts: `release/Supplier Outsourcing Register Setup 0.1.0.exe`, `release/win
 
 ---
 
-**Created with Claude Code** | Last Updated: 2025-12-09
+**Created with Claude Code** | Last Updated: 2025-12-17

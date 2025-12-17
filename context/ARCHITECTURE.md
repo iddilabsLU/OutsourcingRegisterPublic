@@ -153,8 +153,12 @@ app/page.tsx (Main Supplier Register Page)
         ├── Summary Cards (events count, open issues, closed in period, risk changes)
         ├── Events List (change log derived from supplier updates, pending-safe) + manual add/edit/delete
         ├── Filters (30/90/all + custom date range + text search across events/issues)
-        ├── Issue Composer (title/description/status/severity/owner/dates + optional initial follow-up)
-        └── Issues List (status updates, edit, delete, follow-up history + add follow-up, lifecycle dates)
+        ├── Issue Composer (title/description/category/status/severity/owner/dates + optional initial follow-up)
+        ├── Issues List (status updates, edit, delete, follow-up history + add follow-up, lifecycle dates)
+        └── Critical Monitor Section
+            ├── Provider & Category Filters
+            ├── Critical Suppliers Table (12 columns, inline editing for 4 fields)
+            └── Export to Excel Button
 ```
 
 ### Reusable Components
@@ -301,7 +305,7 @@ Dashboard Components (receive calculated data)
 - Respects active filters (uses filteredSuppliers from page)
 - CSSF compliance checks (Points 54.i, 55.c, 55.f, 55.l)
 
-### Reporting Flow (Events + Issues)
+### Reporting Flow (Events + Issues + Critical Monitor)
 
 ```
 Supplier add/update (renderer)
@@ -314,24 +318,35 @@ Event builder (electron/database/event-builder.ts)
   - Emits events for status, risk, criticality flag/assessment date, last risk assessment, notification date, start/renewal/end dates, and new supplier creation
       ↓
 Events table (SQLite, migration migrate-add-events-issues)
-Issues table (SQLite, manual CRUD; follow_ups stored as JSON)
+Issues table (SQLite, manual CRUD; follow_ups + category stored as JSON)
+Critical Monitor table (SQLite, migration migrate-add-critical-monitor)
+  - Stores 4 user-input fields: contract, suitability assessment date, audit reports, CO & RO assessment date
+  - Linked to supplier via reference number
       ↓
 useReporting hook (hooks/use-reporting.ts)
-  - window.electronAPI.getEvents/getIssues
+  - window.electronAPI.getEvents/getIssues/getCriticalMonitorRecords
   - addEvent/updateEvent/deleteEvent
-  - addIssue/updateIssue/deleteIssue (with follow-ups)
+  - addIssue/updateIssue/deleteIssue (with follow-ups and category)
+  - upsertCriticalMonitorRecord/deleteCriticalMonitorRecord
       ↓
 ReportingView (components/shared/reporting/reporting-view.tsx)
   - Period filter (30/90/all/custom range) + search
   - KPI cards (events, open issues, closed-in-period, risk changes)
   - Event list (pending-safe change log) + manual add/edit/delete
-  - Issue composer + lifecycle controls (status updates, edit, delete, due dates) + follow-up add/view
+  - Issue composer + lifecycle controls (status updates, edit, delete, due dates, categories) + follow-up add/view
+  - Critical Monitor section:
+    - Shows critical active suppliers with filled Provider Name and Category (no pending)
+    - Combines supplier data (read-only) + user-input fields (inline editable)
+    - Filters: provider name, category (Cloud/Services/All)
+    - Inline editing: contract, suitability assessment date, audit reports, CO & RO assessment date
+    - Excel export
 ```
 
 **Key Points:**
 - No duplicate data entry: events derive from supplier data; issues optionally reference supplier/function names without ref numbers.
 - Pending fields suppress event generation (e.g., pending start date change will not create an event).
-- New tables: `events` and `issues` (with `follow_ups`) created via migration; auto-created at app startup.
+- New tables: `events`, `issues` (with `follow_ups` and `category`), and `critical_monitor` created via migrations; auto-created at app startup.
+- Critical Monitor: combines supplier data (from main suppliers table) with user-input tracking fields (from critical_monitor table).
 
 ---
 
@@ -438,7 +453,7 @@ ReportingView (components/shared/reporting/reporting-view.tsx)
 
 | File | Purpose | Lines |
 |------|---------|-------|
-| `reporting/reporting-view.tsx` | Reporting tab with period filter, change log, KPI cards, and issue lifecycle controls | ~200 |
+| `reporting/reporting-view.tsx` | Reporting tab with 3 sections: event log, issue tracker (categories/follow-ups), and Critical Monitor (critical active suppliers, inline editing, filters, export) | ~1935 |
 
 ### `/lib` - Business Logic & Types
 
@@ -449,7 +464,7 @@ ReportingView (components/shared/reporting/reporting-view.tsx)
 | `supplier.ts` | CSSF-compliant supplier types (SupplierOutsourcing, enums) |
 | `filters.ts` | Filter field types, CustomFilter interface |
 | `dashboard.ts` | Dashboard analytics type definitions (7 indicator types) |
-| `reporting.ts` | EventLog/EventType + IssueRecord/IssueStatus types for reporting tab |
+| `reporting.ts` | EventLog/EventType + IssueRecord/IssueStatus + CriticalMonitorRecord/CriticalMonitorView types for reporting tab |
 
 **Key Type:** `SupplierOutsourcing`
 ```typescript
@@ -899,5 +914,5 @@ If managing 100+ suppliers:
 
 ---
 
-**Last Updated:** 2025-10-25
+**Last Updated:** 2025-12-17
 **Related Files:** VALIDATION.md, ROADMAP.md, supplier.ts, check-completeness.ts

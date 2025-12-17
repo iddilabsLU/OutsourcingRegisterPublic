@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { SupplierOutsourcing } from '../lib/types/supplier'
-import type { EventLog, IssueRecord } from '../lib/types/reporting'
+import type { EventLog, IssueRecord, CriticalMonitorRecord } from '../lib/types/reporting'
 
 /**
  * Preload script - Exposes safe Electron APIs to the renderer process
@@ -36,6 +36,11 @@ export interface ElectronAPI {
   updateIssue: (issue: IssueRecord) => Promise<void>
   deleteIssue: (id: number) => Promise<void>
 
+  // Critical Monitor
+  getCriticalMonitorRecords: () => Promise<CriticalMonitorRecord[]>
+  upsertCriticalMonitorRecord: (record: CriticalMonitorRecord) => Promise<number>
+  deleteCriticalMonitorRecord: (supplierReferenceNumber: string) => Promise<void>
+
   // Backup/restore operations (to be implemented later)
   // backupDatabase: (path: string) => Promise<{ success: boolean; path: string }>
   // restoreDatabase: (path: string) => Promise<{ success: boolean }>
@@ -68,6 +73,11 @@ const electronAPI: ElectronAPI = {
   addIssue: (issue: IssueRecord) => ipcRenderer.invoke('issues:add', issue),
   updateIssue: (issue: IssueRecord) => ipcRenderer.invoke('issues:update', issue),
   deleteIssue: (id: number) => ipcRenderer.invoke('issues:delete', id),
+
+  // Critical Monitor
+  getCriticalMonitorRecords: () => ipcRenderer.invoke('criticalMonitor:get'),
+  upsertCriticalMonitorRecord: (record: CriticalMonitorRecord) => ipcRenderer.invoke('criticalMonitor:upsert', record),
+  deleteCriticalMonitorRecord: (supplierReferenceNumber: string) => ipcRenderer.invoke('criticalMonitor:delete', supplierReferenceNumber),
 }
 
 // Expose the API to the renderer process

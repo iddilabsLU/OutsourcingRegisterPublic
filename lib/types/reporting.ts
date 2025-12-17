@@ -48,3 +48,27 @@ export interface IssueRecord {
   followUps?: IssueFollowUp[]
   createdAt?: string
 }
+
+// Critical Outsourcing Monitor - user-input fields stored separately
+export interface CriticalMonitorRecord {
+  id?: number
+  supplierReferenceNumber: string
+  contract?: string
+  suitabilityAssessmentDate?: string
+  auditReports?: string
+  coRoAssessmentDate?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+// Combined view with supplier data + user-input fields
+export interface CriticalMonitorView extends CriticalMonitorRecord {
+  providerName: string
+  functionName: string
+  category: string
+  criticalityAssessmentDate?: string
+  riskAssessment?: string
+  lastAuditDate?: string
+  cloudOfficer?: string
+  resourceOperator?: string
+}

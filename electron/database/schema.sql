@@ -188,3 +188,28 @@ CREATE TABLE IF NOT EXISTS schema_version (
 
 -- Insert initial schema version
 INSERT OR IGNORE INTO schema_version (version) VALUES (1);
+
+-- ============================================================================
+-- CRITICAL OUTSOURCING MONITOR TABLE
+-- Stores user-input fields for critical active suppliers
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS critical_monitor (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  supplier_reference_number TEXT NOT NULL UNIQUE,
+  contract TEXT,
+  suitability_assessment_date TEXT,
+  audit_reports TEXT,
+  co_ro_assessment_date TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (supplier_reference_number) REFERENCES suppliers(reference_number) ON DELETE CASCADE
+);
+
+-- Trigger to auto-update updated_at timestamp for critical_monitor
+CREATE TRIGGER IF NOT EXISTS update_critical_monitor_timestamp
+AFTER UPDATE ON critical_monitor
+FOR EACH ROW
+BEGIN
+  UPDATE critical_monitor SET updated_at = datetime('now') WHERE id = NEW.id;
+END;

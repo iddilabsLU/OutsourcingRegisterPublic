@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useReporting } from "@/hooks/use-reporting"
-import type { EventLog, IssueRecord, IssueStatus } from "@/lib/types/reporting"
+import { useDatabase } from "@/hooks/use-database"
+import type { EventLog, IssueRecord, IssueStatus, CriticalMonitorRecord, CriticalMonitorView } from "@/lib/types/reporting"
 import { cn } from "@/lib/utils/cn"
-import { exportEventsToExcel, exportIssuesToExcel } from "@/lib/utils/export-reporting"
+import { exportEventsToExcel, exportIssuesToExcel, exportCriticalMonitorToExcel } from "@/lib/utils/export-reporting"
 import { toast } from "sonner"
 import {
   CalendarClock,
@@ -28,6 +30,7 @@ import {
   Download,
   XCircle,
   FolderOpen,
+  Shield,
 } from "lucide-react"
 import {
   Tooltip,
@@ -142,10 +145,16 @@ const withinCustomRange = (dateStr: string, start?: string, end?: string): boole
   return true
 }
 
+const ALL_PROVIDERS = "__all__"
+const CATEGORY_ALL = "all"
+const CATEGORY_CLOUD = "cloud"
+const CATEGORY_SERVICES = "services"
+
 export function ReportingView() {
   const {
     events,
     issues,
+    criticalMonitorRecords,
     isLoading,
     error,
     addEvent,
@@ -154,7 +163,9 @@ export function ReportingView() {
     addIssue,
     updateIssue,
     deleteIssue,
+    upsertCriticalMonitorRecord,
   } = useReporting()
+  const { suppliers } = useDatabase()
   const [period, setPeriod] = useState<PeriodKey>("last30")
   const [searchTerm, setSearchTerm] = useState("")
   const [rangeStart, setRangeStart] = useState("")
@@ -171,12 +182,80 @@ export function ReportingView() {
   const [isAddingCategory, setIsAddingCategory] = useState(false)
   const [newCategoryInput, setNewCategoryInput] = useState("")
 
+  // Critical Monitor state
+  const [cmProviderFilter, setCmProviderFilter] = useState<string>("")
+  const [cmCategoryFilter, setCmCategoryFilter] = useState<string>(CATEGORY_ALL)
+  const [editingCmCell, setEditingCmCell] = useState<{ refNum: string; field: keyof CriticalMonitorRecord } | null>(null)
+  const [editingCmValue, setEditingCmValue] = useState<string>("")
+
   const allCategories = useMemo(() => {
     // Combine default + custom + any categories from existing issues
     const fromIssues = issues.map((i) => i.category).filter((c) => c && c.trim())
     const combined = new Set([...DEFAULT_ISSUE_CATEGORIES, ...customCategories, ...fromIssues])
     return Array.from(combined).sort()
   }, [issues, customCategories])
+
+  // Critical Outsourcing Monitor - computed values
+  // Only include suppliers that are critical, active, AND have required fields filled (not pending)
+  const criticalActiveSuppliers = useMemo(() => {
+    return suppliers.filter((s) => {
+      // Must be critical and active
+      if (!s.criticality?.isCritical || s.status !== "Active") return false
+      // Must have provider name (not empty/pending)
+      const providerName = s.serviceProvider?.name?.trim()
+      if (!providerName) return false
+      // Must have category (not empty/pending)
+      const category = s.category?.trim()
+      if (!category) return false
+      return true
+    })
+  }, [suppliers])
+
+  const criticalMonitorView = useMemo((): CriticalMonitorView[] => {
+    const monitorMap = new Map(criticalMonitorRecords.map((r) => [r.supplierReferenceNumber, r]))
+
+    return criticalActiveSuppliers.map((supplier) => {
+      const record = monitorMap.get(supplier.referenceNumber)
+      const criticalFields = supplier.criticalFields
+
+      return {
+        id: record?.id,
+        supplierReferenceNumber: supplier.referenceNumber,
+        providerName: supplier.serviceProvider?.name ?? "",
+        functionName: supplier.functionDescription?.name ?? "",
+        category: supplier.category ?? "",
+        contract: record?.contract,
+        criticalityAssessmentDate: supplier.criticalityAssessmentDate,
+        suitabilityAssessmentDate: record?.suitabilityAssessmentDate,
+        riskAssessment: criticalFields?.riskAssessment?.lastAssessmentDate,
+        auditReports: record?.auditReports,
+        lastAuditDate: criticalFields?.audit?.lastAuditDate,
+        cloudOfficer: supplier.cloudService?.cloudOfficer,
+        resourceOperator: supplier.cloudService?.resourceOperator,
+        coRoAssessmentDate: record?.coRoAssessmentDate,
+        createdAt: record?.createdAt,
+        updatedAt: record?.updatedAt,
+      }
+    })
+  }, [criticalActiveSuppliers, criticalMonitorRecords])
+
+  const filteredCriticalMonitor = useMemo(() => {
+    return criticalMonitorView.filter((item) => {
+      // Provider filter
+      if (cmProviderFilter && item.providerName !== cmProviderFilter) return false
+      // Category filter (Cloud vs Services)
+      if (cmCategoryFilter === CATEGORY_CLOUD && item.category !== "Cloud") return false
+      if (cmCategoryFilter === CATEGORY_SERVICES && item.category === "Cloud") return false
+      return true
+    })
+  }, [criticalMonitorView, cmProviderFilter, cmCategoryFilter])
+
+  const uniqueProviders = useMemo(() => {
+    // Filter out any empty provider names to prevent Select.Item errors
+    return Array.from(new Set(criticalMonitorView.map((item) => item.providerName)))
+      .filter((name) => name && name.trim())
+      .sort()
+  }, [criticalMonitorView])
 
   const toggleStatusFilter = (status: IssueStatus) => {
     setIssueStatusFilters((prev) => {
@@ -504,6 +583,56 @@ export function ReportingView() {
       dateClosed: closedDate,
       followUps: issue.followUps,
     })
+  }
+
+  // Critical Monitor handlers
+  const startEditCmCell = (refNum: string, field: keyof CriticalMonitorRecord, currentValue?: string) => {
+    setEditingCmCell({ refNum, field })
+    setEditingCmValue(currentValue ?? "")
+  }
+
+  const cancelEditCmCell = () => {
+    setEditingCmCell(null)
+    setEditingCmValue("")
+  }
+
+  const saveCmCell = async () => {
+    if (!editingCmCell) return
+
+    const existing = criticalMonitorRecords.find((r) => r.supplierReferenceNumber === editingCmCell.refNum)
+    const record: CriticalMonitorRecord = {
+      ...existing,
+      supplierReferenceNumber: editingCmCell.refNum,
+      [editingCmCell.field]: editingCmValue.trim() || undefined,
+    }
+
+    try {
+      await upsertCriticalMonitorRecord(record)
+      toast.success("Saved", { description: "Critical monitor record updated" })
+    } catch (err) {
+      console.error("Failed to save critical monitor record:", err)
+      toast.error("Save failed", { description: "Could not update the record" })
+    } finally {
+      setEditingCmCell(null)
+      setEditingCmValue("")
+    }
+  }
+
+  const handleExportCriticalMonitor = () => {
+    const data = filteredCriticalMonitor
+    if (!data.length) {
+      toast.error("Nothing to export", { description: "No critical outsourcing records match the current filters." })
+      return
+    }
+
+    try {
+      const scopeLabel = cmCategoryFilter === CATEGORY_ALL ? "all" : cmCategoryFilter
+      exportCriticalMonitorToExcel(data, scopeLabel)
+      toast.success("Exported", { description: `Exported ${data.length} critical outsourcing record(s) to Excel` })
+    } catch (err) {
+      console.error("Critical monitor export failed:", err)
+      toast.error("Export failed", { description: "An error occurred while generating the Excel file." })
+    }
   }
 
   const summaryCards = [
@@ -1560,6 +1689,247 @@ export function ReportingView() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Critical Outsourcing Monitor Section */}
+      <Card>
+        <CardHeader className="space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              Critical Outsourcing Monitor
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {filteredCriticalMonitor.length} of {criticalMonitorView.length} critical supplier(s)
+              </span>
+              <Button variant="outline" size="sm" onClick={handleExportCriticalMonitor} className="gap-2">
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Summary of critical active outsourcing arrangements. Fields marked with * can be edited directly.
+          </p>
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-medium whitespace-nowrap">Provider:</Label>
+              <Select
+                value={cmProviderFilter || ALL_PROVIDERS}
+                onValueChange={(val) => setCmProviderFilter(val === ALL_PROVIDERS ? "" : val)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Providers" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_PROVIDERS}>All Providers</SelectItem>
+                  {uniqueProviders.map((provider) => (
+                    <SelectItem key={provider} value={provider}>
+                      {provider}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-medium whitespace-nowrap">Category:</Label>
+              <Select value={cmCategoryFilter} onValueChange={setCmCategoryFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={CATEGORY_ALL}>All</SelectItem>
+                  <SelectItem value={CATEGORY_CLOUD}>Cloud</SelectItem>
+                  <SelectItem value={CATEGORY_SERVICES}>Services</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {(cmProviderFilter || cmCategoryFilter !== CATEGORY_ALL) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground"
+                onClick={() => {
+                  setCmProviderFilter("")
+                  setCmCategoryFilter(CATEGORY_ALL)
+                }}
+              >
+                Clear filters
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {criticalMonitorView.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Shield className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p>No critical active suppliers found.</p>
+              <p className="text-sm">Suppliers must be marked as Critical, have Active status, and have Provider Name and Category filled in (no pending fields).</p>
+            </div>
+          ) : filteredCriticalMonitor.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No suppliers match the current filters.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[150px]">Provider Name</TableHead>
+                    <TableHead className="min-w-[150px]">Function Name</TableHead>
+                    <TableHead className="min-w-[90px]">Category</TableHead>
+                    <TableHead className="min-w-[150px]">Contract *</TableHead>
+                    <TableHead className="min-w-[130px]">Criticality Assessment</TableHead>
+                    <TableHead className="min-w-[130px]">Suitability Assessment *</TableHead>
+                    <TableHead className="min-w-[130px]">Risk Assessment Date</TableHead>
+                    <TableHead className="min-w-[180px]">Audit Reports *</TableHead>
+                    <TableHead className="min-w-[110px]">Last Audit</TableHead>
+                    <TableHead className="min-w-[120px]">Cloud Officer</TableHead>
+                    <TableHead className="min-w-[130px]">Resource Operator</TableHead>
+                    <TableHead className="min-w-[130px]">CO & RO Assessment *</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCriticalMonitor.map((item) => (
+                    <TableRow key={item.supplierReferenceNumber}>
+                      <TableCell className="font-medium">{item.providerName || "—"}</TableCell>
+                      <TableCell>{item.functionName || "—"}</TableCell>
+                      <TableCell>
+                        <Badge variant={item.category === "Cloud" ? "default" : "secondary"}>
+                          {item.category === "Cloud" ? "Cloud" : "Services"}
+                        </Badge>
+                      </TableCell>
+                      {/* Contract - Editable */}
+                      <TableCell
+                        className={cn(
+                          "cursor-pointer hover:bg-muted/50 transition-colors",
+                          editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "contract" && "bg-muted"
+                        )}
+                        onClick={() => {
+                          if (editingCmCell?.refNum !== item.supplierReferenceNumber || editingCmCell?.field !== "contract") {
+                            startEditCmCell(item.supplierReferenceNumber, "contract", item.contract)
+                          }
+                        }}
+                      >
+                        {editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "contract" ? (
+                          <Input
+                            autoFocus
+                            value={editingCmValue}
+                            onChange={(e) => setEditingCmValue(e.target.value)}
+                            onBlur={saveCmCell}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveCmCell()
+                              if (e.key === "Escape") cancelEditCmCell()
+                            }}
+                            className="h-8"
+                          />
+                        ) : (
+                          <span className={cn(!item.contract && "text-muted-foreground")}>{item.contract || "—"}</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{formatDate(item.criticalityAssessmentDate)}</TableCell>
+                      {/* Suitability Assessment - Editable Date */}
+                      <TableCell
+                        className={cn(
+                          "cursor-pointer hover:bg-muted/50 transition-colors",
+                          editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "suitabilityAssessmentDate" && "bg-muted"
+                        )}
+                        onClick={() => {
+                          if (editingCmCell?.refNum !== item.supplierReferenceNumber || editingCmCell?.field !== "suitabilityAssessmentDate") {
+                            startEditCmCell(item.supplierReferenceNumber, "suitabilityAssessmentDate", toInputDateValue(item.suitabilityAssessmentDate))
+                          }
+                        }}
+                      >
+                        {editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "suitabilityAssessmentDate" ? (
+                          <Input
+                            type="date"
+                            autoFocus
+                            value={editingCmValue}
+                            onChange={(e) => setEditingCmValue(e.target.value)}
+                            onBlur={saveCmCell}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveCmCell()
+                              if (e.key === "Escape") cancelEditCmCell()
+                            }}
+                            className="h-8"
+                          />
+                        ) : (
+                          <span className={cn(!item.suitabilityAssessmentDate && "text-muted-foreground")}>
+                            {formatDate(item.suitabilityAssessmentDate)}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>{formatDate(item.riskAssessment)}</TableCell>
+                      {/* Audit Reports - Editable */}
+                      <TableCell
+                        className={cn(
+                          "cursor-pointer hover:bg-muted/50 transition-colors",
+                          editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "auditReports" && "bg-muted"
+                        )}
+                        onClick={() => {
+                          if (editingCmCell?.refNum !== item.supplierReferenceNumber || editingCmCell?.field !== "auditReports") {
+                            startEditCmCell(item.supplierReferenceNumber, "auditReports", item.auditReports)
+                          }
+                        }}
+                      >
+                        {editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "auditReports" ? (
+                          <Input
+                            autoFocus
+                            value={editingCmValue}
+                            onChange={(e) => setEditingCmValue(e.target.value)}
+                            onBlur={saveCmCell}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveCmCell()
+                              if (e.key === "Escape") cancelEditCmCell()
+                            }}
+                            className="h-8"
+                          />
+                        ) : (
+                          <span className={cn(!item.auditReports && "text-muted-foreground")}>{item.auditReports || "—"}</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{formatDate(item.lastAuditDate)}</TableCell>
+                      <TableCell>{item.cloudOfficer || <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell>{item.resourceOperator || <span className="text-muted-foreground">—</span>}</TableCell>
+                      {/* CO & RO Assessment - Editable Date */}
+                      <TableCell
+                        className={cn(
+                          "cursor-pointer hover:bg-muted/50 transition-colors",
+                          editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "coRoAssessmentDate" && "bg-muted"
+                        )}
+                        onClick={() => {
+                          if (editingCmCell?.refNum !== item.supplierReferenceNumber || editingCmCell?.field !== "coRoAssessmentDate") {
+                            startEditCmCell(item.supplierReferenceNumber, "coRoAssessmentDate", toInputDateValue(item.coRoAssessmentDate))
+                          }
+                        }}
+                      >
+                        {editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "coRoAssessmentDate" ? (
+                          <Input
+                            type="date"
+                            autoFocus
+                            value={editingCmValue}
+                            onChange={(e) => setEditingCmValue(e.target.value)}
+                            onBlur={saveCmCell}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveCmCell()
+                              if (e.key === "Escape") cancelEditCmCell()
+                            }}
+                            className="h-8"
+                          />
+                        ) : (
+                          <span className={cn(!item.coRoAssessmentDate && "text-muted-foreground")}>
+                            {formatDate(item.coRoAssessmentDate)}
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

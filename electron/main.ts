@@ -14,10 +14,15 @@ import {
 } from './database/suppliers'
 import { addEvents, getEvents, addEvent, updateEvent, deleteEvent } from './database/events'
 import { addIssue, updateIssue, deleteIssue, getIssues } from './database/issues'
+import {
+  getCriticalMonitorRecords,
+  upsertCriticalMonitorRecord,
+  deleteCriticalMonitorRecord,
+} from './database/critical-monitor'
 import { buildSupplierEvents } from './database/event-builder'
 import { seedDatabase } from './database/seed'
 import type { SupplierOutsourcing } from '../lib/types/supplier'
-import type { EventLog, IssueRecord } from '../lib/types/reporting'
+import type { EventLog, IssueRecord, CriticalMonitorRecord } from '../lib/types/reporting'
 
 // __dirname is available in CommonJS (which we're compiling to)
 
@@ -316,6 +321,34 @@ ipcMain.handle('issues:delete', async (_event, id: number): Promise<void> => {
     deleteIssue(id)
   } catch (error) {
     console.error('❌ Error deleting issue:', error)
+    throw error
+  }
+})
+
+// Critical Monitor - reporting
+ipcMain.handle('criticalMonitor:get', async (): Promise<CriticalMonitorRecord[]> => {
+  try {
+    return getCriticalMonitorRecords()
+  } catch (error) {
+    console.error('❌ Error getting critical monitor records:', error)
+    throw error
+  }
+})
+
+ipcMain.handle('criticalMonitor:upsert', async (_event, record: CriticalMonitorRecord): Promise<number> => {
+  try {
+    return upsertCriticalMonitorRecord(record)
+  } catch (error) {
+    console.error('❌ Error upserting critical monitor record:', error)
+    throw error
+  }
+})
+
+ipcMain.handle('criticalMonitor:delete', async (_event, supplierReferenceNumber: string): Promise<void> => {
+  try {
+    deleteCriticalMonitorRecord(supplierReferenceNumber)
+  } catch (error) {
+    console.error('❌ Error deleting critical monitor record:', error)
     throw error
   }
 })

@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx"
-import type { EventLog, IssueRecord } from "@/lib/types/reporting"
+import type { EventLog, IssueRecord, CriticalMonitorView } from "@/lib/types/reporting"
 
 const formatDate = (value?: string | null) => {
   if (!value) return ""
@@ -23,7 +23,7 @@ const formatFollowUps = (followUps?: IssueRecord["followUps"]) => {
     .join("\n")
 }
 
-const buildFilename = (kind: "events" | "issues", scope: "all" | "filtered") => {
+const buildFilename = (kind: "events" | "issues" | "critical-monitor", scope: string) => {
   const today = new Date()
   const yyyy = today.getFullYear()
   const mm = String(today.getMonth() + 1).padStart(2, "0")
@@ -113,4 +113,44 @@ export const exportIssuesToExcel = (issues: IssueRecord[], scope: "all" | "filte
   const workbook = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(workbook, worksheet, "Issues")
   XLSX.writeFile(workbook, buildFilename("issues", scope))
+}
+
+export const exportCriticalMonitorToExcel = (
+  data: CriticalMonitorView[],
+  scope: string = "all"
+) => {
+  const headers = [
+    "Provider Name",
+    "Function Name",
+    "Category",
+    "Contract",
+    "Criticality Assessment Date",
+    "Suitability Assessment",
+    "Risk Assessment Date",
+    "Audit Reports",
+    "Last Audit Date",
+    "Cloud Officer (CO)",
+    "Resource Operator (RO)",
+    "CO & RO Assessment",
+  ]
+  const widths = [25, 25, 15, 30, 22, 20, 20, 35, 16, 20, 20, 20]
+  const rows = data.map((item) => ({
+    "Provider Name": item.providerName ?? "",
+    "Function Name": item.functionName ?? "",
+    "Category": item.category ?? "",
+    "Contract": item.contract ?? "",
+    "Criticality Assessment Date": formatDate(item.criticalityAssessmentDate),
+    "Suitability Assessment": formatDate(item.suitabilityAssessmentDate),
+    "Risk Assessment Date": formatDate(item.riskAssessment),
+    "Audit Reports": item.auditReports ?? "",
+    "Last Audit Date": formatDate(item.lastAuditDate),
+    "Cloud Officer (CO)": item.cloudOfficer ?? "",
+    "Resource Operator (RO)": item.resourceOperator ?? "",
+    "CO & RO Assessment": formatDate(item.coRoAssessmentDate),
+  }))
+
+  const worksheet = createSheet(rows, headers, widths)
+  const workbook = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Critical Monitor")
+  XLSX.writeFile(workbook, buildFilename("critical-monitor", scope))
 }

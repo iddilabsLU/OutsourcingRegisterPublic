@@ -80,14 +80,17 @@ All Phase 1 features have been implemented and are working correctly.
 - Event log auto-generated from supplier updates (status, risk, criticality flag/assessment date, last risk assessment date, notification date, start/renewal/end dates, supplier creation)
 - Pending fields are respected (pending items do not create events)
 - Manual event add/edit/delete
-- Issue tracker with status/severity/owner/due date plus optional supplier/function tags; status updates, edit, delete, and follow-ups supported
+- Issue tracker with category/status/severity/owner/due date plus optional supplier/function tags; status updates, edit, delete, and follow-ups supported
+- Critical Outsourcing Monitor: displays critical active suppliers with inline editing for 4 user-input fields (contract, suitability assessment date, audit reports, CO & RO assessment date); includes provider and category filters; Excel export
 
 **Technical Implementation:**
-- New SQLite tables: `events`, `issues` (migration `migrate-add-events-issues.ts`)
-- Added follow-ups column via migration; stored as JSON
+- New SQLite tables: `events`, `issues` (migration `migrate-add-events-issues.ts`), `critical_monitor` (migration `migrate-add-critical-monitor.ts`)
+- Added follow-ups and category columns via migrations; stored as JSON
 - Event builder in Electron main process to diff supplier changes (`electron/database/event-builder.ts`), invoked on add/update supplier
-- IPC + preload surface event/issue CRUD; renderer hook `use-reporting` fetches data
-- UI: `components/shared/reporting/reporting-view.tsx` with period filter (including custom range), search, lists, manual event logging, follow-ups, and quick issue composer
+- Critical Monitor CRUD operations in `electron/database/critical-monitor.ts`
+- IPC + preload surface event/issue/critical monitor CRUD; renderer hook `use-reporting` fetches data
+- UI: `components/shared/reporting/reporting-view.tsx` with period filter (including custom range), search, lists, manual event logging, follow-ups, issue composer, and Critical Monitor section
+- Excel export functions: `exportEventsToExcel()`, `exportIssuesToExcel()`, `exportCriticalMonitorToExcel()` in `lib/utils/export-reporting.ts`
 
 **Status:** ✅ Complete
 
@@ -362,7 +365,7 @@ See Phase 2 section above for detailed implementation steps.
 
 ---
 
-**Last Updated:** 2025-12-05
+**Last Updated:** 2025-12-17
 **Phase Status:** Phase 2 - Core Complete ✅
 **Current Priority:** New Features (Step 5: Backup/Restore, Excel Import)
 **Related Files:** CLAUDE.md, OFFLINE_SPEC.md, VALIDATION.md, ARCHITECTURE.md

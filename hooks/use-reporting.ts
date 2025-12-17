@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from "react"
-import type { EventLog, IssueRecord } from "@/lib/types/reporting"
+import type { EventLog, IssueRecord, CriticalMonitorRecord } from "@/lib/types/reporting"
 
 interface UseReportingResult {
   events: EventLog[]
   issues: IssueRecord[]
+  criticalMonitorRecords: CriticalMonitorRecord[]
   isLoading: boolean
   error: string | null
   refresh: () => Promise<void>
@@ -13,11 +14,14 @@ interface UseReportingResult {
   addIssue: (issue: IssueRecord) => Promise<number>
   updateIssue: (issue: IssueRecord) => Promise<void>
   deleteIssue: (id: number) => Promise<void>
+  upsertCriticalMonitorRecord: (record: CriticalMonitorRecord) => Promise<number>
+  deleteCriticalMonitorRecord: (supplierReferenceNumber: string) => Promise<void>
 }
 
 export function useReporting(): UseReportingResult {
   const [events, setEvents] = useState<EventLog[]>([])
   const [issues, setIssues] = useState<IssueRecord[]>([])
+  const [criticalMonitorRecords, setCriticalMonitorRecords] = useState<CriticalMonitorRecord[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -31,12 +35,14 @@ export function useReporting(): UseReportingResult {
     setIsLoading(true)
     setError(null)
     try {
-      const [fetchedEvents, fetchedIssues] = await Promise.all([
+      const [fetchedEvents, fetchedIssues, fetchedCriticalMonitor] = await Promise.all([
         window.electronAPI.getEvents(),
         window.electronAPI.getIssues(),
+        window.electronAPI.getCriticalMonitorRecords(),
       ])
       setEvents(fetchedEvents)
       setIssues(fetchedIssues)
+      setCriticalMonitorRecords(fetchedCriticalMonitor)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load reporting data")
     } finally {
@@ -100,6 +106,25 @@ export function useReporting(): UseReportingResult {
     [refresh]
   )
 
+  const upsertCriticalMonitorRecord = useCallback(
+    async (record: CriticalMonitorRecord) => {
+      if (!window.electronAPI) throw new Error("Electron API unavailable")
+      const id = await window.electronAPI.upsertCriticalMonitorRecord(record)
+      await refresh()
+      return id
+    },
+    [refresh]
+  )
+
+  const deleteCriticalMonitorRecord = useCallback(
+    async (supplierReferenceNumber: string) => {
+      if (!window.electronAPI) throw new Error("Electron API unavailable")
+      await window.electronAPI.deleteCriticalMonitorRecord(supplierReferenceNumber)
+      await refresh()
+    },
+    [refresh]
+  )
+
   useEffect(() => {
     void refresh()
   }, [refresh])
@@ -107,6 +132,7 @@ export function useReporting(): UseReportingResult {
   return {
     events,
     issues,
+    criticalMonitorRecords,
     isLoading,
     error,
     refresh,
@@ -116,5 +142,7 @@ export function useReporting(): UseReportingResult {
     addIssue,
     updateIssue,
     deleteIssue,
+    upsertCriticalMonitorRecord,
+    deleteCriticalMonitorRecord,
   }
 }
