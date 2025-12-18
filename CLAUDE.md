@@ -44,7 +44,7 @@ npm run lint               # Lint
 
 ---
 
-## ✅ Current Status (Updated: 2025-12-17)
+## ✅ Current Status (Updated: 2025-12-18)
 
 **Desktop Application - FULLY FUNCTIONAL**
 
@@ -60,12 +60,24 @@ npm run lint               # Lint
 - Export to Excel (compact/full, events, issues, critical monitor) & PDF (compact)
 - Pending fields + validation layers
 - Desktop packaging: installer generated via `npm run electron:build`
+- Authentication with RBAC, optional, can be enabled/disabled, 3 user roles: Viewer (read only-access), Editor (full edit access), Admin Role (editor + user management).
 
 ### Recent Changes
-- Critical Outsourcing Monitor (new section in Reporting tab: tracks critical active suppliers with inline editing, provider/category filters, Excel export)
-- Issue category field added to issue tracker (enables better organization and filtering)
+- **Authentication System** with Role-Based Access Control (RBAC)
+  - 3 roles: Admin (full access + user management), Editor (edit access), Viewer (read-only)
+  - Settings tab to enable/disable authentication
+  - User management (create, edit, delete users)
+  - Master password recovery for emergency access
+  - "Remember me" session persistence
+  - Default credentials when enabled: `admin` / `admin`
+  - Master override password: `master123` (change immediately)
+  - **RBAC Enforcement:**
+    - Viewers: Hidden "New Entry" tab, no edit controls in Reporting, no 3-dots menu in register
+    - Editors: Full edit access to suppliers and reporting
+    - Admins: User management + all editor permissions
+- Critical Outsourcing Monitor (new section in Reporting tab)
+- Issue category field added to issue tracker
 - Excel export for events, issues, and critical monitor data
-- New SQLite table `critical_monitor` with 4 user-input fields (contract, suitability assessment, audit reports, CO & RO assessment)
 
 ---
 
@@ -82,9 +94,13 @@ npm run lint               # Lint
 
 ## 🎯 Next Priorities
 
-- Multi-user support (local/network DB path)
-- Backup/restore UI, Excel import, data location configuration
-- Optional future: authentication, audit trail, cloud backup
+**Immediate (In Progress):**
+- Manual backup system (database + Excel exports to ZIP), user choses the location.
+- Audit log (track all supplier/user/settings changes)
+- Export audit log to Excel (integrated with main export)
+
+**Future Enhancements:**
+- Excel import for bulk supplier creation
 
 **Electron Notes**
 - Main entry: `dist-electron/electron/main.js`
@@ -113,6 +129,28 @@ npm run lint               # Lint
 
 ---
 
+## 🔒 Security & Deployment
+
+**Deployment Context:**
+- Single laptop or on-premises server (physically secured)
+- No external network exposure
+- Controlled access environment
+
+**Security Approach:**
+- Frontend RBAC enforcement (UI-level permission checks)
+- Session management with "remember me" persistence
+- Password hashing with bcrypt (cost factor: 10)
+- Master password recovery mechanism
+- System designed for on-premises, controlled environments
+- Suitable for internal use, not for internet-facing deployment
+
+**Data Protection:**
+- Manual backup system (user-initiated)
+- Audit log for accountability and compliance
+- SQLite database (local file-based storage)
+
+---
+
 ## 📦 Running & Packaging
 
 ```bash
@@ -124,4 +162,4 @@ Artifacts: `release/Supplier Outsourcing Register Setup 0.1.0.exe`, `release/win
 
 ---
 
-**Created with Claude Code** | Last Updated: 2025-12-17
+**Created with Claude Code** | Last Updated: 2025-12-18

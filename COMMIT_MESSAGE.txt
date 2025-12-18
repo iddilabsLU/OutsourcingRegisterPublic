@@ -1,0 +1,121 @@
+feat: implement authentication system with role-based access control (RBAC)
+
+Add comprehensive authentication system with three user roles (Admin, Editor, Viewer)
+and complete permission enforcement across all application views.
+
+## Authentication System
+
+- Add optional authentication (can be enabled/disabled in Settings)
+- Create default admin account when auth enabled (admin/admin)
+- Implement master password recovery mechanism (master123)
+- Add "Remember me" session persistence
+- Support login/logout with session management
+- Add master password change functionality
+
+## User Management
+
+- Create user management interface (admin-only)
+- Support create, edit, delete operations for users
+- Implement role assignment (Admin/Editor/Viewer)
+- Add password change functionality
+- Prevent deletion of last admin and self-deletion
+- Add user display in header with role badge
+
+## Role-Based Access Control
+
+Three roles with distinct permissions:
+- **Viewer**: Read-only access (view suppliers, dashboard, reporting)
+- **Editor**: Full edit access (create/edit/delete suppliers, manage issues/events)
+- **Admin**: User management + all editor permissions
+
+## Permission Enforcement
+
+- Hide "New Entry" tab for viewers (view-segmented-control.tsx)
+- Remove 3-dots menu in register list for viewers (supplier-register-table.tsx)
+- Hide all edit controls in Reporting view for viewers:
+  - "Log Event" card hidden
+  - Event edit/delete buttons hidden
+  - "New Issue" card hidden
+  - Issue status change, edit/delete buttons hidden
+  - Follow-up add functionality hidden
+  - Critical Monitor inline editing disabled
+- Settings tab: User management section only visible to admins
+
+## Database Changes
+
+- Add auth_settings table (singleton for global auth configuration)
+- Add users table (username, password_hash, display_name, role)
+- Implement database migration for auth schema
+- Add auth service layer with bcrypt password hashing
+
+## Frontend Components
+
+New components:
+- AuthProvider: Global auth context and permission helpers
+- LoginForm: Username/password authentication
+- MasterLoginForm: Master password recovery
+- LoginOverlay: Full-screen login modal
+- SettingsView: Container for settings sections
+- AuthSettingsCard: Enable/disable auth, master password management
+- UserManagement: User list with CRUD operations
+- UserFormDialog: Create/edit user form
+- ChangeMasterDialog: Master password change form
+
+## Backend (Electron)
+
+- Add 12 IPC handlers for auth and user management
+- Implement auth service functions (login, user CRUD, password management)
+- Expose auth APIs via preload script
+- Update TypeScript declarations for window.electronAPI
+
+## Dependencies
+
+- Add bcryptjs for password hashing (v2.4.3)
+- Add @types/bcryptjs for TypeScript support (v2.4.6)
+
+## Documentation
+
+- Update CLAUDE.md with auth system details
+- Add security and deployment context section
+- Document RBAC implementation and enforcement
+- Update status and priorities
+
+## Security Notes
+
+- Designed for on-premises, physically-secured environments
+- Frontend RBAC prevents user errors and accidents
+- Session management with localStorage persistence
+- Password hashing with bcrypt (cost factor: 10)
+- Master password for emergency access
+- Default credentials documented for immediate change
+
+## Files Changed
+
+Modified files:
+- app/layout.tsx: Wrap with AuthProvider
+- app/suppliers/page.tsx: Add canEdit permission check
+- components/layouts/header.tsx: Add user info display
+- components/shared/view-segmented-control.tsx: Hide "New Entry" for viewers
+- components/shared/reporting/reporting-view.tsx: Comprehensive RBAC enforcement
+- components/shared/supplier-register-table.tsx: Hide 3-dots menu for viewers
+- electron/database/db.ts: Run auth migration
+- electron/main.ts: Add auth IPC handlers
+- electron/preload.ts: Expose auth APIs
+- electron/electron.d.ts: Add auth type declarations
+- package.json: Add bcryptjs dependencies
+- CLAUDE.md: Update documentation
+
+New files:
+- lib/types/auth.ts: Auth type definitions
+- lib/validations/auth-schema.ts: Zod validation schemas
+- electron/database/auth.ts: Auth service layer
+- electron/database/migrate-add-auth.ts: Database migration
+- components/providers/auth-provider.tsx: Auth context
+- components/auth/login-form.tsx: Login UI
+- components/auth/master-login-form.tsx: Master recovery UI
+- components/auth/login-overlay.tsx: Full-screen login
+- components/settings/settings-view.tsx: Settings container
+- components/settings/auth-settings-card.tsx: Auth toggle
+- components/settings/user-management.tsx: User list
+- components/settings/user-form-dialog.tsx: User form
+- components/settings/change-master-dialog.tsx: Master password change

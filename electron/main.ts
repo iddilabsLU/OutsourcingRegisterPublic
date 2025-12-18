@@ -19,10 +19,32 @@ import {
   upsertCriticalMonitorRecord,
   deleteCriticalMonitorRecord,
 } from './database/critical-monitor'
+import {
+  getAuthSettings,
+  enableAuth,
+  disableAuth,
+  loginUser,
+  loginWithMasterPassword,
+  changeMasterPassword,
+  getAllUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  canDeleteUser,
+  changeUserPassword,
+} from './database/auth'
 import { buildSupplierEvents } from './database/event-builder'
 import { seedDatabase } from './database/seed'
 import type { SupplierOutsourcing } from '../lib/types/supplier'
 import type { EventLog, IssueRecord, CriticalMonitorRecord } from '../lib/types/reporting'
+import type {
+  AuthSettings,
+  LoginResult,
+  User,
+  CreateUserInput,
+  UpdateUserInput,
+  CanDeleteUserResult,
+} from '../lib/types/auth'
 
 // __dirname is available in CommonJS (which we're compiling to)
 
@@ -349,6 +371,134 @@ ipcMain.handle('criticalMonitor:delete', async (_event, supplierReferenceNumber:
     deleteCriticalMonitorRecord(supplierReferenceNumber)
   } catch (error) {
     console.error('❌ Error deleting critical monitor record:', error)
+    throw error
+  }
+})
+
+// ============================================================================
+// Authentication IPC Handlers
+// ============================================================================
+
+// Get auth settings
+ipcMain.handle('auth:getSettings', async (): Promise<AuthSettings> => {
+  try {
+    return getAuthSettings()
+  } catch (error) {
+    console.error('❌ Error getting auth settings:', error)
+    throw error
+  }
+})
+
+// Enable authentication
+ipcMain.handle('auth:enable', async (): Promise<void> => {
+  try {
+    enableAuth()
+  } catch (error) {
+    console.error('❌ Error enabling auth:', error)
+    throw error
+  }
+})
+
+// Disable authentication
+ipcMain.handle('auth:disable', async (): Promise<void> => {
+  try {
+    disableAuth()
+  } catch (error) {
+    console.error('❌ Error disabling auth:', error)
+    throw error
+  }
+})
+
+// Login with username/password
+ipcMain.handle('auth:login', async (_event, username: string, password: string): Promise<LoginResult> => {
+  try {
+    return loginUser(username, password)
+  } catch (error) {
+    console.error('❌ Error during login:', error)
+    throw error
+  }
+})
+
+// Login with master password
+ipcMain.handle('auth:loginMaster', async (_event, password: string): Promise<LoginResult> => {
+  try {
+    return loginWithMasterPassword(password)
+  } catch (error) {
+    console.error('❌ Error during master login:', error)
+    throw error
+  }
+})
+
+// Change master password
+ipcMain.handle('auth:changeMasterPassword', async (_event, currentPassword: string, newPassword: string): Promise<boolean> => {
+  try {
+    return changeMasterPassword(currentPassword, newPassword)
+  } catch (error) {
+    console.error('❌ Error changing master password:', error)
+    throw error
+  }
+})
+
+// Change user's own password
+ipcMain.handle('auth:changeUserPassword', async (_event, userId: number, currentPassword: string, newPassword: string): Promise<boolean> => {
+  try {
+    return changeUserPassword(userId, currentPassword, newPassword)
+  } catch (error) {
+    console.error('❌ Error changing user password:', error)
+    throw error
+  }
+})
+
+// ============================================================================
+// User Management IPC Handlers
+// ============================================================================
+
+// Get all users
+ipcMain.handle('users:getAll', async (): Promise<User[]> => {
+  try {
+    return getAllUsers()
+  } catch (error) {
+    console.error('❌ Error getting users:', error)
+    throw error
+  }
+})
+
+// Create user
+ipcMain.handle('users:create', async (_event, input: CreateUserInput): Promise<User> => {
+  try {
+    return createUser(input)
+  } catch (error) {
+    console.error('❌ Error creating user:', error)
+    throw error
+  }
+})
+
+// Update user
+ipcMain.handle('users:update', async (_event, id: number, updates: UpdateUserInput): Promise<User> => {
+  try {
+    return updateUser(id, updates)
+  } catch (error) {
+    console.error('❌ Error updating user:', error)
+    throw error
+  }
+})
+
+// Delete user
+ipcMain.handle('users:delete', async (_event, id: number): Promise<void> => {
+  try {
+    deleteUser(id)
+  } catch (error) {
+    console.error('❌ Error deleting user:', error)
+    throw error
+  }
+})
+
+// Check if user can be deleted
+ipcMain.handle('users:canDelete', async (_event, id: number): Promise<CanDeleteUserResult> => {
+  try {
+    return canDeleteUser(id)
+  } catch (error) {
+    console.error('❌ Error checking if user can be deleted:', error)
     throw error
   }
 })

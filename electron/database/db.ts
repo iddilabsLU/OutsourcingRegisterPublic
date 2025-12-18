@@ -7,6 +7,7 @@ import { migrateAddEventsAndIssues } from './migrate-add-events-issues'
 import { migrateAddIssueFollowups } from './migrate-add-issue-followups'
 import { migrateAddIssueCategory } from './migrate-add-issue-category'
 import { migrateAddCriticalMonitor } from './migrate-add-critical-monitor'
+import { migrateAddAuth } from './migrate-add-auth'
 
 /**
  * Database module for CSSF Supplier Outsourcing Register
@@ -102,6 +103,7 @@ function runMigrations(): void {
   migrateAddIssueFollowups()
   migrateAddIssueCategory()
   migrateAddCriticalMonitor()
+  migrateAddAuth()
 }
 
 /**

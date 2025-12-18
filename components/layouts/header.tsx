@@ -1,15 +1,16 @@
 "use client"
 
-import Link from "next/link"
 import Image from "next/image"
-import { usePathname } from "next/navigation"
-import { Package } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Package, LogOut, User } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { useAuth } from "@/components/providers/auth-provider"
+import { ROLE_LABELS } from "@/lib/types/auth"
 
 export function Header() {
-  const pathname = usePathname()
+  const { authSettings, currentUser, isAuthenticated, logout, isMasterOverride } = useAuth()
 
-  const navItems: { href: string; label: string }[] = []
+  const showUserInfo = authSettings?.authEnabled && isAuthenticated
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-primary bg-primary">
@@ -22,22 +23,34 @@ export function Header() {
           </span>
         </div>
 
-        {/* Navigation & Logo */}
-        <div className="flex items-center gap-6">
-          <nav className="flex items-center gap-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  pathname === item.href ? "text-foreground" : "text-muted-foreground"
-                )}
+        {/* User Info & Logo */}
+        <div className="flex items-center gap-4">
+          {/* User display when authenticated */}
+          {showUserInfo && currentUser && (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-primary-foreground">
+                <User className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  {currentUser.displayName}
+                </span>
+                <Badge
+                  variant="secondary"
+                  className="text-xs bg-primary-foreground/20 text-primary-foreground border-none"
+                >
+                  {isMasterOverride ? "Master" : ROLE_LABELS[currentUser.role]}
+                </Badge>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={logout}
+                className="text-primary-foreground hover:text-primary-foreground hover:bg-primary-foreground/10 gap-1"
               >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
+            </div>
+          )}
 
           {/* Extended Logo */}
           <Image

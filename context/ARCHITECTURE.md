@@ -25,15 +25,24 @@ The Supplier Register is a **desktop Electron application** built with Next.js 1
 
 ```
 ┌─────────────────────────────────────────────────────┐
+│  AUTHENTICATION LAYER (Optional, Settings-Enabled)  │
+│  - Login Overlay (username/password, master)        │
+│  - AuthProvider Context (session, permissions)      │
+│  - RBAC enforcement (Admin, Editor, Viewer)         │
+└─────────────────────────────────────────────────────┘
+                     ↓ ↑
+┌─────────────────────────────────────────────────────┐
 │  USER INTERFACE (React Components)                  │
 │  - Supplier Register Table                          │
 │  - Add Supplier Form (4 tabs, 73 fields)           │
 │  - Filter Panel                                      │
-│  - View Navigation                                   │
+│  - View Navigation (permission-aware)                │
+│  - Settings (auth toggle, user management)          │
 └─────────────────────────────────────────────────────┘
                      ↓ ↑
 ┌─────────────────────────────────────────────────────┐
 │  STATE MANAGEMENT (React State + Context)           │
+│  - Auth state (user, role, session)                 │
 │  - Suppliers array (in-memory)                      │
 │  - Filter state                                      │
 │  - Search context                                    │
@@ -42,6 +51,7 @@ The Supplier Register is a **desktop Electron application** built with Next.js 1
                      ↓ ↑
 ┌─────────────────────────────────────────────────────┐
 │  BUSINESS LOGIC (TypeScript Functions)              │
+│  - Auth & permission checks (canEdit)               │
 │  - Filter suppliers                                  │
 │  - Check completeness (CSSF validation)            │
 │  - Text highlighting                                 │
@@ -51,6 +61,7 @@ The Supplier Register is a **desktop Electron application** built with Next.js 1
 ┌─────────────────────────────────────────────────────┐
 │  DATA MODEL (TypeScript Types)                      │
 │  - SupplierOutsourcing interface                    │
+│  - User, AuthSettings types                         │
 │  - CSSF enums (Status, Category, Risk, etc.)       │
 │  - Filter types                                      │
 └─────────────────────────────────────────────────────┘
@@ -65,6 +76,7 @@ The Supplier Register is a **desktop Electron application** built with Next.js 1
 5. **Two-Layer Validation** - Type safety (Zod) + Business logic (Completeness checker)
 6. **Pending Fields** - Mark incomplete fields for later completion
 7. **Reporting & Issues** - Change log auto-generated from supplier updates (pending-safe) plus lightweight issue tracker stored in SQLite
+8. **Authentication & RBAC** - Optional authentication with three roles (Admin, Editor, Viewer) and frontend permission enforcement
 
 ---
 
@@ -73,11 +85,16 @@ The Supplier Register is a **desktop Electron application** built with Next.js 1
 ### Page Level (`app/`)
 
 ```
-app/page.tsx (Main Supplier Register Page)
-├── AppLayout (Header + Footer wrapper)
-│   ├── Header
-│   └── Footer
-└── ViewSegmentedControl (Tab Navigation)
+app/layout.tsx (Root Layout)
+└── AuthProvider (Authentication Context)
+    └── app/page.tsx (Main Supplier Register Page)
+        ├── LoginOverlay (if auth enabled and not logged in)
+        │   ├── LoginForm (username/password)
+        │   └── MasterLoginForm (master password recovery)
+        ├── AppLayout (Header + Footer wrapper)
+        │   ├── Header (with user info display)
+        │   └── Footer
+        └── ViewSegmentedControl (Tab Navigation, permission-aware)
     ├── Register List View
     │   ├── FilterPanel
     │   │   ├── QuickFilters (Critical, Cloud)
@@ -149,16 +166,26 @@ app/page.tsx (Main Supplier Register Page)
     │       ├── PendingNotificationsList
     │       └── DataCompletenessCard
     │
-    └── Reporting View
-        ├── Summary Cards (events count, open issues, closed in period, risk changes)
-        ├── Events List (change log derived from supplier updates, pending-safe) + manual add/edit/delete
-        ├── Filters (30/90/all + custom date range + text search across events/issues)
-        ├── Issue Composer (title/description/category/status/severity/owner/dates + optional initial follow-up)
-        ├── Issues List (status updates, edit, delete, follow-up history + add follow-up, lifecycle dates)
-        └── Critical Monitor Section
-            ├── Provider & Category Filters
-            ├── Critical Suppliers Table (12 columns, inline editing for 4 fields)
-            └── Export to Excel Button
+    ├── Reporting View (RBAC-enforced)
+    │   ├── Summary Cards (events count, open issues, closed in period, risk changes)
+    │   ├── Events List (change log derived from supplier updates, pending-safe) + manual add/edit/delete (editors only)
+    │   ├── Filters (30/90/all + custom date range + text search across events/issues)
+    │   ├── Issue Composer (editors only: title/description/category/status/severity/owner/dates + optional initial follow-up)
+    │   ├── Issues List (status updates/edit/delete for editors, follow-up history + add follow-up, lifecycle dates)
+    │   └── Critical Monitor Section
+    │       ├── Provider & Category Filters
+    │       ├── Critical Suppliers Table (12 columns, inline editing for 4 fields - editors only)
+    │       └── Export to Excel Button
+    │
+    └── Settings View (admin-only user management)
+        ├── SettingsView Container
+        ├── AuthSettingsCard (enable/disable auth, change master password)
+        └── UserManagement (admin-only)
+            ├── Users List (with role badges)
+            └── UserFormDialog (create/edit users)
+                ├── Username, Display Name, Role fields
+                ├── Password field (create) or optional password field (edit)
+                └── ChangeMasterDialog (master password change)
 ```
 
 ### Reusable Components
@@ -179,9 +206,22 @@ app/page.tsx (Main Supplier Register Page)
 - `form-sub-contractor.tsx` - Complex nested sub-contractor fields
 
 **Navigation & Filtering:**
-- `view-segmented-control.tsx` - Main view switcher
+- `view-segmented-control.tsx` - Main view switcher (permission-aware, hides "New Entry" for viewers)
 - `filter-panel.tsx` - Collapsible filter UI
 - `active-filter-badges.tsx` - Active filter chips
+
+**Authentication Components:**
+- `auth/login-form.tsx` - Username/password login form
+- `auth/master-login-form.tsx` - Master password recovery form
+- `auth/login-overlay.tsx` - Full-screen login modal overlay
+- `providers/auth-provider.tsx` - Authentication context provider
+
+**Settings Components:**
+- `settings/settings-view.tsx` - Settings container
+- `settings/auth-settings-card.tsx` - Enable/disable auth, master password management
+- `settings/user-management.tsx` - User list with CRUD operations (admin-only)
+- `settings/user-form-dialog.tsx` - Create/edit user form dialog
+- `settings/change-master-dialog.tsx` - Change master password dialog
 
 ---
 
@@ -348,6 +388,105 @@ ReportingView (components/shared/reporting/reporting-view.tsx)
 - New tables: `events`, `issues` (with `follow_ups` and `category`), and `critical_monitor` created via migrations; auto-created at app startup.
 - Critical Monitor: combines supplier data (from main suppliers table) with user-input tracking fields (from critical_monitor table).
 
+### Authentication & RBAC Flow
+
+The authentication system is **optional** and can be enabled/disabled in Settings.
+
+```
+App Startup
+      ↓
+AuthProvider loads (components/providers/auth-provider.tsx)
+      ↓
+window.electronAPI.getAuthSettings()
+      ↓
+If auth enabled AND no valid session:
+      ↓
+LoginOverlay renders (full-screen modal)
+  ├── LoginForm (username + password)
+  │     ↓
+  │   window.electronAPI.login(username, password)
+  │     ↓
+  │   electron/database/auth.ts: verifyPassword (bcrypt compare)
+  │     ↓
+  │   Returns: { success, user: { id, username, displayName, role }, sessionToken }
+  │     ↓
+  │   If rememberMe: store session in localStorage
+  │     ↓
+  │   AuthProvider updates state: { user, isAuthenticated: true }
+  │
+  └── MasterLoginForm (master password recovery)
+        ↓
+      window.electronAPI.loginWithMaster(password)
+        ↓
+      electron/database/auth.ts: verifyMasterPassword
+        ↓
+      Returns admin session token
+```
+
+**RBAC Permission Enforcement (Frontend):**
+
+```
+Component renders
+      ↓
+useAuth() hook provides:
+  - user (username, displayName, role)
+  - isAuthenticated (boolean)
+  - canEdit (boolean: role === 'admin' || role === 'editor')
+  - canManageUsers (boolean: role === 'admin')
+      ↓
+Conditional rendering based on permissions:
+  - ViewSegmentedControl: hides "New Entry" tab if !canEdit
+  - SupplierRegisterTable: hides 3-dots menu if !canEdit
+  - ReportingView: hides ALL edit controls if !canEdit
+    * "Log Event" card hidden
+    * Event edit/delete buttons hidden
+    * "New Issue" card hidden
+    * Issue status change replaced with badge for viewers
+    * Issue edit/delete buttons hidden
+    * Follow-up add section hidden
+    * Critical Monitor inline editing disabled
+  - Settings: User Management section only visible if canManageUsers
+```
+
+**Database Schema:**
+
+```sql
+-- auth_settings table (singleton)
+CREATE TABLE auth_settings (
+  id INTEGER PRIMARY KEY CHECK (id = 1),  -- Single row enforced
+  is_enabled INTEGER NOT NULL DEFAULT 0,  -- Auth enabled flag
+  master_password_hash TEXT NOT NULL,     -- bcrypt hash
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- users table
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,            -- bcrypt hash (cost factor: 10)
+  display_name TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'editor', 'viewer')),
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Session Management:**
+- Session token stored in localStorage if "Remember me" enabled
+- Session token is just user ID (simple approach for on-premises deployment)
+- No expiration (manual logout only)
+- On app restart: AuthProvider checks localStorage and validates session with backend
+- On logout: localStorage cleared, AuthProvider resets state
+
+**Security Context:**
+- Designed for on-premises, physically-secured environments
+- Frontend RBAC prevents user errors and accidents
+- No backend permission validation (planned for future)
+- Password hashing with bcrypt (cost factor: 10)
+- Master password for emergency access (default: `master123`, change immediately)
+- Default admin credentials: `admin` / `admin` (change on first login)
+
 ---
 
 ## File Structure
@@ -356,8 +495,8 @@ ReportingView (components/shared/reporting/reporting-view.tsx)
 
 | File | Purpose |
 |------|---------|
-| `layout.tsx` | Root layout with metadata, fonts, theme |
-| `page.tsx` | Main supplier register page (loads dummy data) |
+| `layout.tsx` | Root layout wrapped with AuthProvider |
+| `page.tsx` | Main supplier register page with permission checks |
 | `globals.css` | CSS variables (light theme only), Tailwind base |
 | `loading.tsx` | Loading skeleton (shown during page load) |
 | `error.tsx` | Error boundary for route errors |
@@ -455,6 +594,30 @@ ReportingView (components/shared/reporting/reporting-view.tsx)
 |------|---------|-------|
 | `reporting/reporting-view.tsx` | Reporting tab with 3 sections: event log, issue tracker (categories/follow-ups), and Critical Monitor (critical active suppliers, inline editing, filters, export) | ~1935 |
 
+#### Authentication Components
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `auth/login-form.tsx` | Username/password login form with remember me | ~120 |
+| `auth/master-login-form.tsx` | Master password recovery form | ~80 |
+| `auth/login-overlay.tsx` | Full-screen login modal overlay | ~100 |
+
+#### Settings Components
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `settings/settings-view.tsx` | Settings container with tabs | ~150 |
+| `settings/auth-settings-card.tsx` | Enable/disable auth, change master password | ~180 |
+| `settings/user-management.tsx` | User list with CRUD operations (admin-only) | ~250 |
+| `settings/user-form-dialog.tsx` | Create/edit user form dialog | ~220 |
+| `settings/change-master-dialog.tsx` | Change master password dialog | ~150 |
+
+#### Providers
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `providers/auth-provider.tsx` | Authentication context provider with session management | ~200 |
+
 ### `/lib` - Business Logic & Types
 
 #### `/lib/types` - TypeScript Types
@@ -465,6 +628,7 @@ ReportingView (components/shared/reporting/reporting-view.tsx)
 | `filters.ts` | Filter field types, CustomFilter interface |
 | `dashboard.ts` | Dashboard analytics type definitions (7 indicator types) |
 | `reporting.ts` | EventLog/EventType + IssueRecord/IssueStatus + CriticalMonitorRecord/CriticalMonitorView types for reporting tab |
+| `auth.ts` | Auth types (User, AuthSettings, LoginResult, CreateUserInput, UpdateUserInput, CanDeleteUserResult) |
 
 **Key Type:** `SupplierOutsourcing`
 ```typescript
@@ -505,7 +669,8 @@ The type definitions in `supplier.ts` are intentionally aligned with CSSF Circul
 
 | File | Purpose |
 |------|---------|
-| `supplier-schema.ts` | Zod schema for form validation (Layer 1) |
+| `supplier-schema.ts` | Zod schema for supplier form validation (Layer 1) |
+| `auth-schema.ts` | Zod schemas for auth forms (login, master login, create user, edit user, change password, change master password) |
 
 #### `/lib/contexts` - React Contexts
 
@@ -521,6 +686,30 @@ The type definitions in `supplier.ts` are intentionally aligned with CSSF Circul
 | `use-local-storage.ts` | localStorage hook with SSR safety |
 | `use-debounce.ts` | Debounced value updates |
 | `use-api.ts` | API fetch hook (for future backend) |
+| `use-database.ts` | Hook for database CRUD operations via IPC |
+| `use-reporting.ts` | Hook for events, issues, and critical monitor operations |
+
+### `/electron` - Electron Main Process
+
+#### Main Process Files
+
+| File | Purpose |
+|------|---------|
+| `main.ts` | Electron main process entry point, window creation, IPC handlers |
+| `preload.ts` | Context bridge exposing `window.electronAPI` to renderer |
+| `electron.d.ts` | TypeScript declarations for ElectronAPI interface |
+
+#### Database Layer (`/electron/database`)
+
+| File | Purpose |
+|------|---------|
+| `db.ts` | SQLite database initialization, schema creation, CRUD operations for suppliers |
+| `auth.ts` | Authentication service layer (login, user management, password hashing with bcrypt) |
+| `event-builder.ts` | Auto-generates change log events from supplier updates (pending-safe) |
+| `schema.sql` | Database schema for suppliers, events, issues, critical_monitor, auth_settings, users tables |
+| `migrate-add-events-issues.ts` | Migration to add events and issues tables |
+| `migrate-add-critical-monitor.ts` | Migration to add critical_monitor table |
+| `migrate-add-auth.ts` | Migration to add auth_settings and users tables |
 
 ---
 
@@ -704,8 +893,9 @@ Use CSS variable tokens, not hardcoded colors:
 
 | State | Location | Purpose |
 |-------|----------|---------|
+| `authState` | `AuthProvider` (Context) | User session (user, isAuthenticated, permissions) |
 | `suppliers` | `app/page.tsx` | Array of all suppliers (in-memory) |
-| `activeView` | `ViewSegmentedControl` | Current view (Register/New Entry/Dashboard) |
+| `activeView` | `ViewSegmentedControl` | Current view (Register/New Entry/Dashboard/Reporting/Settings) |
 | `filters` | `FilterPanel` | Active filters (quick + custom) |
 | `expandedRowId` | `SupplierRegisterTable` | Which row is expanded |
 | `activeTab` | `SupplierDetailTabs` | Active detail tab (Basic/Provider/Cloud/Critical) |
@@ -714,6 +904,23 @@ Use CSS variable tokens, not hardcoded colors:
 | `searchTerm` | `SearchContext` | Global text search term for highlighting |
 
 ### Context API Usage
+
+**AuthContext:**
+```tsx
+// components/providers/auth-provider.tsx
+export const AuthContext = createContext<AuthContextType>({
+  user: null,
+  isAuthenticated: false,
+  canEdit: true,  // Default to true when auth disabled
+  canManageUsers: false,
+  // ... methods
+})
+
+// Usage in components:
+const { user, canEdit, canManageUsers } = useAuth()
+{canEdit && <Button>Edit</Button>}
+{canManageUsers && <UserManagement />}
+```
 
 **SearchContext:**
 ```tsx
@@ -898,7 +1105,7 @@ If managing 100+ suppliers:
 ## Common Questions
 
 ### Q: Why no backend?
-**A:** Phase 1 is a frontend demo. Phase 2 will add Tauri + SQLite for desktop app.
+**A:** This is a desktop Electron application with SQLite database in the main process. Data persists locally.
 
 ### Q: Why are all Zod fields `.optional()`?
 **A:** To support partial saves and pending fields. Mandatory validation happens in Layer 2 (check-completeness.ts).
@@ -909,10 +1116,19 @@ If managing 100+ suppliers:
 ### Q: How do pending fields skip validation?
 **A:** The completeness checker accepts a `pendingFields` array and skips those field paths.
 
-### Q: Where is data persistence?
-**A:** Not implemented yet. Planned for roadmap (sessionStorage or localStorage).
+### Q: Is authentication mandatory?
+**A:** No, authentication is optional and can be enabled/disabled in Settings. When disabled, all users have full edit access.
+
+### Q: Why is authentication frontend-only?
+**A:** This application is designed for on-premises, physically-secured environments. Frontend RBAC prevents user errors and accidents. Backend permission validation is planned for future enhancement.
+
+### Q: How are passwords stored?
+**A:** Passwords are hashed using bcrypt with cost factor 10 and stored in the local SQLite database. Session tokens are stored in localStorage if "Remember me" is enabled.
+
+### Q: What happens if I forget all passwords?
+**A:** Use the master password (default: `master123`, change immediately) for emergency access. The master password provides admin-level access.
 
 ---
 
-**Last Updated:** 2025-12-17
-**Related Files:** VALIDATION.md, ROADMAP.md, supplier.ts, check-completeness.ts
+**Last Updated:** 2025-12-18
+**Related Files:** VALIDATION.md, ROADMAP.md, supplier.ts, check-completeness.ts, auth.ts, auth-provider.tsx

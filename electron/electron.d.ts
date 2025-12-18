@@ -7,6 +7,14 @@
 
 import type { SupplierOutsourcing } from '../lib/types/supplier'
 import type { EventLog, IssueRecord, CriticalMonitorRecord } from '../lib/types/reporting'
+import type {
+  AuthSettings,
+  LoginResult,
+  User,
+  CreateUserInput,
+  UpdateUserInput,
+  CanDeleteUserResult,
+} from '../lib/types/auth'
 
 export interface ElectronAPI {
   // System info
@@ -35,6 +43,22 @@ export interface ElectronAPI {
   getCriticalMonitorRecords: () => Promise<CriticalMonitorRecord[]>
   upsertCriticalMonitorRecord: (record: CriticalMonitorRecord) => Promise<number>
   deleteCriticalMonitorRecord: (supplierReferenceNumber: string) => Promise<void>
+
+  // Authentication
+  getAuthSettings: () => Promise<AuthSettings>
+  enableAuth: () => Promise<void>
+  disableAuth: () => Promise<void>
+  login: (username: string, password: string) => Promise<LoginResult>
+  loginWithMaster: (password: string) => Promise<LoginResult>
+  changeMasterPassword: (currentPassword: string, newPassword: string) => Promise<boolean>
+  changeUserPassword: (userId: number, currentPassword: string, newPassword: string) => Promise<boolean>
+
+  // User Management
+  getAllUsers: () => Promise<User[]>
+  createUser: (input: CreateUserInput) => Promise<User>
+  updateUser: (id: number, updates: UpdateUserInput) => Promise<User>
+  deleteUser: (id: number) => Promise<void>
+  canDeleteUser: (id: number) => Promise<CanDeleteUserResult>
 
   // Backup/restore operations (to be implemented later)
   // backupDatabase: (path: string) => Promise<{ success: boolean; path: string }>

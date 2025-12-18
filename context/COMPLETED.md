@@ -481,6 +481,83 @@ Entries are organized by sync date (when documentation was updated), not feature
 
 ---
 
+## Documentation Sync: 2025-12-18
+
+**Features Processed:** 1
+**Documentation Updated:** CLAUDE.md, ROADMAP.md, ARCHITECTURE.md
+**Sync Duration:** ~30 minutes
+
+---
+
+### ✅ Authentication & RBAC System (2025-12-18)
+- **User Impact:** Optional authentication system with three user roles provides control over who can view and edit supplier data. Prevents accidental changes by limiting permissions based on role. Admins manage users, Editors can modify suppliers and reporting data, Viewers have read-only access.
+
+- **Technical Details:**
+  - **Database Layer:**
+    - Created `electron/database/auth.ts` (auth service layer with bcrypt password hashing)
+    - Created `electron/database/migrate-add-auth.ts` (migration for auth_settings and users tables)
+    - Modified `electron/database/db.ts` (runs auth migration on startup)
+    - New tables: `auth_settings` (singleton), `users` (with role enum: admin/editor/viewer)
+
+  - **Backend (Electron Main Process):**
+    - Modified `electron/main.ts` (added 12 IPC handlers: getAuthSettings, enableAuth, disableAuth, login, loginWithMaster, changeMasterPassword, changeUserPassword, getAllUsers, createUser, updateUser, deleteUser, canDeleteUser)
+    - Modified `electron/preload.ts` (exposed 12 auth APIs via contextBridge)
+    - Modified `electron/electron.d.ts` (added TypeScript declarations for ElectronAPI)
+
+  - **Types & Validation:**
+    - Created `lib/types/auth.ts` (User, AuthSettings, LoginResult, CreateUserInput, UpdateUserInput, CanDeleteUserResult)
+    - Created `lib/validations/auth-schema.ts` (6 Zod schemas: loginSchema, masterLoginSchema, createUserSchema, editUserSchema, changePasswordSchema, changeMasterPasswordSchema)
+
+  - **Frontend Components:**
+    - Created `components/providers/auth-provider.tsx` (AuthContext with session management, permission helpers)
+    - Created `components/auth/login-form.tsx` (username/password login with remember me)
+    - Created `components/auth/master-login-form.tsx` (master password recovery)
+    - Created `components/auth/login-overlay.tsx` (full-screen login modal)
+    - Created `components/settings/settings-view.tsx` (settings container)
+    - Created `components/settings/auth-settings-card.tsx` (enable/disable auth, change master password)
+    - Created `components/settings/user-management.tsx` (user list with CRUD, admin-only)
+    - Created `components/settings/user-form-dialog.tsx` (create/edit user form)
+    - Created `components/settings/change-master-dialog.tsx` (master password change)
+
+  - **RBAC Permission Enforcement:**
+    - Modified `app/layout.tsx` (wrapped with AuthProvider)
+    - Modified `app/suppliers/page.tsx` (added canEdit permission check for actions)
+    - Modified `components/layouts/header.tsx` (displays user info with role badge)
+    - Modified `components/shared/view-segmented-control.tsx` (hides "New Entry" tab for viewers)
+    - Modified `components/shared/supplier-register-table.tsx` (hides 3-dots menu for viewers)
+    - Modified `components/shared/reporting/reporting-view.tsx` (comprehensive RBAC: all edit controls hidden for viewers)
+
+  - **Features:**
+    - Optional authentication (toggle in Settings)
+    - Three roles: Admin (user management + full access), Editor (full edit access), Viewer (read-only)
+    - Default admin account: `admin` / `admin` (created when auth enabled)
+    - Master password: `master123` (emergency access, change immediately)
+    - Session persistence with "Remember me" (localStorage)
+    - Password hashing with bcrypt (cost factor: 10)
+    - Frontend permission enforcement (canEdit, canManageUsers)
+    - User management: create/edit/delete with role assignment
+    - Password change for users and master password change for admins
+    - Prevents deletion of last admin and self-deletion
+
+- **Validation Change:** YES - Added 6 new Zod schemas for auth forms (login, master login, create user, edit user, change password, change master password)
+
+- **Architecture Change:** YES - New authentication layer with context provider, new settings module, new database tables, extensive permission enforcement across UI
+
+- **Commits:**
+  - Not committed yet (pending user approval)
+
+- **Docs Updated:** CLAUDE.md, ROADMAP.md, ARCHITECTURE.md
+
+- **Additional Notes:**
+  - Designed for on-premises, physically-secured environments
+  - Frontend RBAC is for preventing user errors, not security against malicious actors
+  - Backend permission validation planned for future enhancement
+  - Session token is just user ID (simple approach for on-premises)
+  - No session expiration (manual logout only)
+  - Dependencies added: bcryptjs v2.4.3, @types/bcryptjs v2.4.6
+
+---
+
 <!-- Future syncs will be appended below -->
 <!-- /docs-sync automatically adds entries here -->
 

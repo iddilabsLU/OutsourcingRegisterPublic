@@ -1,6 +1,14 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { SupplierOutsourcing } from '../lib/types/supplier'
 import type { EventLog, IssueRecord, CriticalMonitorRecord } from '../lib/types/reporting'
+import type {
+  AuthSettings,
+  LoginResult,
+  User,
+  CreateUserInput,
+  UpdateUserInput,
+  CanDeleteUserResult,
+} from '../lib/types/auth'
 
 /**
  * Preload script - Exposes safe Electron APIs to the renderer process
@@ -41,13 +49,21 @@ export interface ElectronAPI {
   upsertCriticalMonitorRecord: (record: CriticalMonitorRecord) => Promise<number>
   deleteCriticalMonitorRecord: (supplierReferenceNumber: string) => Promise<void>
 
-  // Backup/restore operations (to be implemented later)
-  // backupDatabase: (path: string) => Promise<{ success: boolean; path: string }>
-  // restoreDatabase: (path: string) => Promise<{ success: boolean }>
+  // Authentication
+  getAuthSettings: () => Promise<AuthSettings>
+  enableAuth: () => Promise<void>
+  disableAuth: () => Promise<void>
+  login: (username: string, password: string) => Promise<LoginResult>
+  loginWithMaster: (password: string) => Promise<LoginResult>
+  changeMasterPassword: (currentPassword: string, newPassword: string) => Promise<boolean>
+  changeUserPassword: (userId: number, currentPassword: string, newPassword: string) => Promise<boolean>
 
-  // File operations (to be implemented later)
-  // selectFile: () => Promise<string | null>
-  // selectFolder: () => Promise<string | null>
+  // User Management
+  getAllUsers: () => Promise<User[]>
+  createUser: (input: CreateUserInput) => Promise<User>
+  updateUser: (id: number, updates: UpdateUserInput) => Promise<User>
+  deleteUser: (id: number) => Promise<void>
+  canDeleteUser: (id: number) => Promise<CanDeleteUserResult>
 }
 
 // Expose protected methods in the render process
@@ -78,6 +94,22 @@ const electronAPI: ElectronAPI = {
   getCriticalMonitorRecords: () => ipcRenderer.invoke('criticalMonitor:get'),
   upsertCriticalMonitorRecord: (record: CriticalMonitorRecord) => ipcRenderer.invoke('criticalMonitor:upsert', record),
   deleteCriticalMonitorRecord: (supplierReferenceNumber: string) => ipcRenderer.invoke('criticalMonitor:delete', supplierReferenceNumber),
+
+  // Authentication
+  getAuthSettings: () => ipcRenderer.invoke('auth:getSettings'),
+  enableAuth: () => ipcRenderer.invoke('auth:enable'),
+  disableAuth: () => ipcRenderer.invoke('auth:disable'),
+  login: (username: string, password: string) => ipcRenderer.invoke('auth:login', username, password),
+  loginWithMaster: (password: string) => ipcRenderer.invoke('auth:loginMaster', password),
+  changeMasterPassword: (currentPassword: string, newPassword: string) => ipcRenderer.invoke('auth:changeMasterPassword', currentPassword, newPassword),
+  changeUserPassword: (userId: number, currentPassword: string, newPassword: string) => ipcRenderer.invoke('auth:changeUserPassword', userId, currentPassword, newPassword),
+
+  // User Management
+  getAllUsers: () => ipcRenderer.invoke('users:getAll'),
+  createUser: (input: CreateUserInput) => ipcRenderer.invoke('users:create', input),
+  updateUser: (id: number, updates: UpdateUserInput) => ipcRenderer.invoke('users:update', id, updates),
+  deleteUser: (id: number) => ipcRenderer.invoke('users:delete', id),
+  canDeleteUser: (id: number) => ipcRenderer.invoke('users:canDelete', id),
 }
 
 // Expose the API to the renderer process

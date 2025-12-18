@@ -58,6 +58,9 @@ export function SupplierRegisterTable({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [supplierToDelete, setSupplierToDelete] = useState<SupplierOutsourcing | null>(null)
 
+  // Check if user has any edit permissions (hide actions menu for viewers)
+  const hasAnyEditPermission = !!(onEdit || onDuplicate || onDelete)
+
   const toggleRow = (referenceNumber: string) => {
     const newExpanded = new Set(expandedRows)
     if (newExpanded.has(referenceNumber)) {
@@ -147,50 +150,52 @@ export function SupplierRegisterTable({
                     onClick={() => toggleRow(supplier.referenceNumber)}
                   >
                     <TableCell className="align-top">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleEdit(supplier)
-                            }}
-                          >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Supplier
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDuplicate(supplier)
-                            }}
-                          >
-                            <Copy className="mr-2 h-4 w-4" />
-                            Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteClick(supplier)
-                            }}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {hasAnyEditPermission && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleEdit(supplier)
+                              }}
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Supplier
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDuplicate(supplier)
+                              }}
+                            >
+                              <Copy className="mr-2 h-4 w-4" />
+                              Duplicate
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteClick(supplier)
+                              }}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </TableCell>
                     <TableCell className="font-medium whitespace-normal break-words leading-tight align-top text-base">
                       <div className="flex items-center gap-2">

@@ -96,6 +96,48 @@ All Phase 1 features have been implemented and are working correctly.
 
 ---
 
+### 1.6 Authentication & RBAC ✅ COMPLETED (2025-12-18)
+
+**Goal:** Add optional authentication with role-based access control to prevent user errors and manage permissions.
+
+**Implemented Features:**
+- Optional authentication system (can be enabled/disabled in Settings)
+- Three user roles: Admin (full access + user management), Editor (full edit access), Viewer (read-only)
+- Login overlay with username/password authentication
+- Master password recovery mechanism (default: `master123`)
+- "Remember me" session persistence in localStorage
+- Complete RBAC enforcement across all views:
+  - ViewSegmentedControl: hides "New Entry" tab for viewers
+  - SupplierRegisterTable: hides 3-dots menu for viewers
+  - ReportingView: comprehensive permission checks (all edit controls hidden for viewers)
+  - Settings: User Management section only visible to admins
+- User management interface (create, edit, delete users with role assignment)
+- Password change functionality for users
+- Master password change functionality for admins
+- Default admin account created when auth enabled (username: `admin`, password: `admin`)
+
+**Technical Implementation:**
+- New SQLite tables: `auth_settings` (singleton), `users` (with bcrypt password hashing)
+- Migration: `migrate-add-auth.ts` creates auth schema
+- Auth service layer: `electron/database/auth.ts` (login, user CRUD, password management)
+- 12 new IPC handlers in `electron/main.ts` for auth operations
+- AuthProvider context: `components/providers/auth-provider.tsx` (session management, permissions)
+- 9 new auth/settings components (login forms, user management, settings cards)
+- Zod validation schemas: `lib/validations/auth-schema.ts` (6 schemas)
+- Auth types: `lib/types/auth.ts` (User, AuthSettings, LoginResult, etc.)
+- Dependencies: bcryptjs v2.4.3 + @types/bcryptjs v2.4.6
+
+**Security Context:**
+- Designed for on-premises, physically-secured environments
+- Frontend RBAC enforcement (UI-level permission checks)
+- Password hashing with bcrypt (cost factor: 10)
+- Session stored in localStorage (acceptable for on-premises deployment)
+- No backend permission validation (planned for future enhancement)
+
+**Status:** ✅ Complete
+
+---
+
 ### 2. Export Functionality ✅ COMPLETED
 
 **Goal:** Export supplier data to Excel/PDF
@@ -270,11 +312,25 @@ function exportToPDF(suppliers: SupplierOutsourcing[]) {
 - Database auto-refreshes after CRUD operations
 - Desktop-only: App requires Electron, throws error if run in browser
 
-#### Step 5: New Features
-- [ ] Database backup functionality (copy .sqlite file)
-- [ ] Database restore functionality (replace .sqlite file)
-- [ ] Excel import (bulk import suppliers)
-- [ ] Data location configuration UI (choose local or network path)
+#### Step 5: New Features (IN PROGRESS)
+- [ ] **Manual Backup System** - User-initiated backup to ZIP (database + Excel exports)
+  - [ ] Create backup ZIP with: database file + 4 Excel exports (suppliers, events, issues, critical monitor)
+  - [ ] User chooses save location via file picker
+  - [ ] Backup metadata (JSON with counts, timestamp)
+  - [ ] Success notification with backup path
+- [ ] **Restore from Backup** - Restore database from ZIP backup
+  - [ ] File picker for ZIP selection
+  - [ ] Validation and confirmation dialog
+  - [ ] Safety backup before restore
+  - [ ] Force re-login after restore
+- [ ] **Audit Log** - Track all changes for accountability
+  - [ ] Simple SQLite table (timestamp, user_name, action, entity_type, entity_identifier, details)
+  - [ ] Log supplier/user/settings changes (no login/logout events)
+  - [ ] Export to Excel (standalone + integrated with main export)
+  - [ ] Settings UI section for on-demand export
+- [ ] Excel import (bulk import suppliers) - Future
+- [ ] Data location configuration UI (choose local or network path) - Future
+- [ ] Automatic scheduled backups (weekly/monthly) - Future
 
 #### Step 6: Packaging & Distribution
 - [x] Configure Electron Builder for Windows
@@ -359,13 +415,16 @@ See Phase 2 section above for detailed implementation steps.
 - Bulk actions (select multiple, export/delete in bulk)
 - Print-friendly view
 - Keyboard shortcuts for power users
-- Audit trail and version history
+- Version history (revert to previous versions)
 - Email reminders for upcoming renewals
-- User authentication and roles
+- Backend permission validation (IPC handler security)
+- Excel import (bulk supplier creation)
+- Data location configuration
 
 ---
 
-**Last Updated:** 2025-12-17
+**Last Updated:** 2025-12-18
 **Phase Status:** Phase 2 - Core Complete ✅
-**Current Priority:** New Features (Step 5: Backup/Restore, Excel Import)
+**Current Priority:** New Features (Step 5: Manual Backup, Audit Log)
+**Next Priority:** Restore from Backup, Automatic Scheduled Backups
 **Related Files:** CLAUDE.md, OFFLINE_SPEC.md, VALIDATION.md, ARCHITECTURE.md

@@ -1,10 +1,11 @@
 "use client"
 
-import { List, FileText, BarChart3, PieChart } from "lucide-react"
+import { List, FileText, BarChart3, PieChart, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils/cn"
+import { useAuth } from "@/components/providers/auth-provider"
 
-export type ViewType = "list" | "new" | "dashboard" | "reporting"
+export type ViewType = "list" | "new" | "dashboard" | "reporting" | "settings"
 
 interface ViewSegmentedControlProps {
   activeView: ViewType
@@ -15,12 +16,18 @@ export function ViewSegmentedControl({
   activeView,
   onViewChange,
 }: ViewSegmentedControlProps) {
-  const views: { value: ViewType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  const { canEdit } = useAuth()
+
+  const allViews: { value: ViewType; label: string; icon: React.ComponentType<{ className?: string }>; requiresEdit?: boolean }[] = [
     { value: "list", label: "Register List", icon: List },
-    { value: "new", label: "New Entry", icon: FileText },
+    { value: "new", label: "New Entry", icon: FileText, requiresEdit: true },
     { value: "dashboard", label: "Dashboard", icon: BarChart3 },
     { value: "reporting", label: "Reporting", icon: PieChart },
+    { value: "settings", label: "Settings", icon: Settings },
   ]
+
+  // Filter out views that require edit permission when user can't edit
+  const views = allViews.filter((view) => !view.requiresEdit || canEdit)
 
   return (
     <div className="flex justify-center">

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useReporting } from "@/hooks/use-reporting"
 import { useDatabase } from "@/hooks/use-database"
+import { useAuth } from "@/components/providers/auth-provider"
 import type { EventLog, IssueRecord, IssueStatus, CriticalMonitorRecord, CriticalMonitorView } from "@/lib/types/reporting"
 import { cn } from "@/lib/utils/cn"
 import { exportEventsToExcel, exportIssuesToExcel, exportCriticalMonitorToExcel } from "@/lib/utils/export-reporting"
@@ -166,6 +167,7 @@ export function ReportingView() {
     upsertCriticalMonitorRecord,
   } = useReporting()
   const { suppliers } = useDatabase()
+  const { canEdit } = useAuth()
   const [period, setPeriod] = useState<PeriodKey>("last30")
   const [searchTerm, setSearchTerm] = useState("")
   const [rangeStart, setRangeStart] = useState("")
@@ -835,19 +837,21 @@ export function ReportingView() {
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
                       {formatDate(event.date)}
                     </span>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => startEditEvent(event)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteEvent(event.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                    {canEdit && (
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => startEditEvent(event)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteEvent(event.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 {editingEventId === event.id && editingEventForm ? (
@@ -985,121 +989,123 @@ export function ReportingView() {
             ))}
           </CardContent>
         </Card>
-        <Card className="border-dashed border-2 bg-muted/20">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Plus className="h-5 w-5 text-primary" />
-              Log Event
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">Record a new event in the change log</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground">Event Type</Label>
-              <Select value={newEvent.type} onValueChange={(val) => setNewEvent((prev) => ({ ...prev, type: val }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Event type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {EVENT_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {formatEventType(t)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {newEvent.type === "custom" && (
+        {canEdit && (
+          <Card className="border-dashed border-2 bg-muted/20">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Plus className="h-5 w-5 text-primary" />
+                Log Event
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">Record a new event in the change log</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Custom Type</Label>
-                <Input
-                  placeholder="Enter custom type"
-                  value={newEvent.customType}
-                  onChange={(e) => setNewEvent((prev) => ({ ...prev, customType: e.target.value }))}
-                />
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground">Summary *</Label>
-              <Input
-                placeholder="Brief description of the event"
-                value={newEvent.summary}
-                onChange={(e) => setNewEvent((prev) => ({ ...prev, summary: e.target.value }))}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Date</Label>
-                <Input
-                  type="date"
-                  value={toInputDateValue(newEvent.date)}
-                  onChange={(e) => setNewEvent((prev) => ({ ...prev, date: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Severity</Label>
-                <Select
-                  value={newEvent.severity && newEvent.severity.trim() ? newEvent.severity : SEVERITY_NONE}
-                  onValueChange={(val) =>
-                    setNewEvent((prev) => ({ ...prev, severity: val === SEVERITY_NONE ? "" : val }))
-                  }
-                >
+                <Label className="text-xs font-medium text-muted-foreground">Event Type</Label>
+                <Select value={newEvent.type} onValueChange={(val) => setNewEvent((prev) => ({ ...prev, type: val }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Severity" />
+                    <SelectValue placeholder="Event type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={SEVERITY_NONE}>None</SelectItem>
-                    {SEVERITIES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
+                    {EVENT_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {formatEventType(t)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+              {newEvent.type === "custom" && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Custom Type</Label>
+                  <Input
+                    placeholder="Enter custom type"
+                    value={newEvent.customType}
+                    onChange={(e) => setNewEvent((prev) => ({ ...prev, customType: e.target.value }))}
+                  />
+                </div>
+              )}
               <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Supplier</Label>
+                <Label className="text-xs font-medium text-muted-foreground">Summary *</Label>
                 <Input
-                  placeholder="Supplier Name"
-                  value={newEvent.supplierName}
-                  onChange={(e) => setNewEvent((prev) => ({ ...prev, supplierName: e.target.value }))}
+                  placeholder="Brief description of the event"
+                  value={newEvent.summary}
+                  onChange={(e) => setNewEvent((prev) => ({ ...prev, summary: e.target.value }))}
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Function</Label>
-                <Input
-                  placeholder="Outsourced Function"
-                  value={newEvent.functionName}
-                  onChange={(e) => setNewEvent((prev) => ({ ...prev, functionName: e.target.value }))}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Date</Label>
+                  <Input
+                    type="date"
+                    value={toInputDateValue(newEvent.date)}
+                    onChange={(e) => setNewEvent((prev) => ({ ...prev, date: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Severity</Label>
+                  <Select
+                    value={newEvent.severity && newEvent.severity.trim() ? newEvent.severity : SEVERITY_NONE}
+                    onValueChange={(val) =>
+                      setNewEvent((prev) => ({ ...prev, severity: val === SEVERITY_NONE ? "" : val }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Severity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={SEVERITY_NONE}>None</SelectItem>
+                      {SEVERITIES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Old Value</Label>
-                <Input
-                  placeholder="Previous value"
-                  value={newEvent.oldValue}
-                  onChange={(e) => setNewEvent((prev) => ({ ...prev, oldValue: e.target.value }))}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Supplier</Label>
+                  <Input
+                    placeholder="Supplier Name"
+                    value={newEvent.supplierName}
+                    onChange={(e) => setNewEvent((prev) => ({ ...prev, supplierName: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Function</Label>
+                  <Input
+                    placeholder="Outsourced Function"
+                    value={newEvent.functionName}
+                    onChange={(e) => setNewEvent((prev) => ({ ...prev, functionName: e.target.value }))}
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">New Value</Label>
-                <Input
-                  placeholder="New value"
-                  value={newEvent.newValue}
-                  onChange={(e) => setNewEvent((prev) => ({ ...prev, newValue: e.target.value }))}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Old Value</Label>
+                  <Input
+                    placeholder="Previous value"
+                    value={newEvent.oldValue}
+                    onChange={(e) => setNewEvent((prev) => ({ ...prev, oldValue: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">New Value</Label>
+                  <Input
+                    placeholder="New value"
+                    value={newEvent.newValue}
+                    onChange={(e) => setNewEvent((prev) => ({ ...prev, newValue: e.target.value }))}
+                  />
+                </div>
               </div>
-            </div>
-            <Button onClick={handleCreateEvent} disabled={!newEvent.summary.trim()} className="w-full">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Event
-            </Button>
-          </CardContent>
-        </Card>
+              <Button onClick={handleCreateEvent} disabled={!newEvent.summary.trim()} className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Event
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -1236,52 +1242,58 @@ export function ReportingView() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 items-end shrink-0">
-                    <Select value={issue.status} onValueChange={(val) => handleStatusChange(issue, val as IssueStatus)}>
-                      <SelectTrigger className="w-[120px] h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["Open", "In Progress", "Blocked", "Closed"].map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {editingIssueId === issue.id ? (
-                        <>
-                          <Button size="sm" className="h-7" onClick={handleSaveIssueEdit} disabled={!editingIssueForm?.title?.trim()}>
-                            Save
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7"
-                            onClick={() => {
-                              setEditingIssueId(null)
-                              setEditingIssueForm(null)
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => startEditIssue(issue)}>
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-destructive hover:text-destructive"
-                            onClick={() => deleteIssue(issue.id!)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
+                    {canEdit ? (
+                      <Select value={issue.status} onValueChange={(val) => handleStatusChange(issue, val as IssueStatus)}>
+                        <SelectTrigger className="w-[120px] h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["Open", "In Progress", "Blocked", "Closed"].map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {s}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge className={cn("text-xs", STATUS_COLORS[issue.status])}>{issue.status}</Badge>
+                    )}
+                    {canEdit && (
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {editingIssueId === issue.id ? (
+                          <>
+                            <Button size="sm" className="h-7" onClick={handleSaveIssueEdit} disabled={!editingIssueForm?.title?.trim()}>
+                              Save
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7"
+                              onClick={() => {
+                                setEditingIssueId(null)
+                                setEditingIssueForm(null)
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => startEditIssue(issue)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-destructive hover:text-destructive"
+                              onClick={() => deleteIssue(issue.id!)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1459,235 +1471,239 @@ export function ReportingView() {
                 )}
 
                 {/* Add follow-up */}
-                <div className="border-t pt-3">
-                  <div className="flex gap-2 items-start">
-                    <Textarea
-                      placeholder="Add follow-up note..."
-                      className="min-h-[36px] text-sm resize-none"
-                      rows={1}
-                      value={followUpDrafts[issue.id ?? -1] ?? ""}
-                      onChange={(e) => setFollowUpDrafts((prev) => ({ ...prev, [issue.id ?? -1]: e.target.value }))}
-                    />
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="shrink-0 h-[36px]"
-                      onClick={() => handleFollowUpAdd(issue)}
-                      disabled={!followUpDrafts[issue.id ?? -1]?.trim()}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                {canEdit && (
+                  <div className="border-t pt-3">
+                    <div className="flex gap-2 items-start">
+                      <Textarea
+                        placeholder="Add follow-up note..."
+                        className="min-h-[36px] text-sm resize-none"
+                        rows={1}
+                        value={followUpDrafts[issue.id ?? -1] ?? ""}
+                        onChange={(e) => setFollowUpDrafts((prev) => ({ ...prev, [issue.id ?? -1]: e.target.value }))}
+                      />
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="shrink-0 h-[36px]"
+                        onClick={() => handleFollowUpAdd(issue)}
+                        disabled={!followUpDrafts[issue.id ?? -1]?.trim()}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ))}
           </CardContent>
         </Card>
-        <Card className="border-dashed border-2 bg-muted/20">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Plus className="h-5 w-5 text-primary" />
-              New Issue
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">Create a new issue to track</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground">Title *</Label>
-              <Input
-                placeholder="Brief issue title"
-                value={newIssue.title}
-                onChange={(e) => setNewIssue((prev) => ({ ...prev, title: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground">Description *</Label>
-              <Textarea
-                placeholder="Describe the issue in detail"
-                className="min-h-[36px] text-sm resize-none"
-                rows={1}
-                value={newIssue.description}
-                onChange={(e) => setNewIssue((prev) => ({ ...prev, description: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground">Category *</Label>
-              {isAddingCategory ? (
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="New category name"
-                    value={newCategoryInput}
-                    onChange={(e) => setNewCategoryInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault()
+        {canEdit && (
+          <Card className="border-dashed border-2 bg-muted/20">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Plus className="h-5 w-5 text-primary" />
+                New Issue
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">Create a new issue to track</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground">Title *</Label>
+                <Input
+                  placeholder="Brief issue title"
+                  value={newIssue.title}
+                  onChange={(e) => setNewIssue((prev) => ({ ...prev, title: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground">Description *</Label>
+                <Textarea
+                  placeholder="Describe the issue in detail"
+                  className="min-h-[36px] text-sm resize-none"
+                  rows={1}
+                  value={newIssue.description}
+                  onChange={(e) => setNewIssue((prev) => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground">Category *</Label>
+                {isAddingCategory ? (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="New category name"
+                      value={newCategoryInput}
+                      onChange={(e) => setNewCategoryInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault()
+                          if (newCategoryInput.trim()) {
+                            handleAddCustomCategory()
+                            setNewIssue((prev) => ({ ...prev, category: newCategoryInput.trim() }))
+                          }
+                        } else if (e.key === "Escape") {
+                          setIsAddingCategory(false)
+                          setNewCategoryInput("")
+                        }
+                      }}
+                      autoFocus
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => {
                         if (newCategoryInput.trim()) {
                           handleAddCustomCategory()
                           setNewIssue((prev) => ({ ...prev, category: newCategoryInput.trim() }))
                         }
-                      } else if (e.key === "Escape") {
+                      }}
+                      disabled={!newCategoryInput.trim()}
+                    >
+                      Add
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
                         setIsAddingCategory(false)
                         setNewCategoryInput("")
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <Select
+                    value={newIssue.category}
+                    onValueChange={(val) => {
+                      if (val === ADD_NEW_CATEGORY) {
+                        setIsAddingCategory(true)
+                      } else {
+                        setNewIssue((prev) => ({ ...prev, category: val }))
                       }
                     }}
-                    autoFocus
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allCategories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value={ADD_NEW_CATEGORY}>+ Add new category</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground">Initial Follow-up</Label>
+                <Textarea
+                  placeholder="Optional initial note"
+                  className="min-h-[36px] text-sm resize-none"
+                  rows={1}
+                  value={newIssueFollowUp}
+                  onChange={(e) => setNewIssueFollowUp(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground">Owner</Label>
+                <Input
+                  placeholder="Responsible person"
+                  value={newIssue.owner}
+                  onChange={(e) => setNewIssue((prev) => ({ ...prev, owner: e.target.value }))}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Supplier</Label>
+                  <Input
+                    placeholder="Supplier Name"
+                    value={newIssue.supplierName}
+                    onChange={(e) => setNewIssue((prev) => ({ ...prev, supplierName: e.target.value }))}
                   />
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      if (newCategoryInput.trim()) {
-                        handleAddCustomCategory()
-                        setNewIssue((prev) => ({ ...prev, category: newCategoryInput.trim() }))
-                      }
-                    }}
-                    disabled={!newCategoryInput.trim()}
-                  >
-                    Add
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setIsAddingCategory(false)
-                      setNewCategoryInput("")
-                    }}
-                  >
-                    Cancel
-                  </Button>
                 </div>
-              ) : (
-                <Select
-                  value={newIssue.category}
-                  onValueChange={(val) => {
-                    if (val === ADD_NEW_CATEGORY) {
-                      setIsAddingCategory(true)
-                    } else {
-                      setNewIssue((prev) => ({ ...prev, category: val }))
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allCategories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value={ADD_NEW_CATEGORY}>+ Add new category</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Function</Label>
+                  <Input
+                    placeholder="Outsourced Function"
+                    value={newIssue.functionName}
+                    onChange={(e) => setNewIssue((prev) => ({ ...prev, functionName: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Status</Label>
+                  <Select
+                    value={newIssue.status}
+                    onValueChange={(val) => setNewIssue((prev) => ({ ...prev, status: val as IssueStatus }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["Open", "In Progress", "Blocked", "Closed"].map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Severity</Label>
+                  <Select
+                    value={newIssue.severity}
+                    onValueChange={(val) => setNewIssue((prev) => ({ ...prev, severity: val }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Severity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ISSUE_SEVERITIES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Opened On</Label>
+                  <Input
+                    type="date"
+                    value={toInputDateValue(newIssue.dateOpened)}
+                    onChange={(e) => setNewIssue((prev) => ({ ...prev, dateOpened: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Due Date</Label>
+                  <Input
+                    type="date"
+                    value={toInputDateValue(newIssue.dueDate)}
+                    onChange={(e) => setNewIssue((prev) => ({ ...prev, dueDate: e.target.value }))}
+                  />
+                </div>
+              </div>
+              {newIssue.status === "Closed" && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Closed On</Label>
+                  <Input
+                    type="date"
+                    value={toInputDateValue(newIssue.dateClosed)}
+                    onChange={(e) => setNewIssue((prev) => ({ ...prev, dateClosed: e.target.value }))}
+                  />
+                </div>
               )}
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground">Initial Follow-up</Label>
-              <Textarea
-                placeholder="Optional initial note"
-                className="min-h-[36px] text-sm resize-none"
-                rows={1}
-                value={newIssueFollowUp}
-                onChange={(e) => setNewIssueFollowUp(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground">Owner</Label>
-              <Input
-                placeholder="Responsible person"
-                value={newIssue.owner}
-                onChange={(e) => setNewIssue((prev) => ({ ...prev, owner: e.target.value }))}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Supplier</Label>
-                <Input
-                  placeholder="Supplier Name"
-                  value={newIssue.supplierName}
-                  onChange={(e) => setNewIssue((prev) => ({ ...prev, supplierName: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Function</Label>
-                <Input
-                  placeholder="Outsourced Function"
-                  value={newIssue.functionName}
-                  onChange={(e) => setNewIssue((prev) => ({ ...prev, functionName: e.target.value }))}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Status</Label>
-                <Select
-                  value={newIssue.status}
-                  onValueChange={(val) => setNewIssue((prev) => ({ ...prev, status: val as IssueStatus }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["Open", "In Progress", "Blocked", "Closed"].map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Severity</Label>
-                <Select
-                  value={newIssue.severity}
-                  onValueChange={(val) => setNewIssue((prev) => ({ ...prev, severity: val }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Severity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ISSUE_SEVERITIES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Opened On</Label>
-                <Input
-                  type="date"
-                  value={toInputDateValue(newIssue.dateOpened)}
-                  onChange={(e) => setNewIssue((prev) => ({ ...prev, dateOpened: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Due Date</Label>
-                <Input
-                  type="date"
-                  value={toInputDateValue(newIssue.dueDate)}
-                  onChange={(e) => setNewIssue((prev) => ({ ...prev, dueDate: e.target.value }))}
-                />
-              </div>
-            </div>
-            {newIssue.status === "Closed" && (
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Closed On</Label>
-                <Input
-                  type="date"
-                  value={toInputDateValue(newIssue.dateClosed)}
-                  onChange={(e) => setNewIssue((prev) => ({ ...prev, dateClosed: e.target.value }))}
-                />
-              </div>
-            )}
-            <Button onClick={handleCreateIssue} disabled={!newIssue.title || !newIssue.description || !newIssue.category} className="w-full">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Issue
-            </Button>
-          </CardContent>
-        </Card>
+              <Button onClick={handleCreateIssue} disabled={!newIssue.title || !newIssue.description || !newIssue.category} className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Issue
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Critical Outsourcing Monitor Section */}
@@ -1709,7 +1725,7 @@ export function ReportingView() {
             </div>
           </div>
           <p className="text-sm text-muted-foreground">
-            Summary of critical active outsourcing arrangements. Fields marked with * can be edited directly.
+            Summary of critical active outsourcing arrangements.{canEdit && " Fields marked with * can be edited directly."}
           </p>
           <div className="flex flex-wrap gap-3 items-center">
             <div className="flex items-center gap-2">
@@ -1778,15 +1794,15 @@ export function ReportingView() {
                     <TableHead className="min-w-[150px]">Provider Name</TableHead>
                     <TableHead className="min-w-[150px]">Function Name</TableHead>
                     <TableHead className="min-w-[90px]">Category</TableHead>
-                    <TableHead className="min-w-[150px]">Contract *</TableHead>
+                    <TableHead className="min-w-[150px]">Contract{canEdit && " *"}</TableHead>
                     <TableHead className="min-w-[130px]">Criticality Assessment</TableHead>
-                    <TableHead className="min-w-[130px]">Suitability Assessment *</TableHead>
+                    <TableHead className="min-w-[130px]">Suitability Assessment{canEdit && " *"}</TableHead>
                     <TableHead className="min-w-[130px]">Risk Assessment Date</TableHead>
-                    <TableHead className="min-w-[180px]">Audit Reports *</TableHead>
+                    <TableHead className="min-w-[180px]">Audit Reports{canEdit && " *"}</TableHead>
                     <TableHead className="min-w-[110px]">Last Audit</TableHead>
                     <TableHead className="min-w-[120px]">Cloud Officer</TableHead>
                     <TableHead className="min-w-[130px]">Resource Operator</TableHead>
-                    <TableHead className="min-w-[130px]">CO & RO Assessment *</TableHead>
+                    <TableHead className="min-w-[130px]">CO & RO Assessment{canEdit && " *"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1802,16 +1818,17 @@ export function ReportingView() {
                       {/* Contract - Editable */}
                       <TableCell
                         className={cn(
-                          "cursor-pointer hover:bg-muted/50 transition-colors",
+                          canEdit && "cursor-pointer hover:bg-muted/50 transition-colors",
                           editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "contract" && "bg-muted"
                         )}
                         onClick={() => {
+                          if (!canEdit) return
                           if (editingCmCell?.refNum !== item.supplierReferenceNumber || editingCmCell?.field !== "contract") {
                             startEditCmCell(item.supplierReferenceNumber, "contract", item.contract)
                           }
                         }}
                       >
-                        {editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "contract" ? (
+                        {canEdit && editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "contract" ? (
                           <Input
                             autoFocus
                             value={editingCmValue}
@@ -1831,16 +1848,17 @@ export function ReportingView() {
                       {/* Suitability Assessment - Editable Date */}
                       <TableCell
                         className={cn(
-                          "cursor-pointer hover:bg-muted/50 transition-colors",
+                          canEdit && "cursor-pointer hover:bg-muted/50 transition-colors",
                           editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "suitabilityAssessmentDate" && "bg-muted"
                         )}
                         onClick={() => {
+                          if (!canEdit) return
                           if (editingCmCell?.refNum !== item.supplierReferenceNumber || editingCmCell?.field !== "suitabilityAssessmentDate") {
                             startEditCmCell(item.supplierReferenceNumber, "suitabilityAssessmentDate", toInputDateValue(item.suitabilityAssessmentDate))
                           }
                         }}
                       >
-                        {editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "suitabilityAssessmentDate" ? (
+                        {canEdit && editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "suitabilityAssessmentDate" ? (
                           <Input
                             type="date"
                             autoFocus
@@ -1863,16 +1881,17 @@ export function ReportingView() {
                       {/* Audit Reports - Editable */}
                       <TableCell
                         className={cn(
-                          "cursor-pointer hover:bg-muted/50 transition-colors",
+                          canEdit && "cursor-pointer hover:bg-muted/50 transition-colors",
                           editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "auditReports" && "bg-muted"
                         )}
                         onClick={() => {
+                          if (!canEdit) return
                           if (editingCmCell?.refNum !== item.supplierReferenceNumber || editingCmCell?.field !== "auditReports") {
                             startEditCmCell(item.supplierReferenceNumber, "auditReports", item.auditReports)
                           }
                         }}
                       >
-                        {editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "auditReports" ? (
+                        {canEdit && editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "auditReports" ? (
                           <Input
                             autoFocus
                             value={editingCmValue}
@@ -1894,16 +1913,17 @@ export function ReportingView() {
                       {/* CO & RO Assessment - Editable Date */}
                       <TableCell
                         className={cn(
-                          "cursor-pointer hover:bg-muted/50 transition-colors",
+                          canEdit && "cursor-pointer hover:bg-muted/50 transition-colors",
                           editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "coRoAssessmentDate" && "bg-muted"
                         )}
                         onClick={() => {
+                          if (!canEdit) return
                           if (editingCmCell?.refNum !== item.supplierReferenceNumber || editingCmCell?.field !== "coRoAssessmentDate") {
                             startEditCmCell(item.supplierReferenceNumber, "coRoAssessmentDate", toInputDateValue(item.coRoAssessmentDate))
                           }
                         }}
                       >
-                        {editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "coRoAssessmentDate" ? (
+                        {canEdit && editingCmCell?.refNum === item.supplierReferenceNumber && editingCmCell?.field === "coRoAssessmentDate" ? (
                           <Input
                             type="date"
                             autoFocus

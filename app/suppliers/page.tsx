@@ -12,7 +12,9 @@ import { DashboardView } from "@/components/shared/dashboard/dashboard-view"
 import { ReportingView } from "@/components/shared/reporting/reporting-view"
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton"
 import { MobileBlock } from "@/components/shared/mobile-block"
+import { SettingsView } from "@/components/settings/settings-view"
 import { useDatabase } from "@/hooks/use-database"
+import { useAuth } from "@/components/providers/auth-provider"
 import { toast } from "sonner"
 import { AlertCircle } from "lucide-react"
 import type { QuickFilters, CustomFilter } from "@/lib/types/filters"
@@ -34,6 +36,9 @@ export default function SuppliersPage() {
     deleteSupplier: dbDeleteSupplier,
     duplicateSupplier: dbDuplicateSupplier,
   } = useDatabase()
+
+  // Auth state for RBAC
+  const { canEdit } = useAuth()
 
   // Edit state
   const [editingSupplier, setEditingSupplier] = useState<SupplierOutsourcing | null>(null)
@@ -254,9 +259,9 @@ export default function SuppliersPage() {
                 <SupplierRegisterTable
                   suppliers={filteredSuppliers}
                   searchTerm={searchTerm}
-                  onEdit={handleEditSupplier}
-                  onDuplicate={handleDuplicateSupplier}
-                  onDelete={handleDeleteSupplier}
+                  onEdit={canEdit ? handleEditSupplier : undefined}
+                  onDuplicate={canEdit ? handleDuplicateSupplier : undefined}
+                  onDelete={canEdit ? handleDeleteSupplier : undefined}
                   allSuppliers={suppliers}
                 />
               ) : (
@@ -294,6 +299,9 @@ export default function SuppliersPage() {
 
           {/* Reporting View */}
           {activeView === "reporting" && <ReportingView />}
+
+          {/* Settings View */}
+          {activeView === "settings" && <SettingsView />}
         </div>
       </AppLayout>
     </MobileBlock>
