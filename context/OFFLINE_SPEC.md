@@ -296,64 +296,6 @@ export async function restoreFromExcelBackup(
   - Database restore: Fastest and most accurate
   - Excel restore: Use only if you manually edited the Excel files in the backup
 
-### 3. Excel Import (Bulk Import)
-**Goal:** Import multiple suppliers from Excel file
-
-**UI Location:** Register page, toolbar button "Import from Excel"
-
-**Functionality:**
-- Button: "Import from Excel"
-- File picker: Select `.xlsx` file
-- Validation: Check required columns exist
-- Preview: Show first 5 rows before import
-- Confirmation: "Import X suppliers?"
-- Import: Insert into database, show progress bar
-- Report: "Successfully imported X suppliers. Y skipped (errors)."
-
-**Excel Format:**
-- Template file: User downloads template with all column headers
-- Required columns: All mandatory CSSF fields (54.a-54.i)
-- Optional columns: Cloud fields, critical fields
-- Header row: Column names match field names (e.g., "Reference Number", "Provider Name")
-
-**Implementation:**
-```typescript
-// Frontend: Read Excel file with SheetJS (xlsx)
-import * as XLSX from 'xlsx'
-
-const workbook = XLSX.read(file, { type: 'binary' })
-const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-const suppliers = XLSX.utils.sheet_to_json(worksheet)
-
-// Send to Electron API
-const result = await window.electronAPI.importSuppliers(suppliers)
-```
-
-### 4. Data Location Configuration
-**Goal:** Allow users to choose database location (local or network drive)
-
-**UI Location:** Settings page (new page)
-
-**Functionality:**
-- Setting: "Database Location"
-- Options:
-  - Local (default): `%APPDATA%/OutsourcingRegister/suppliers.db`
-  - Network Drive: User enters path (e.g., `\\Server\Share\OutsourcingRegister\suppliers.db`)
-- Button: "Browse..." to select folder
-- Validation: Check path exists and is writable
-- Action: Move database to new location, update config
-- Restart app to use new location
-
-**Implementation:**
-```typescript
-// Store config in separate file: config.json
-{
-  "databasePath": "C:\\Users\\...\\AppData\\Roaming\\OutsourcingRegister\\suppliers.db"
-}
-
-// On app start: Read config, connect to database at specified path
-```
-
 ---
 
 ## 📦 Packaging & Distribution (Completed)
@@ -392,10 +334,10 @@ const result = await window.electronAPI.importSuppliers(suppliers)
 - [x] Test local database creation
 - [x] Test uninstaller
 - [x] Test backup/restore (database and Excel methods)
-- [ ] Install on clean Windows 10 machine
-- [ ] Test network drive database access
-- [ ] Test all CRUD operations (packaged)
-- [ ] Test Excel import
+- [ ] Install on clean Windows 10/11 machine
+- [ ] Test network drive database access (multi-user scenario)
+- [ ] Test all CRUD operations in packaged app
+- [ ] Write user documentation (installation, backup procedures, multi-user setup)
 
 ---
 
@@ -427,13 +369,13 @@ These features will **NOT** be implemented in Phase 2:
 4. ✅ Data persists after app restart (SQLite database)
 5. ✅ Desktop-only architecture (no browser fallback)
 
-### Remaining Work (Phase 2.5)
+### Remaining Work (Testing & Deployment)
 6. ✅ Windows installer (.exe) - COMPLETED
-7. ✅ User can backup database to external file - COMPLETED (ZIP with database + Excel exports)
-8. ✅ User can restore database from backup file - COMPLETED (hybrid restore with selective options)
-9. ⏳ User can import suppliers from Excel file
-10. ⏳ User can configure database location (local or network drive)
-11. ⏳ App works for multiple users (shared network database, up to 5 users)
+7. ✅ User can backup database to external file - COMPLETED
+8. ✅ User can restore database from backup file - COMPLETED
+9. ⏳ Test installer on clean Windows machine
+10. ⏳ Test multi-user scenario (shared network database)
+11. ⏳ Write user documentation
 
 ---
 
@@ -448,5 +390,5 @@ These features will **NOT** be implemented in Phase 2:
 
 **Created:** 2025-12-02
 **Last Updated:** 2025-12-19
-**Status:** Phase 2 - Core Complete ✅ (Packaging delivered, Backup/Restore implemented)
-**Next Step:** Step 5: New Features (Excel Import, Database Location Config, Audit Log)
+**Status:** Phase 2 - Complete ✅ (All features implemented)
+**Next Step:** Testing & Deployment (clean machine testing, multi-user testing, documentation)

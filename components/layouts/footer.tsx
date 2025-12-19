@@ -1,6 +1,15 @@
 import Link from "next/link"
 import Image from "next/image"
-import { Github, Linkedin, Instagram, Mail, FileText, Home as HomeIcon } from "lucide-react"
+import {
+  Github,
+  Linkedin,
+  Instagram,
+  Mail,
+  FileText,
+  Home as HomeIcon,
+  BookOpen,
+  Coffee,
+} from "lucide-react"
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -30,13 +39,6 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-slate-300">Quick Links</h3>
             <nav className="flex flex-col gap-2">
               <Link
-                href="/suppliers"
-                className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
-              >
-                <FileText className="h-4 w-4" />
-                View Register
-              </Link>
-              <Link
                 href="https://www.iddi-labs.com"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -46,13 +48,22 @@ export function Footer() {
                 Website
               </Link>
               <Link
-                href="https://www.iddi-labs.com/privacy-policy"
+                href="https://www.iddi-labs.com/outsourcingregister/guidelines"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
               >
-                <FileText className="h-4 w-4" />
-                Privacy Policy
+                <BookOpen className="h-4 w-4" />
+                Guidelines
+              </Link>
+              <Link
+                href="https://buymeacoffee.com/iddilabs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                <Coffee className="h-4 w-4" />
+                Donations
               </Link>
             </nav>
           </div>
