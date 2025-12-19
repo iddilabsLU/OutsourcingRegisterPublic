@@ -60,9 +60,19 @@ npm run lint               # Lint
 - Export to Excel (compact/full, events, issues, critical monitor) & PDF (compact)
 - Pending fields + validation layers
 - Desktop packaging: installer generated via `npm run electron:build`
-- Authentication with RBAC, optional, can be enabled/disabled, 3 user roles: Viewer (read only-access), Editor (full edit access), Admin Role (editor + user management).
+- Authentication with RBAC, optional, can be enabled/disabled, 3 user roles: Viewer (read only-access), Editor (full edit access), Admin Role (editor + user management)
+- **Backup & Restore system** (Settings tab) with hybrid restore options
 
 ### Recent Changes
+- **Backup & Restore System** (Settings tab)
+  - Create backup: Database file + 4 Excel exports (Suppliers, Events, Issues, Critical Monitor)
+  - Restore with options:
+    - **From Database:** Fast, exact restoration using database.db file
+    - **From Excel:** Use if you manually edited the Excel files in the backup
+  - **Selective restore:** Choose which data to restore (Suppliers, Events, Issues, Critical Monitor)
+  - ZIP format: `SupplierRegister_Backup_YYYY-MM-DD.zip`
+  - User chooses save/load location via file dialogs
+  - Info section explains difference between restore methods
 - **Authentication System** with Role-Based Access Control (RBAC)
   - 3 roles: Admin (full access + user management), Editor (edit access), Viewer (read-only)
   - Settings tab to enable/disable authentication
@@ -94,13 +104,11 @@ npm run lint               # Lint
 
 ## 🎯 Next Priorities
 
-**Immediate (In Progress):**
-- Manual backup system (database + Excel exports to ZIP), user choses the location.
-- Audit log (track all supplier/user/settings changes)
-- Export audit log to Excel (integrated with main export)
+**Completed:**
+- ✅ Manual backup system with hybrid restore (database + Excel exports to ZIP)
 
 **Future Enhancements:**
-- Excel import for bulk supplier creation
+- (No immediate priorities - system is feature-complete)
 
 **Electron Notes**
 - Main entry: `dist-electron/electron/main.js`
@@ -145,8 +153,7 @@ npm run lint               # Lint
 - Suitable for internal use, not for internet-facing deployment
 
 **Data Protection:**
-- Manual backup system (user-initiated)
-- Audit log for accountability and compliance
+- Manual backup system (user-initiated) with hybrid restore
 - SQLite database (local file-based storage)
 
 ---

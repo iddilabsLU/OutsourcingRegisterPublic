@@ -179,6 +179,9 @@ app/layout.tsx (Root Layout)
     │
     └── Settings View (admin-only user management)
         ├── SettingsView Container
+        ├── BackupSettingsCard (backup & restore)
+        │   ├── Create Backup (database + Excel exports to ZIP)
+        │   └── Restore from Backup (hybrid: database or Excel, selective restore)
         ├── AuthSettingsCard (enable/disable auth, change master password)
         └── UserManagement (admin-only)
             ├── Users List (with role badges)
@@ -487,6 +490,79 @@ CREATE TABLE users (
 - Master password for emergency access (default: `master123`, change immediately)
 - Default admin credentials: `admin` / `admin` (change on first login)
 
+### Backup & Restore Flow
+
+```
+User Initiates Backup (Settings → Backup & Restore)
+      ↓
+File Dialog: Select save location (user chooses path)
+      ↓
+electron/main.ts: backup:showSaveDialog
+  - Suggests filename: SupplierRegister_Backup_YYYY-MM-DD.zip
+      ↓
+electron/main.ts: backup:create
+      ↓
+electron/database/backup.ts: createBackupZip(zipPath)
+  1. Create temp directory
+  2. Close database connection
+  3. Copy database file (database.db)
+  4. Reopen database
+  5. Export 4 Excel files:
+     - Suppliers.xlsx (all supplier records)
+     - Events.xlsx (change log)
+     - Issues.xlsx (issue tracker)
+     - CriticalMonitor.xlsx (critical outsourcing monitor)
+  6. Create ZIP archive (archiver library)
+  7. Clean up temp directory
+      ↓
+Success: Toast notification with backup path
+
+---
+
+User Initiates Restore (Settings → Backup & Restore)
+      ↓
+File Dialog: Select backup ZIP file
+      ↓
+Restore Confirmation Dialog:
+  Step 1: Choose restore method
+    - From Database (fast, exact - uses database.db file)
+    - From Excel (manual edits - uses Excel files)
+  Step 2: Select data to restore
+    - ✓ Suppliers
+    - ✓ Events
+    - ✓ Issues
+    - ✓ Critical Monitor
+    (Select/deselect each, or all)
+      ↓
+User confirms: "Restore Selected Data"
+      ↓
+electron/main.ts: backup:restoreFromDatabase OR backup:restoreFromExcel
+      ↓
+electron/database/backup.ts:
+  IF restoreFromDatabase:
+    - Extract ZIP to temp directory
+    - If ALL options selected: Replace entire database (fastest)
+    - If SELECTIVE: Read from backup DB, delete selected tables, import selected data
+  IF restoreFromExcel:
+    - Extract ZIP to temp directory
+    - Parse selected Excel files (XLSX library)
+    - Delete selected tables
+    - Import parsed data
+      ↓
+Return stats: { suppliers: X, events: Y, issues: Z, criticalMonitor: W }
+      ↓
+Success: Toast notification + window.location.reload()
+```
+
+**Key Points:**
+- ZIP format: 1 database file + 4 Excel exports
+- Hybrid restore: Choose between database (fast) or Excel (for manual edits)
+- Selective restore: Choose which data types to restore
+- User controls save/load locations via file dialogs
+- Database connection handling: Close before copy, reopen after
+- Temp directory cleanup: On both success and error
+- Full page reload after restore to reflect new data
+
 ---
 
 ## File Structure
@@ -607,6 +683,7 @@ CREATE TABLE users (
 | File | Purpose | Lines |
 |------|---------|-------|
 | `settings/settings-view.tsx` | Settings container with tabs | ~150 |
+| `settings/backup-settings-card.tsx` | Backup & restore with hybrid restore options | ~440 |
 | `settings/auth-settings-card.tsx` | Enable/disable auth, change master password | ~180 |
 | `settings/user-management.tsx` | User list with CRUD operations (admin-only) | ~250 |
 | `settings/user-form-dialog.tsx` | Create/edit user form dialog | ~220 |
@@ -705,6 +782,11 @@ The type definitions in `supplier.ts` are intentionally aligned with CSSF Circul
 |------|---------|
 | `db.ts` | SQLite database initialization, schema creation, CRUD operations for suppliers |
 | `auth.ts` | Authentication service layer (login, user management, password hashing with bcrypt) |
+| `backup.ts` | Backup & restore module (ZIP creation, database/Excel restore, selective restore) |
+| `suppliers.ts` | Supplier CRUD operations with deleteAllSuppliers() for restore |
+| `events.ts` | Event CRUD operations with deleteAllEvents() for restore |
+| `issues.ts` | Issue CRUD operations with deleteAllIssues() for restore |
+| `critical-monitor.ts` | Critical monitor CRUD operations with deleteAllCriticalMonitorRecords() for restore |
 | `event-builder.ts` | Auto-generates change log events from supplier updates (pending-safe) |
 | `schema.sql` | Database schema for suppliers, events, issues, critical_monitor, auth_settings, users tables |
 | `migrate-add-events-issues.ts` | Migration to add events and issues tables |
@@ -1130,5 +1212,5 @@ If managing 100+ suppliers:
 
 ---
 
-**Last Updated:** 2025-12-18
-**Related Files:** VALIDATION.md, ROADMAP.md, supplier.ts, check-completeness.ts, auth.ts, auth-provider.tsx
+**Last Updated:** 2025-12-19
+**Related Files:** VALIDATION.md, ROADMAP.md, supplier.ts, check-completeness.ts, auth.ts, auth-provider.tsx, backup.ts

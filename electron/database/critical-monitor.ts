@@ -114,3 +114,11 @@ export function deleteCriticalMonitorRecord(supplierReferenceNumber: string): vo
   const db = getDatabase()
   db.prepare('DELETE FROM critical_monitor WHERE supplier_reference_number = ?').run(supplierReferenceNumber)
 }
+
+/**
+ * Delete all critical monitor records from database (used for restore)
+ */
+export function deleteAllCriticalMonitorRecords(): void {
+  const db = getDatabase()
+  db.prepare('DELETE FROM critical_monitor').run()
+}

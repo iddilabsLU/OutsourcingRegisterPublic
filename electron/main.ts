@@ -1,8 +1,16 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import { createServer, type Server } from 'http'
 import path from 'path'
 import handler from 'serve-handler'
-import { initializeDatabase, closeDatabase, getDatabaseStats } from './database/db'
+import { initializeDatabase, closeDatabase, getDatabaseStats, getDatabasePath, backupDatabase, restoreDatabase } from './database/db'
+import {
+  createBackupZip,
+  restoreFromDatabaseBackup,
+  restoreFromExcelBackup,
+  type BackupResult,
+  type RestoreResult,
+  type RestoreOptions,
+} from './database/backup'
 import {
   getAllSuppliers,
   getSupplierByReference,
@@ -499,6 +507,72 @@ ipcMain.handle('users:canDelete', async (_event, id: number): Promise<CanDeleteU
     return canDeleteUser(id)
   } catch (error) {
     console.error('❌ Error checking if user can be deleted:', error)
+    throw error
+  }
+})
+
+// ============================================================================
+// Backup & Restore IPC Handlers
+// ============================================================================
+
+// Show save dialog for backup
+ipcMain.handle('backup:showSaveDialog', async (): Promise<string | null> => {
+  if (!mainWindow) return null
+
+  const today = new Date()
+  const yyyy = today.getFullYear()
+  const mm = String(today.getMonth() + 1).padStart(2, '0')
+  const dd = String(today.getDate()).padStart(2, '0')
+  const defaultFilename = `SupplierRegister_Backup_${yyyy}-${mm}-${dd}.zip`
+
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: 'Save Backup',
+    defaultPath: defaultFilename,
+    filters: [{ name: 'ZIP Archive', extensions: ['zip'] }],
+  })
+
+  return result.canceled ? null : result.filePath || null
+})
+
+// Show open dialog for restore
+ipcMain.handle('backup:showOpenDialog', async (): Promise<string | null> => {
+  if (!mainWindow) return null
+
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Select Backup File',
+    filters: [{ name: 'ZIP Archive', extensions: ['zip'] }],
+    properties: ['openFile'],
+  })
+
+  return result.canceled || result.filePaths.length === 0 ? null : result.filePaths[0]
+})
+
+// Create backup ZIP
+ipcMain.handle('backup:create', async (_event, zipPath: string): Promise<BackupResult> => {
+  try {
+    return await createBackupZip(zipPath)
+  } catch (error) {
+    console.error('❌ Error creating backup:', error)
+    throw error
+  }
+})
+
+// Restore from database file in backup
+ipcMain.handle('backup:restoreFromDatabase', async (_event, zipPath: string, options: RestoreOptions): Promise<RestoreResult> => {
+  try {
+    return await restoreFromDatabaseBackup(zipPath, options)
+  } catch (error) {
+    console.error('❌ Error restoring from database:', error)
+    throw error
+  }
+})
+
+// Restore from Excel files in backup
+ipcMain.handle('backup:restoreFromExcel', async (_event, zipPath: string, options: RestoreOptions): Promise<RestoreResult> => {
+  try {
+    return await restoreFromExcelBackup(zipPath, options)
+  } catch (error) {
+    console.error('❌ Error restoring from Excel:', error)
     throw error
   }
 })

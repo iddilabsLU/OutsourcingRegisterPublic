@@ -313,16 +313,17 @@ function exportToPDF(suppliers: SupplierOutsourcing[]) {
 - Desktop-only: App requires Electron, throws error if run in browser
 
 #### Step 5: New Features (IN PROGRESS)
-- [ ] **Manual Backup System** - User-initiated backup to ZIP (database + Excel exports)
-  - [ ] Create backup ZIP with: database file + 4 Excel exports (suppliers, events, issues, critical monitor)
-  - [ ] User chooses save location via file picker
-  - [ ] Backup metadata (JSON with counts, timestamp)
-  - [ ] Success notification with backup path
-- [ ] **Restore from Backup** - Restore database from ZIP backup
-  - [ ] File picker for ZIP selection
-  - [ ] Validation and confirmation dialog
-  - [ ] Safety backup before restore
-  - [ ] Force re-login after restore
+- [x] **Manual Backup System** ✅ COMPLETED (2025-12-19)
+  - [x] Create backup ZIP with: database file + 4 Excel exports (suppliers, events, issues, critical monitor)
+  - [x] User chooses save location via file picker
+  - [x] Default filename: `SupplierRegister_Backup_YYYY-MM-DD.zip`
+  - [x] Success notification with backup path
+- [x] **Restore from Backup** ✅ COMPLETED (2025-12-19)
+  - [x] File picker for ZIP selection
+  - [x] Hybrid restore options: From Database (fast) or From Excel (manual edits)
+  - [x] Selective restore: Choose which data to restore (Suppliers/Events/Issues/Critical Monitor)
+  - [x] Validation and confirmation dialog with warnings
+  - [x] Page reload after restore to reflect changes
 - [ ] **Audit Log** - Track all changes for accountability
   - [ ] Simple SQLite table (timestamp, user_name, action, entity_type, entity_identifier, details)
   - [ ] Log supplier/user/settings changes (no login/logout events)
@@ -331,6 +332,16 @@ function exportToPDF(suppliers: SupplierOutsourcing[]) {
 - [ ] Excel import (bulk import suppliers) - Future
 - [ ] Data location configuration UI (choose local or network path) - Future
 - [ ] Automatic scheduled backups (weekly/monthly) - Future
+
+**Implementation Details (Backup & Restore):**
+- New module: `electron/database/backup.ts` (716 lines)
+- New component: `components/settings/backup-settings-card.tsx` (440 lines)
+- 5 new IPC handlers in `electron/main.ts` (file dialogs, backup create, restore operations)
+- Added `deleteAll*()` functions to database modules for selective restore
+- Dependencies: `archiver` v7.0.1 (ZIP creation), `adm-zip` v0.5.16 (ZIP extraction)
+- Backup contains: database.db + Suppliers.xlsx + Events.xlsx + Issues.xlsx + CriticalMonitor.xlsx
+- Restore validation: Checks ZIP contains required files, confirms before overwrite
+- Info section in UI explains difference between database and Excel restore methods
 
 #### Step 6: Packaging & Distribution
 - [x] Configure Electron Builder for Windows
@@ -423,8 +434,8 @@ See Phase 2 section above for detailed implementation steps.
 
 ---
 
-**Last Updated:** 2025-12-18
+**Last Updated:** 2025-12-19
 **Phase Status:** Phase 2 - Core Complete ✅
-**Current Priority:** New Features (Step 5: Manual Backup, Audit Log)
-**Next Priority:** Restore from Backup, Automatic Scheduled Backups
+**Current Priority:** New Features (Step 5: Audit Log - remaining)
+**Next Priority:** Excel Import, Automatic Scheduled Backups
 **Related Files:** CLAUDE.md, OFFLINE_SPEC.md, VALIDATION.md, ARCHITECTURE.md

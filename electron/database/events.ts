@@ -141,3 +141,11 @@ export function getEvents(): EventLog[] {
     createdAt: row.created_at,
   }))
 }
+
+/**
+ * Delete all events from database (used for restore)
+ */
+export function deleteAllEvents(): void {
+  const db = getDatabase()
+  db.prepare('DELETE FROM events').run()
+}

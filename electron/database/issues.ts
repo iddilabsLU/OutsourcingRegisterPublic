@@ -159,3 +159,11 @@ function parseFollowups(value?: unknown): IssueFollowUp[] | undefined {
   }
   return undefined
 }
+
+/**
+ * Delete all issues from database (used for restore)
+ */
+export function deleteAllIssues(): void {
+  const db = getDatabase()
+  db.prepare('DELETE FROM issues').run()
+}

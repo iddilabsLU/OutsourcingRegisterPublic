@@ -206,50 +206,95 @@ All existing features have been successfully migrated to desktop application:
 
 ## 🆕 New Features (Phase 2)
 
-### 1. Database Backup
-**Goal:** Allow users to backup the database file
+### 1. Backup & Restore System ✅ COMPLETED (2025-12-19)
 
-**UI Location:** Settings menu or toolbar button
+**Goal:** Allow users to backup and restore their complete dataset with flexibility
 
+**UI Location:** Settings tab → Backup & Restore card
+
+#### Create Backup
 **Functionality:**
-- Button: "Backup Database"
-- Action: Copy `suppliers.db` to user-selected location
-- Filename format: `suppliers_backup_YYYY-MM-DD_HHMMSS.db`
-- Show success toast: "Database backed up to [path]"
+- Button: "Create Backup"
+- Action: Opens save dialog for user to choose location
+- Default filename: `SupplierRegister_Backup_YYYY-MM-DD.zip`
+- Creates ZIP containing:
+  - `database.db` - Complete SQLite database
+  - `Suppliers.xlsx` - All supplier records
+  - `Events.xlsx` - Change log
+  - `Issues.xlsx` - Issue tracker
+  - `CriticalMonitor.xlsx` - Critical outsourcing monitor data
+- Success toast with backup path
 
 **Implementation:**
 ```typescript
-// Electron main process
-ipcMain.handle('database:backup', async (event, destinationPath) => {
-  const dbPath = getDatabasePath() // Current database file
-  await fs.copyFile(dbPath, destinationPath)
-  return { success: true, path: destinationPath }
-})
+// electron/database/backup.ts
+export async function createBackupZip(zipPath: string): Promise<BackupResult> {
+  1. Create temp directory
+  2. Close database connection
+  3. Copy database.db file
+  4. Reopen database
+  5. Generate 4 Excel exports using XLSX library
+  6. Create ZIP archive using archiver
+  7. Clean up temp directory
+  return { success: true, path: zipPath, files: [...] }
+}
 ```
 
-### 2. Database Restore
-**Goal:** Allow users to restore from a backup file
-
-**UI Location:** Settings menu or toolbar button
-
+#### Restore from Backup
 **Functionality:**
-- Button: "Restore Database"
-- Action: Replace `suppliers.db` with user-selected backup file
-- Confirmation dialog: "This will replace all current data. Continue?"
-- Show success toast: "Database restored from [path]. App will restart."
-- Restart app to reload data
+- Button: "Select Backup File"
+- Action: Opens file picker to select backup ZIP
+- Two-step confirmation dialog:
+
+  **Step 1: Choose Restore Method**
+  - **From Database** - Fast and exact (uses database.db file)
+  - **From Excel** - Use if you manually edited the Excel files
+
+  **Step 2: Select Data to Restore** (Selective Restore)
+  - ☑ Suppliers
+  - ☑ Events (Change Log)
+  - ☑ Issues
+  - ☑ Critical Monitor
+  - Select/deselect individual data types or all
+
+- Warning: "Selected data will be replaced. This action cannot be undone."
+- Button: "Restore Selected Data"
+- Success toast with stats (X suppliers, Y events, etc.)
+- Page reload to reflect restored data
 
 **Implementation:**
 ```typescript
-// Electron main process
-ipcMain.handle('database:restore', async (event, backupPath) => {
-  const dbPath = getDatabasePath()
-  await db.close() // Close database connection
-  await fs.copyFile(backupPath, dbPath) // Replace current database
-  app.relaunch() // Restart app
-  app.exit()
-})
+// electron/database/backup.ts
+
+// Database restore (fast, exact)
+export async function restoreFromDatabaseBackup(
+  zipPath: string,
+  options: RestoreOptions
+): Promise<RestoreResult> {
+  1. Extract ZIP to temp directory
+  2. If ALL options selected: Replace entire database (fastest path)
+  3. If SELECTIVE: Open backup DB, read selected tables, import to main DB
+  4. Return stats: { suppliers: X, events: Y, issues: Z, criticalMonitor: W }
+}
+
+// Excel restore (for manual edits)
+export async function restoreFromExcelBackup(
+  zipPath: string,
+  options: RestoreOptions
+): Promise<RestoreResult> {
+  1. Extract ZIP to temp directory
+  2. Parse selected Excel files (XLSX library)
+  3. Delete selected tables in main DB
+  4. Import parsed records
+  5. Return stats
+}
 ```
+
+**Info Section in UI:**
+- Explains ZIP contents (database + 4 Excel files)
+- Clarifies difference between restore methods:
+  - Database restore: Fastest and most accurate
+  - Excel restore: Use only if you manually edited the Excel files in the backup
 
 ### 3. Excel Import (Bulk Import)
 **Goal:** Import multiple suppliers from Excel file
@@ -346,10 +391,10 @@ const result = await window.electronAPI.importSuppliers(suppliers)
 - [x] Install on Windows 11 (dev box)
 - [x] Test local database creation
 - [x] Test uninstaller
+- [x] Test backup/restore (database and Excel methods)
 - [ ] Install on clean Windows 10 machine
 - [ ] Test network drive database access
 - [ ] Test all CRUD operations (packaged)
-- [ ] Test backup/restore
 - [ ] Test Excel import
 
 ---
@@ -383,9 +428,9 @@ These features will **NOT** be implemented in Phase 2:
 5. ✅ Desktop-only architecture (no browser fallback)
 
 ### Remaining Work (Phase 2.5)
-6. ⏳ Windows installer (.exe) - to be implemented
-7. ⏳ User can backup database to external file
-8. ⏳ User can restore database from backup file
+6. ✅ Windows installer (.exe) - COMPLETED
+7. ✅ User can backup database to external file - COMPLETED (ZIP with database + Excel exports)
+8. ✅ User can restore database from backup file - COMPLETED (hybrid restore with selective options)
 9. ⏳ User can import suppliers from Excel file
 10. ⏳ User can configure database location (local or network drive)
 11. ⏳ App works for multiple users (shared network database, up to 5 users)
@@ -402,6 +447,6 @@ These features will **NOT** be implemented in Phase 2:
 ---
 
 **Created:** 2025-12-02
-**Last Updated:** 2025-12-09
-**Status:** Phase 2 - Core Complete ✅ (Packaging delivered)
-**Next Step:** Step 5: New Features (Backup/Restore, Excel Import, Database Location Config)
+**Last Updated:** 2025-12-19
+**Status:** Phase 2 - Core Complete ✅ (Packaging delivered, Backup/Restore implemented)
+**Next Step:** Step 5: New Features (Excel Import, Database Location Config, Audit Log)

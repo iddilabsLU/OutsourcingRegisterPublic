@@ -377,3 +377,11 @@ export function getSuppliersCount(): number {
   const row = db.prepare('SELECT COUNT(*) as count FROM suppliers').get() as { count: number }
   return row.count
 }
+
+/**
+ * Delete all suppliers from database (used for restore)
+ */
+export function deleteAllSuppliers(): void {
+  const db = getDatabase()
+  db.prepare('DELETE FROM suppliers').run()
+}

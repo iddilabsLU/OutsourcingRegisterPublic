@@ -9,6 +9,7 @@ import type {
   UpdateUserInput,
   CanDeleteUserResult,
 } from '../lib/types/auth'
+import type { BackupResult, RestoreResult, RestoreOptions } from './database/backup'
 
 /**
  * Preload script - Exposes safe Electron APIs to the renderer process
@@ -64,6 +65,13 @@ export interface ElectronAPI {
   updateUser: (id: number, updates: UpdateUserInput) => Promise<User>
   deleteUser: (id: number) => Promise<void>
   canDeleteUser: (id: number) => Promise<CanDeleteUserResult>
+
+  // Backup & Restore
+  showBackupSaveDialog: () => Promise<string | null>
+  showBackupOpenDialog: () => Promise<string | null>
+  createBackup: (zipPath: string) => Promise<BackupResult>
+  restoreFromDatabase: (zipPath: string, options: RestoreOptions) => Promise<RestoreResult>
+  restoreFromExcel: (zipPath: string, options: RestoreOptions) => Promise<RestoreResult>
 }
 
 // Expose protected methods in the render process
@@ -110,6 +118,13 @@ const electronAPI: ElectronAPI = {
   updateUser: (id: number, updates: UpdateUserInput) => ipcRenderer.invoke('users:update', id, updates),
   deleteUser: (id: number) => ipcRenderer.invoke('users:delete', id),
   canDeleteUser: (id: number) => ipcRenderer.invoke('users:canDelete', id),
+
+  // Backup & Restore
+  showBackupSaveDialog: () => ipcRenderer.invoke('backup:showSaveDialog'),
+  showBackupOpenDialog: () => ipcRenderer.invoke('backup:showOpenDialog'),
+  createBackup: (zipPath: string) => ipcRenderer.invoke('backup:create', zipPath),
+  restoreFromDatabase: (zipPath: string, options: RestoreOptions) => ipcRenderer.invoke('backup:restoreFromDatabase', zipPath, options),
+  restoreFromExcel: (zipPath: string, options: RestoreOptions) => ipcRenderer.invoke('backup:restoreFromExcel', zipPath, options),
 }
 
 // Expose the API to the renderer process
