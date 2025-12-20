@@ -11,6 +11,25 @@ import type {
 } from '../lib/types/auth'
 import type { BackupResult, RestoreResult, RestoreOptions } from './database/backup'
 
+// Types for database configuration
+export interface DatabasePathInfo {
+  currentPath: string
+  isCustom: boolean
+  defaultPath: string
+}
+
+export interface ValidatePathResult {
+  valid: boolean
+  error?: string
+  exists: boolean
+}
+
+export interface SetPathResult {
+  success: boolean
+  error?: string
+  requiresRestart: boolean
+}
+
 /**
  * Preload script - Exposes safe Electron APIs to the renderer process
  *
@@ -72,6 +91,13 @@ export interface ElectronAPI {
   createBackup: (zipPath: string) => Promise<BackupResult>
   restoreFromDatabase: (zipPath: string, options: RestoreOptions) => Promise<RestoreResult>
   restoreFromExcel: (zipPath: string, options: RestoreOptions) => Promise<RestoreResult>
+
+  // Database Configuration
+  getDatabasePathInfo: () => Promise<DatabasePathInfo>
+  validateDatabasePath: (path: string) => Promise<ValidatePathResult>
+  setDatabasePath: (path: string | null, copyData: boolean) => Promise<SetPathResult>
+  showDatabaseFolderDialog: () => Promise<string | null>
+  restartApp: () => Promise<void>
 }
 
 // Expose protected methods in the render process
@@ -125,6 +151,13 @@ const electronAPI: ElectronAPI = {
   createBackup: (zipPath: string) => ipcRenderer.invoke('backup:create', zipPath),
   restoreFromDatabase: (zipPath: string, options: RestoreOptions) => ipcRenderer.invoke('backup:restoreFromDatabase', zipPath, options),
   restoreFromExcel: (zipPath: string, options: RestoreOptions) => ipcRenderer.invoke('backup:restoreFromExcel', zipPath, options),
+
+  // Database Configuration
+  getDatabasePathInfo: () => ipcRenderer.invoke('config:getDatabasePath'),
+  validateDatabasePath: (path: string) => ipcRenderer.invoke('config:validateDatabasePath', path),
+  setDatabasePath: (path: string | null, copyData: boolean) => ipcRenderer.invoke('config:setDatabasePath', path, copyData),
+  showDatabaseFolderDialog: () => ipcRenderer.invoke('config:showDatabaseFolderDialog'),
+  restartApp: () => ipcRenderer.invoke('app:restart'),
 }
 
 // Expose the API to the renderer process

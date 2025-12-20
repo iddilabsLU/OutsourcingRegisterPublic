@@ -1,13 +1,13 @@
 import Database from 'better-sqlite3'
 import path from 'path'
 import fs from 'fs'
-import { app } from 'electron'
 import { migrateAddCloudOtherInformation } from './migrate-add-cloud-other-info'
 import { migrateAddEventsAndIssues } from './migrate-add-events-issues'
 import { migrateAddIssueFollowups } from './migrate-add-issue-followups'
 import { migrateAddIssueCategory } from './migrate-add-issue-category'
 import { migrateAddCriticalMonitor } from './migrate-add-critical-monitor'
 import { migrateAddAuth } from './migrate-add-auth'
+import { getEffectiveDatabasePath, getDefaultDatabasePath } from './config'
 
 /**
  * Database module for CSSF Supplier Outsourcing Register
@@ -17,37 +17,17 @@ import { migrateAddAuth } from './migrate-add-auth'
 let db: Database.Database | null = null
 
 /**
- * Get the database file path based on environment
- * - Development: ./data/suppliers.db (project folder, easy to view in VSCode)
- * - Production: %APPDATA%/SupplierRegister/data.db
+ * Get the database file path
+ * Uses custom path from config if set, otherwise uses default
  */
 export function getDatabasePath(): string {
-  const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
-
-  if (isDev) {
-    // Development: Store in project folder
-    const projectRoot = process.cwd()
-    const dbDir = path.join(projectRoot, 'data')
-
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(dbDir)) {
-      fs.mkdirSync(dbDir, { recursive: true })
-    }
-
-    return path.join(dbDir, 'suppliers.db')
-  } else {
-    // Production: Store in AppData
-    const userDataPath = app.getPath('userData') // %APPDATA%/SupplierRegister
-    const dbDir = userDataPath
-
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(dbDir)) {
-      fs.mkdirSync(dbDir, { recursive: true })
-    }
-
-    return path.join(dbDir, 'data.db')
-  }
+  return getEffectiveDatabasePath()
 }
+
+/**
+ * Get the default database path (for display in UI)
+ */
+export { getDefaultDatabasePath }
 
 /**
  * Initialize the database
@@ -212,6 +192,37 @@ export function restoreDatabase(backupPath: string): void {
 export function databaseExists(): boolean {
   const dbPath = getDatabasePath()
   return fs.existsSync(dbPath)
+}
+
+/**
+ * Copy database to a new location
+ * Used for data migration when changing database path
+ * @param destinationPath - Full path where database should be copied
+ */
+export function copyDatabaseTo(destinationPath: string): void {
+  const currentPath = getDatabasePath()
+
+  // Close database before copying
+  if (db) {
+    db.close()
+    db = null
+  }
+
+  // Copy database file
+  fs.copyFileSync(currentPath, destinationPath)
+
+  // Also copy WAL and SHM files if they exist (for WAL mode)
+  const walPath = currentPath + '-wal'
+  const shmPath = currentPath + '-shm'
+
+  if (fs.existsSync(walPath)) {
+    fs.copyFileSync(walPath, destinationPath + '-wal')
+  }
+  if (fs.existsSync(shmPath)) {
+    fs.copyFileSync(shmPath, destinationPath + '-shm')
+  }
+
+  console.log(`Database copied from ${currentPath} to ${destinationPath}`)
 }
 
 // Export types for better TypeScript support

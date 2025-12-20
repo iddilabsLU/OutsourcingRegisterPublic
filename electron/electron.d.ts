@@ -16,6 +16,25 @@ import type {
   CanDeleteUserResult,
 } from '../lib/types/auth'
 
+// Database configuration types
+export interface DatabasePathInfo {
+  currentPath: string
+  isCustom: boolean
+  defaultPath: string
+}
+
+export interface ValidatePathResult {
+  valid: boolean
+  error?: string
+  exists: boolean
+}
+
+export interface SetPathResult {
+  success: boolean
+  error?: string
+  requiresRestart: boolean
+}
+
 export interface ElectronAPI {
   // System info
   ping: () => Promise<string>
@@ -60,9 +79,19 @@ export interface ElectronAPI {
   deleteUser: (id: number) => Promise<void>
   canDeleteUser: (id: number) => Promise<CanDeleteUserResult>
 
-  // Backup/restore operations (to be implemented later)
-  // backupDatabase: (path: string) => Promise<{ success: boolean; path: string }>
-  // restoreDatabase: (path: string) => Promise<{ success: boolean }>
+  // Backup & Restore
+  showBackupSaveDialog: () => Promise<string | null>
+  showBackupOpenDialog: () => Promise<string | null>
+  createBackup: (zipPath: string) => Promise<{ success: boolean; path?: string; message?: string }>
+  restoreFromDatabase: (zipPath: string, options: { suppliers: boolean; events: boolean; issues: boolean; criticalMonitor: boolean }) => Promise<{ success: boolean; message?: string; stats?: { suppliers?: number; events?: number; issues?: number; criticalMonitor?: number } }>
+  restoreFromExcel: (zipPath: string, options: { suppliers: boolean; events: boolean; issues: boolean; criticalMonitor: boolean }) => Promise<{ success: boolean; message?: string; stats?: { suppliers?: number; events?: number; issues?: number; criticalMonitor?: number } }>
+
+  // Database Configuration
+  getDatabasePathInfo: () => Promise<DatabasePathInfo>
+  validateDatabasePath: (path: string) => Promise<ValidatePathResult>
+  setDatabasePath: (path: string | null, copyData: boolean) => Promise<SetPathResult>
+  showDatabaseFolderDialog: () => Promise<string | null>
+  restartApp: () => Promise<void>
 }
 
 export interface Versions {

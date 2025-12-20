@@ -316,7 +316,7 @@ function exportToPDF(suppliers: SupplierOutsourcing[]) {
 - [x] **Manual Backup System**
   - [x] Create backup ZIP with: database file + 4 Excel exports (suppliers, events, issues, critical monitor)
   - [x] User chooses save location via file picker
-  - [x] Default filename: `SupplierRegister_Backup_YYYY-MM-DD.zip`
+  - [x] Default filename: `OutsourcingRegister_Backup_YYYY-MM-DD.zip`
   - [x] Success notification with backup path
 - [x] **Restore from Backup**
   - [x] File picker for ZIP selection

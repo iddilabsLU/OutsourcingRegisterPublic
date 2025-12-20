@@ -78,8 +78,8 @@ This application helps Luxembourg financial institutions comply with **CSSF Circ
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/supplierregister.git
-   cd supplierregister
+   git clone https://github.com/yourusername/Outsourcingregister.git
+   cd Outsourcingregister
    ```
 
 2. **Install dependencies**
@@ -165,7 +165,7 @@ This application implements **CSSF Circular 22/806 Section 4.2.7** requirements:
 ## 📁 Project Structure
 
 ```
-supplierregister/
+Outsourcingregister/
 ├── app/
 │   ├── page.tsx                 # Landing page with features
 │   ├── suppliers/page.tsx       # Main register view

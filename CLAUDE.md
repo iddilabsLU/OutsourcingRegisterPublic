@@ -44,7 +44,7 @@ npm run lint               # Lint
 
 ---
 
-## ✅ Current Status (Updated: 2025-12-18)
+## ✅ Current Status (Updated: 2025-12-19)
 
 **Desktop Application - FULLY FUNCTIONAL**
 
@@ -62,15 +62,23 @@ npm run lint               # Lint
 - Desktop packaging: installer generated via `npm run electron:build`
 - Authentication with RBAC, optional, can be enabled/disabled, 3 user roles: Viewer (read only-access), Editor (full edit access), Admin Role (editor + user management)
 - **Backup & Restore system** (Settings tab) with hybrid restore options
+- **Configurable database location** (Settings tab) for multi-user network setups
 
 ### Recent Changes
+- **Database Location Setting** (Settings tab)
+  - Configure custom database path (e.g., network share `\\server\share\data.db`)
+  - Enables multi-user access for companies
+  - All users can view and change database path (to connect to shared database)
+  - Only Admins can copy existing data to new location
+  - Path validation before applying
+  - App restart required after changing location
 - **Backup & Restore System** (Settings tab)
   - Create backup: Database file + 4 Excel exports (Suppliers, Events, Issues, Critical Monitor)
   - Restore with options:
     - **From Database:** Fast, exact restoration using database.db file
     - **From Excel:** Use if you manually edited the Excel files in the backup
   - **Selective restore:** Choose which data to restore (Suppliers, Events, Issues, Critical Monitor)
-  - ZIP format: `SupplierRegister_Backup_YYYY-MM-DD.zip`
+  - ZIP format: `OutsourcingRegister_Backup_YYYY-MM-DD.zip`
   - User chooses save/load location via file dialogs
   - Info section explains difference between restore methods
 - **Authentication System** with Role-Based Access Control (RBAC)
@@ -118,7 +126,8 @@ npm run lint               # Lint
 
 **Electron Notes**
 - Main entry: `dist-electron/electron/main.js`
-- DB: `data/suppliers.db` (dev) or `%APPDATA%/SupplierRegister/data.db` (prod)
+- DB default: `data/suppliers.db` (dev) or `%APPDATA%/OutsourcingRegister/data.db` (prod)
+- DB custom: Configurable via Settings > Database Location (stored in `app-config.json`)
 - Commands: `npm run electron:dev` (dev), `npm run electron:build` (installer), `npm run electron:compile` (TS + schema copy)
 
 ---
@@ -175,4 +184,4 @@ Artifacts: `release/Supplier Outsourcing Register Setup 0.1.0.exe`, `release/win
 
 ---
 
-**Created with Claude Code** | Last Updated: 2025-12-18
+**Created with Claude Code** | Last Updated: 2025-12-19

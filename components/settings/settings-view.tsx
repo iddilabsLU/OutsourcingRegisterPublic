@@ -3,6 +3,7 @@
 import { useAuth } from "@/components/providers/auth-provider"
 import { AuthSettingsCard } from "./auth-settings-card"
 import { BackupSettingsCard } from "./backup-settings-card"
+import { DatabaseSettingsCard } from "./database-settings-card"
 import { UserManagement } from "./user-management"
 import { AlertTriangle } from "lucide-react"
 
@@ -30,6 +31,9 @@ export function SettingsView() {
       )}
 
       <div className="grid gap-6">
+        {/* Database Location - visible to everyone, but copy data is admin-only */}
+        <DatabaseSettingsCard isAdmin={!authSettings?.authEnabled || isAdmin} />
+
         {/* Backup & Restore - always visible */}
         <BackupSettingsCard />
 

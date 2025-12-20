@@ -216,7 +216,7 @@ All existing features have been successfully migrated to desktop application:
 **Functionality:**
 - Button: "Create Backup"
 - Action: Opens save dialog for user to choose location
-- Default filename: `SupplierRegister_Backup_YYYY-MM-DD.zip`
+- Default filename: `OutsourcingRegister_Backup_YYYY-MM-DD.zip`
 - Creates ZIP containing:
   - `database.db` - Complete SQLite database
   - `Suppliers.xlsx` - All supplier records

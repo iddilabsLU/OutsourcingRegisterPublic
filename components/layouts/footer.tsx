@@ -5,7 +5,6 @@ import {
   Linkedin,
   Instagram,
   Mail,
-  FileText,
   Home as HomeIcon,
   BookOpen,
   Coffee,

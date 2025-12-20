@@ -30,7 +30,7 @@ Notes to reproduce the working Electron builds without re-hitting past issues.
 - Static export loading: relies on `resources/out/suppliers/index.html`; ensure `extraResources` is present and static server uses `process.resourcesPath`.
 
 ## Data Locations
-- Prod packaged: `%APPDATA%\SupplierRegister\data.db`.
+- Prod packaged: `%APPDATA%\OutsourcingRegister\data.db`.
 - Dev: `./data/suppliers.db` in repo root.
 
 ## Logging / Debug

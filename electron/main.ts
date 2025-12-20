@@ -2,7 +2,17 @@ import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import { createServer, type Server } from 'http'
 import path from 'path'
 import handler from 'serve-handler'
-import { initializeDatabase, closeDatabase, getDatabaseStats, getDatabasePath, backupDatabase, restoreDatabase } from './database/db'
+import {
+  initializeDatabase,
+  closeDatabase,
+  getDatabaseStats,
+  getDatabasePath,
+  getDefaultDatabasePath,
+  backupDatabase,
+  restoreDatabase,
+  copyDatabaseTo,
+} from "./database/db"
+import { validateDatabasePath, setDatabasePath, isUsingCustomPath } from "./database/config"
 import {
   createBackupZip,
   restoreFromDatabaseBackup,
@@ -516,63 +526,169 @@ ipcMain.handle('users:canDelete', async (_event, id: number): Promise<CanDeleteU
 // ============================================================================
 
 // Show save dialog for backup
-ipcMain.handle('backup:showSaveDialog', async (): Promise<string | null> => {
+ipcMain.handle("backup:showSaveDialog", async (): Promise<string | null> => {
   if (!mainWindow) return null
 
   const today = new Date()
   const yyyy = today.getFullYear()
-  const mm = String(today.getMonth() + 1).padStart(2, '0')
-  const dd = String(today.getDate()).padStart(2, '0')
-  const defaultFilename = `SupplierRegister_Backup_${yyyy}-${mm}-${dd}.zip`
+  const mm = String(today.getMonth() + 1).padStart(2, "0")
+  const dd = String(today.getDate()).padStart(2, "0")
+  const defaultFilename = `OutsourcingRegister_Backup_${yyyy}-${mm}-${dd}.zip`
 
   const result = await dialog.showSaveDialog(mainWindow, {
-    title: 'Save Backup',
+    title: "Save Backup",
     defaultPath: defaultFilename,
-    filters: [{ name: 'ZIP Archive', extensions: ['zip'] }],
+    filters: [{ name: "ZIP Archive", extensions: ["zip"] }],
   })
 
   return result.canceled ? null : result.filePath || null
 })
 
 // Show open dialog for restore
-ipcMain.handle('backup:showOpenDialog', async (): Promise<string | null> => {
+ipcMain.handle("backup:showOpenDialog", async (): Promise<string | null> => {
   if (!mainWindow) return null
 
   const result = await dialog.showOpenDialog(mainWindow, {
-    title: 'Select Backup File',
-    filters: [{ name: 'ZIP Archive', extensions: ['zip'] }],
-    properties: ['openFile'],
+    title: "Select Backup File",
+    filters: [{ name: "ZIP Archive", extensions: ["zip"] }],
+    properties: ["openFile"],
   })
 
   return result.canceled || result.filePaths.length === 0 ? null : result.filePaths[0]
 })
 
 // Create backup ZIP
-ipcMain.handle('backup:create', async (_event, zipPath: string): Promise<BackupResult> => {
+ipcMain.handle("backup:create", async (_event, zipPath: string): Promise<BackupResult> => {
   try {
     return await createBackupZip(zipPath)
   } catch (error) {
-    console.error('❌ Error creating backup:', error)
+    console.error("❌ Error creating backup:", error)
     throw error
   }
 })
 
 // Restore from database file in backup
-ipcMain.handle('backup:restoreFromDatabase', async (_event, zipPath: string, options: RestoreOptions): Promise<RestoreResult> => {
+ipcMain.handle(
+  "backup:restoreFromDatabase",
+  async (_event, zipPath: string, options: RestoreOptions): Promise<RestoreResult> => {
+    try {
+      return await restoreFromDatabaseBackup(zipPath, options)
+    } catch (error) {
+      console.error("❌ Error restoring from database:", error)
+      throw error
+    }
+  }
+)
+
+// Restore from Excel files in backup
+ipcMain.handle(
+  "backup:restoreFromExcel",
+  async (_event, zipPath: string, options: RestoreOptions): Promise<RestoreResult> => {
+    try {
+      return await restoreFromExcelBackup(zipPath, options)
+    } catch (error) {
+      console.error("❌ Error restoring from Excel:", error)
+      throw error
+    }
+  }
+)
+
+// ============================================================================
+// Database Configuration IPC Handlers
+// ============================================================================
+
+export interface DatabasePathInfo {
+  currentPath: string
+  isCustom: boolean
+  defaultPath: string
+}
+
+export interface ValidatePathResult {
+  valid: boolean
+  error?: string
+  exists: boolean
+}
+
+export interface SetPathResult {
+  success: boolean
+  error?: string
+  requiresRestart: boolean
+}
+
+// Get current database path info
+ipcMain.handle("config:getDatabasePath", async (): Promise<DatabasePathInfo> => {
   try {
-    return await restoreFromDatabaseBackup(zipPath, options)
+    return {
+      currentPath: getDatabasePath(),
+      isCustom: isUsingCustomPath(),
+      defaultPath: getDefaultDatabasePath(),
+    }
   } catch (error) {
-    console.error('❌ Error restoring from database:', error)
+    console.error("❌ Error getting database path info:", error)
     throw error
   }
 })
 
-// Restore from Excel files in backup
-ipcMain.handle('backup:restoreFromExcel', async (_event, zipPath: string, options: RestoreOptions): Promise<RestoreResult> => {
-  try {
-    return await restoreFromExcelBackup(zipPath, options)
-  } catch (error) {
-    console.error('❌ Error restoring from Excel:', error)
-    throw error
+// Validate a database path
+ipcMain.handle(
+  "config:validateDatabasePath",
+  async (_event, newPath: string): Promise<ValidatePathResult> => {
+    try {
+      return validateDatabasePath(newPath)
+    } catch (error) {
+      console.error("❌ Error validating database path:", error)
+      throw error
+    }
   }
+)
+
+// Set database path (with optional copy)
+ipcMain.handle(
+  "config:setDatabasePath",
+  async (_event, newPath: string | null, copyData: boolean): Promise<SetPathResult> => {
+    try {
+      // If copying data and setting a new path
+      if (copyData && newPath) {
+        copyDatabaseTo(newPath)
+      }
+
+      // Update config
+      setDatabasePath(newPath)
+
+      return {
+        success: true,
+        requiresRestart: true,
+      }
+    } catch (error) {
+      console.error("❌ Error setting database path:", error)
+      return {
+        success: false,
+        error: (error as Error).message,
+        requiresRestart: false,
+      }
+    }
+  }
+)
+
+// Show folder picker dialog for database location
+ipcMain.handle("config:showDatabaseFolderDialog", async (): Promise<string | null> => {
+  if (!mainWindow) return null
+
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: "Select Database Folder",
+    properties: ["openDirectory", "createDirectory"],
+  })
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return null
+  }
+
+  // Return the folder path with default filename
+  return path.join(result.filePaths[0], "data.db")
+})
+
+// Restart the application
+ipcMain.handle("app:restart", async (): Promise<void> => {
+  app.relaunch()
+  app.quit()
 })

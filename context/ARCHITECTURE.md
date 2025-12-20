@@ -177,8 +177,14 @@ app/layout.tsx (Root Layout)
     │       ├── Critical Suppliers Table (12 columns, inline editing for 4 fields - editors only)
     │       └── Export to Excel Button
     │
-    └── Settings View (admin-only user management)
+    └── Settings View
         ├── SettingsView Container
+        ├── DatabaseSettingsCard (visible to all, copy data admin-only)
+        │   ├── Current Path Display (default/custom badge)
+        │   ├── Path Validation (real-time)
+        │   ├── Browse Folder Dialog
+        │   ├── Copy Data Option (admin-only when destination empty)
+        │   └── Reset to Default
         ├── BackupSettingsCard (backup & restore)
         │   ├── Create Backup (database + Excel exports to ZIP)
         │   └── Restore from Backup (hybrid: database or Excel, selective restore)
@@ -234,7 +240,10 @@ app/layout.tsx (Root Layout)
 - Renderer: exported Next.js app running inside Electron.
 - Preload: `electron/preload.ts` exposes `window.electronAPI` for CRUD (IPC to main process).
 - Main process: `electron/main.ts` hosts static `out/` (packaged) and handles SQLite via `better-sqlite3` (`electron/database/*`).
-- Database file: `./data/suppliers.db` in dev, `%APPDATA%/SupplierRegister/data.db` in packaged production.
+- Database file:
+  - Default: `./data/suppliers.db` (dev) or `%APPDATA%/OutsourcingRegister/data.db` (production)
+  - Custom: Configurable via Settings > Database Location (stored in `app-config.json`)
+  - Enables multi-user access via shared network paths (e.g., `\\server\share\data.db`)
 
 ### Adding a New Supplier
 
@@ -490,6 +499,83 @@ CREATE TABLE users (
 - Master password for emergency access (default: `master123`, change immediately)
 - Default admin credentials: `admin` / `admin` (change on first login)
 
+### Database Configuration Flow
+
+```
+User Opens Settings → Database Location
+      ↓
+DatabaseSettingsCard loads current path info
+      ↓
+window.electronAPI.getDatabasePathInfo()
+      ↓
+electron/database/config.ts: readConfig()
+  - Reads app-config.json (or creates default)
+  - Returns { currentPath, isCustom, defaultPath }
+      ↓
+User enters new path or browses folder
+      ↓
+Real-time validation (debounced 500ms)
+      ↓
+window.electronAPI.validateDatabasePath(path)
+      ↓
+electron/database/config.ts: validateDatabasePath()
+  - Checks path is absolute
+  - Checks ends with .db
+  - Tries to create directory if doesn't exist
+  - Tests write permissions (creates temp file)
+  - Checks if database already exists at path
+  - Returns { valid, error?, exists }
+      ↓
+User clicks "Apply & Restart"
+      ↓
+Confirmation dialog shows:
+  - New path
+  - If database exists: "Will connect to existing database"
+  - If no database AND user is Admin: Checkbox "Copy existing data"
+  - If no database AND user is NOT Admin: Info message about empty database
+      ↓
+User confirms
+      ↓
+window.electronAPI.setDatabasePath(path, copyData)
+      ↓
+electron/main.ts: config:setDatabasePath handler
+  IF copyData && newPath:
+    - electron/database/db.ts: copyDatabaseTo(newPath)
+      * Closes current database
+      * Copies database file + WAL/SHM files
+  - electron/database/config.ts: setDatabasePath(newPath)
+    * Updates app-config.json
+  - Returns { success: true, requiresRestart: true }
+      ↓
+Frontend shows toast: "Database path updated. Restarting..."
+      ↓
+window.electronAPI.restartApp()
+      ↓
+electron/main.ts: app:restart handler
+  - app.relaunch()
+  - app.quit()
+      ↓
+App restarts, reads new config, connects to new database location
+```
+
+**Multi-User Setup:**
+1. Admin installs app, sets shared network path (e.g., `\\server\share\data.db`)
+2. Admin checks "Copy existing data" to migrate current data
+3. App restarts, connects to shared database
+4. Other users install app, point to same network path
+5. They see "existing database found", no copy option needed
+6. All users now share the same database
+
+**Key Points:**
+- Configuration stored in `app-config.json` (separate from database)
+- All users can change database path (to connect to shared database)
+- Only Admins can copy data to new location (when destination is empty)
+- Copy option hidden when database already exists at destination
+- App restart required for database path change to take effect
+- SQLite WAL mode enables concurrent access for multiple users
+
+---
+
 ### Backup & Restore Flow
 
 ```
@@ -498,7 +584,7 @@ User Initiates Backup (Settings → Backup & Restore)
 File Dialog: Select save location (user chooses path)
       ↓
 electron/main.ts: backup:showSaveDialog
-  - Suggests filename: SupplierRegister_Backup_YYYY-MM-DD.zip
+  - Suggests filename: OutsourcingRegister_Backup_YYYY-MM-DD.zip
       ↓
 electron/main.ts: backup:create
       ↓
@@ -683,6 +769,7 @@ Success: Toast notification + window.location.reload()
 | File | Purpose | Lines |
 |------|---------|-------|
 | `settings/settings-view.tsx` | Settings container with tabs | ~150 |
+| `settings/database-settings-card.tsx` | Database path configuration (visible to all, copy admin-only) | ~430 |
 | `settings/backup-settings-card.tsx` | Backup & restore with hybrid restore options | ~440 |
 | `settings/auth-settings-card.tsx` | Enable/disable auth, change master password | ~180 |
 | `settings/user-management.tsx` | User list with CRUD operations (admin-only) | ~250 |
@@ -780,7 +867,8 @@ The type definitions in `supplier.ts` are intentionally aligned with CSSF Circul
 
 | File | Purpose |
 |------|---------|
-| `db.ts` | SQLite database initialization, schema creation, CRUD operations for suppliers |
+| `db.ts` | SQLite database initialization, schema creation, CRUD operations for suppliers, copyDatabaseTo() for migration |
+| `config.ts` | App configuration management (database path, app-config.json, path validation) |
 | `auth.ts` | Authentication service layer (login, user management, password hashing with bcrypt) |
 | `backup.ts` | Backup & restore module (ZIP creation, database/Excel restore, selective restore) |
 | `suppliers.ts` | Supplier CRUD operations with deleteAllSuppliers() for restore |
@@ -1212,5 +1300,5 @@ If managing 100+ suppliers:
 
 ---
 
-**Last Updated:** 2025-12-19
-**Related Files:** VALIDATION.md, ROADMAP.md, supplier.ts, check-completeness.ts, auth.ts, auth-provider.tsx, backup.ts
+**Last Updated:** 2025-12-21
+**Related Files:** VALIDATION.md, ROADMAP.md, supplier.ts, check-completeness.ts, auth.ts, auth-provider.tsx, backup.ts, config.ts, database-settings-card.tsx
