@@ -1,6 +1,6 @@
 # Supplier Outsourcing Register
 
-A **desktop application** for managing supplier outsourcing arrangements in compliance with **CSSF Circular 22/806 Section 4.2.7**. Built with Electron, Next.js 15, React 19, TypeScript, and SQLite.
+A **cross-platform desktop application** for managing supplier outsourcing arrangements in compliance with **CSSF Circular 22/806 Section 4.2.7**. Built with Electron, Next.js 15, React 19, TypeScript, and SQLite.
 
 > **Desktop-Only Application**
 > Requires Electron to run. Uses SQLite for persistence.
@@ -11,7 +11,7 @@ A **desktop application** for managing supplier outsourcing arrangements in comp
 ## 🚀 Quick Overview
 
 **Purpose:** CSSF-compliant supplier outsourcing register for Luxembourg financial institutions
-**Target:** Windows desktop application (.exe installer)
+**Platforms:** Windows and Linux (desktop application)
 **Database:** SQLite (local database file: `data/suppliers.db`)
 **User:** Non-technical user relying on Claude Code for all development
 
@@ -20,13 +20,15 @@ A **desktop application** for managing supplier outsourcing arrangements in comp
 ## 🧭 Quick Start
 
 ```bash
-npm run electron:dev       # Start desktop app (dev)
-npm run electron:build     # Build installer + unpacked app
-npm run electron:compile   # Compile Electron TS + copy schema
-npm run lint               # Lint
+npm run electron:dev         # Start desktop app (dev)
+npm run electron:build       # Build all platforms (Windows + Linux)
+npm run electron:build:win   # Build Windows only (.exe + unpacked)
+npm run electron:build:linux # Build Linux only (.AppImage + .deb + unpacked)
+npm run electron:compile     # Compile Electron TS + copy schema
+npm run lint                 # Lint
 ```
 
-**Note:** Runs only in Electron. `npm run electron:build` produces the Windows installer.
+**Note:** Runs only in Electron. Build commands produce platform-specific installers.
 
 ---
 
@@ -44,7 +46,7 @@ npm run lint               # Lint
 
 ---
 
-## ✅ Current Status (Updated: 2025-12-19)
+## ✅ Current Status (Updated: 2025-12-21)
 
 **Desktop Application - FULLY FUNCTIONAL**
 
@@ -126,9 +128,10 @@ npm run lint               # Lint
 
 **Electron Notes**
 - Main entry: `dist-electron/electron/main.js`
-- DB default: `data/suppliers.db` (dev) or `%APPDATA%/OutsourcingRegister/data.db` (prod)
+- DB default (Windows): `data/suppliers.db` (dev) or `%APPDATA%/OutsourcingRegister/data.db` (prod)
+- DB default (Linux): `data/suppliers.db` (dev) or `~/.config/OutsourcingRegister/data.db` (prod)
 - DB custom: Configurable via Settings > Database Location (stored in `app-config.json`)
-- Commands: `npm run electron:dev` (dev), `npm run electron:build` (installer), `npm run electron:compile` (TS + schema copy)
+- Commands: `npm run electron:dev` (dev), `npm run electron:build` (all platforms), `npm run electron:build:win` (Windows), `npm run electron:build:linux` (Linux)
 
 ---
 
@@ -176,12 +179,35 @@ npm run lint               # Lint
 ## 📦 Running & Packaging
 
 ```bash
-npm run electron:dev    # Development
-npm run electron:build  # Installer + unpacked
+npm run electron:dev         # Development
+npm run electron:build       # Build all platforms
+npm run electron:build:win   # Windows only
+npm run electron:build:linux # Linux only
 ```
 
-Artifacts: `release/Supplier Outsourcing Register Setup 0.1.0.exe`, `release/win-unpacked/`.
+### Build Artifacts (`release/` folder)
+
+**Windows:**
+| File | Description |
+|------|-------------|
+| `Supplier Outsourcing Register Setup X.X.X.exe` | Windows installer (NSIS) |
+| `win-unpacked/` | Portable Windows app |
+
+**Linux:**
+| File | Description |
+|------|-------------|
+| `Supplier Outsourcing Register-X.X.X.AppImage` | Universal Linux app (recommended) |
+| `Supplier Outsourcing Register-X.X.X.deb` | Debian/Ubuntu package |
+| `linux-unpacked/` | Portable Linux app |
+
+### Data Locations
+
+| Platform | Default Database Path |
+|----------|----------------------|
+| Windows (dev) | `./data/suppliers.db` |
+| Windows (prod) | `%APPDATA%/OutsourcingRegister/data.db` |
+| Linux (prod) | `~/.config/OutsourcingRegister/data.db` |
 
 ---
 
-**Created with Claude Code** | Last Updated: 2025-12-19
+**Created with Claude Code** | Last Updated: 2025-12-21

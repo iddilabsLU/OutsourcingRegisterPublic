@@ -1,6 +1,8 @@
 {
   "name": "OutsourcingRegister",
   "version": "0.1.0",
+  "description": "CSSF-compliant supplier outsourcing register for Luxembourg financial institutions",
+  "author": "Supplier Outsourcing Register",
   "private": true,
   "license": "MIT",
   "main": "dist-electron/electron/main.js",
@@ -12,7 +14,9 @@
     "electron:compile": "tsc -p electron/tsconfig.json && node -e \"require('fs').mkdirSync('dist-electron/electron/database', {recursive: true}); require('fs').copyFileSync('electron/database/schema.sql', 'dist-electron/electron/database/schema.sql')\"",
     "electron:rebuild": "electron-rebuild -f -w better-sqlite3",
     "electron:dev": "npm run electron:compile && npm run electron:rebuild && concurrently \"cross-env NODE_ENV=development npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",
-    "electron:build": "npm run build && npm run electron:compile && npm run electron:rebuild && electron-builder"
+    "electron:build": "npm run build && npm run electron:compile && npm run electron:rebuild && electron-builder",
+    "electron:build:win": "npm run build && npm run electron:compile && npm run electron:rebuild && electron-builder --win",
+    "electron:build:linux": "npm run build && npm run electron:compile && npm run electron:rebuild && electron-builder --linux"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -91,11 +95,13 @@
       "output": "release"
     },
     "files": [
-      "out/**/*",
       "dist-electron/**/*",
-      "public/**/*",
       "package.json",
-      "!node_modules/@img/**"
+      "!node_modules/.cache/**/*",
+      "!node_modules/.package-lock.json",
+      "!**/*.map",
+      "!**/*.md",
+      "!**/LICENSE*"
     ],
     "asarUnpack": [
       "**/*.node"
@@ -103,13 +109,26 @@
     "extraResources": [
       {
         "from": "out",
-        "to": "out"
+        "to": "out",
+        "filter": [
+          "**/*",
+          "!**/*.map"
+        ]
       }
+    ],
+    "npmArgs": [
+      "--ignore-optional"
     ],
     "win": {
       "target": [
         {
           "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "dir",
           "arch": [
             "x64"
           ]
@@ -123,6 +142,47 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Supplier Outsourcing Register"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Office",
+      "icon": "build/icon.ico"
+    },
+    "appImage": {
+      "artifactName": "${productName}-${version}.${ext}"
+    },
+    "deb": {
+      "artifactName": "${productName}-${version}.${ext}",
+      "depends": [
+        "libgtk-3-0",
+        "libnotify4",
+        "libnss3",
+        "libxss1",
+        "libxtst6",
+        "xdg-utils",
+        "libatspi2.0-0",
+        "libuuid1",
+        "libsecret-1-0"
+      ]
     }
   }
 }
