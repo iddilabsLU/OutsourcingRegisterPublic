@@ -47,7 +47,7 @@ export function Footer() {
                 Website
               </Link>
               <Link
-                href="https://www.iddi-labs.com/outsourcingregister-guidelines"
+                href="https://www.iddi-labs.com/blog/outsourcingregister-guidelines"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
