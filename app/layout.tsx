@@ -13,11 +13,11 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: {
-    default: "Supplier Outsourcing Register - CSSF Circular 22/806 Demo",
+    default: "Services and Cloud Outsourcing Register",
     template: "%s | Supplier Register",
   },
   description:
-    "A comprehensive demo showcasing CSSF Circular 22/806 & EBA Outsourcing Guidelines compliance for financial institutions managing Services & Cloud outsourcing arrangements. Includes all mandatory and optional fields with full traceability.",
+    "Open-source Outsourcing Service and Cloud register in compliance with CSSF Circular 22/806 & EBA Outsourcing Guidelines for financial institutions managing outsourcing arrangements.",
   keywords: [
     "CSSF",
     "Outsourcing Register",
@@ -26,23 +26,23 @@ export const metadata: Metadata = {
     "Circular 22/806",
     "Regulatory",
   ],
-  authors: [{ name: "Demo Application" }],
-  creator: "Demo Application",
+  authors: [{ name: "IddiLabs" }],
+  creator: "IddiLabs",
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://yoursite.com",
-    title: "Supplier Outsourcing Register - CSSF Circular 22/806 Demo",
+    url: "https://www.iddi-labs.com/",
+    title: "Services and Cloud Outsourcing Register",
     description:
-      "A comprehensive demo showcasing CSSF Circular 22/806 & EBA Outsourcing Guidelines compliance for financial institutions managing Services & Cloud outsourcing arrangements.",
-    siteName: "Supplier Outsourcing Register",
+      "An Outsourcing and Cloud register in compliance with CSSF Circular 22/806 & EBA Outsourcing Guidelines for financial institutions managing Services & Cloud outsourcing arrangements.",
+    siteName: "Services and Cloud Outsourcing Register",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Supplier Outsourcing Register - CSSF Circular 22/806 Demo",
+    title: "Services and Cloud Outsourcing Register",
     description:
-      "A comprehensive demo showcasing CSSF Circular 22/806 & EBA Outsourcing Guidelines compliance for financial institutions.",
-    creator: "@yourusername",
+      "An Outsourcing and Cloud register in compliance with CSSF Circular 22/806 & EBA Outsourcing Guidelines for financial institutions.",
+    creator: "IddiLabs",
   },
   robots: {
     index: true,
