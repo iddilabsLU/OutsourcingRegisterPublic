@@ -63,9 +63,9 @@ export function buildSupplierEvents(
   // New supplier created
   if (!previous) {
     events.push({
-      type: 'supplier_created',
+      type: "supplier_created",
       date: now,
-      summary: `Supplier created${supplierName ? `: ${supplierName}` : ''}`,
+      summary: `Outsourcing added${supplierName ? `: ${supplierName}` : ""}`,
       supplierName,
       functionName,
     })

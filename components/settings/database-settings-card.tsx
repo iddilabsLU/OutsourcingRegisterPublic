@@ -228,8 +228,7 @@ export function DatabaseSettingsCard({ isAdmin = false }: DatabaseSettingsCardPr
             <CardTitle>Database Location</CardTitle>
           </div>
           <CardDescription>
-            Configure where your data is stored. Use a network path for multi-user
-            access.
+            Configure where your data is stored. Use a network path for multi-user access.
           </CardDescription>
         </CardHeader>
 
@@ -264,11 +263,7 @@ export function DatabaseSettingsCard({ isAdmin = false }: DatabaseSettingsCardPr
                 className="font-mono text-sm"
                 disabled={isApplying || isResetting}
               />
-              <Button
-                variant="outline"
-                onClick={handleBrowse}
-                disabled={isApplying || isResetting}
-              >
+              <Button variant="outline" onClick={handleBrowse} disabled={isApplying || isResetting}>
                 <FolderOpen className="h-4 w-4 mr-2" />
                 Browse
               </Button>
@@ -301,10 +296,7 @@ export function DatabaseSettingsCard({ isAdmin = false }: DatabaseSettingsCardPr
 
             {/* Action Buttons */}
             <div className="flex gap-2">
-              <Button
-                onClick={handleApply}
-                disabled={!canApply || isApplying || isResetting}
-              >
+              <Button onClick={handleApply} disabled={!canApply || isApplying || isResetting}>
                 {isApplying ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -346,17 +338,20 @@ export function DatabaseSettingsCard({ isAdmin = false }: DatabaseSettingsCardPr
               <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
               <div className="text-sm text-muted-foreground space-y-2">
                 <p>
-                  <strong>Multi-user setup:</strong> Point to a network share
-                  (e.g., <code className="bg-muted px-1 rounded">\\server\share\data.db</code>)
-                  so multiple users can access the same data.
+                  <strong>Multi-user setup:</strong> Point to a network share (e.g.,{" "}
+                  <code className="bg-muted px-1 rounded">\\server\share\data.db</code>) so multiple
+                  users can access the same data.
                 </p>
                 <p>
-                  <strong>Note:</strong> The database uses WAL mode for concurrent
-                  access. All users should have read/write access to the folder.
+                  <strong>Multi-user access:</strong> All the users must point the same shared
+                  folder and have read/write permissions.
                 </p>
                 <p>
-                  <strong>Tip:</strong> Create a backup before changing the
-                  database location.
+                  <strong>Note:</strong> The database uses WAL mode for concurrent access. All users
+                  should have read/write access to the folder.
+                </p>
+                <p>
+                  <strong>Tip:</strong> Create a backup before changing the database location.
                 </p>
               </div>
             </div>
@@ -375,17 +370,14 @@ export function DatabaseSettingsCard({ isAdmin = false }: DatabaseSettingsCardPr
                   <div className="flex gap-2">
                     <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                     <p className="text-sm text-amber-800">
-                      <strong>Warning:</strong> The application will restart after
-                      this change.
+                      <strong>Warning:</strong> The application will restart after this change.
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <p className="text-sm font-medium">New location:</p>
-                  <code className="block text-xs bg-muted p-2 rounded break-all">
-                    {newPath}
-                  </code>
+                  <code className="block text-xs bg-muted p-2 rounded break-all">{newPath}</code>
                 </div>
 
                 {validationResult?.exists && (
@@ -393,8 +385,7 @@ export function DatabaseSettingsCard({ isAdmin = false }: DatabaseSettingsCardPr
                     <div className="flex gap-2">
                       <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                       <p className="text-sm text-blue-800">
-                        An existing database was found at this location. The app
-                        will connect to it.
+                        An existing database was found at this location. The app will connect to it.
                       </p>
                     </div>
                   </div>
@@ -416,9 +407,8 @@ export function DatabaseSettingsCard({ isAdmin = false }: DatabaseSettingsCardPr
                 {!validationResult?.exists && !isAdmin && (
                   <div className="rounded-md bg-muted p-3">
                     <p className="text-sm text-muted-foreground">
-                      A new empty database will be created at this location. Ask an
-                      administrator to set up the shared database first if you want
-                      to connect to existing data.
+                      A new empty database will be created at this location. Ask an administrator to
+                      set up the shared database first if you want to connect to existing data.
                     </p>
                   </div>
                 )}
@@ -427,9 +417,7 @@ export function DatabaseSettingsCard({ isAdmin = false }: DatabaseSettingsCardPr
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmApply}>
-              Apply & Restart
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmApply}>Apply & Restart</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

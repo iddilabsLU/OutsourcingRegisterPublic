@@ -28,7 +28,7 @@ export function Footer() {
               className="h-6 w-auto"
             />
             <div className="text-sm text-slate-400">
-              <p>Built with ❤️ in Luxembourg 🇱🇺</p>
+              <p>Built in Luxembourg by a Risk Manager</p>
               <p className="text-xs">© {currentYear} IddiLabs</p>
             </div>
           </div>

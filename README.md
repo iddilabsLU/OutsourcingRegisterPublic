@@ -474,7 +474,7 @@ This is an open source desktop application for Luxembourg financial institutions
 
 ---
 
-**Built with ❤️ for Luxembourg Financial Institutions**
+**Built in Luxembourg by a Risk Manager**
 **Compliance Made Simple with Electron, Next.js, and shadcn/ui**
 
 ---
