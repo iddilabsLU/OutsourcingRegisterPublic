@@ -1,0 +1,156 @@
+import * as XLSX from "xlsx"
+import type { EventLog, IssueRecord, CriticalMonitorView } from "@/lib/types/reporting"
+
+const formatDate = (value?: string | null) => {
+  if (!value) return ""
+  const parsed = new Date(value)
+  if (isNaN(parsed.getTime())) return ""
+  const day = parsed.getUTCDate().toString().padStart(2, "0")
+  const month = (parsed.getUTCMonth() + 1).toString().padStart(2, "0")
+  const year = parsed.getUTCFullYear()
+  return `${day}/${month}/${year}`
+}
+
+const formatEventType = (type?: string) =>
+  (type ?? "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (l) => l.toUpperCase())
+
+const formatFollowUps = (followUps?: IssueRecord["followUps"]) => {
+  if (!followUps || followUps.length === 0) return ""
+  return followUps
+    .map((f) => `${formatDate(f.date) || "—"} — ${f.note}`)
+    .join("\n")
+}
+
+const buildFilename = (kind: "events" | "issues" | "critical-monitor", scope: string) => {
+  const today = new Date()
+  const yyyy = today.getFullYear()
+  const mm = String(today.getMonth() + 1).padStart(2, "0")
+  const dd = String(today.getDate()).padStart(2, "0")
+  return `reporting-${kind}-${scope}-${yyyy}-${mm}-${dd}.xlsx`
+}
+
+const createSheet = (data: Record<string, string>[], headers: string[], widths: number[]) => {
+  const worksheet = XLSX.utils.json_to_sheet(data)
+  worksheet["!cols"] = widths.map((wch) => ({ wch }))
+  const range = XLSX.utils.decode_range(worksheet["!ref"] || "A1")
+  for (let col = range.s.c; col <= range.e.c; col++) {
+    const headerCell = XLSX.utils.encode_cell({ r: 0, c: col })
+    if (worksheet[headerCell]) {
+      worksheet[headerCell].s = {
+        font: { bold: true },
+        alignment: { horizontal: "left", vertical: "top" },
+      }
+    }
+  }
+  return worksheet
+}
+
+export const exportEventsToExcel = (events: EventLog[], scope: "all" | "filtered") => {
+  const headers = [
+    "Date",
+    "Type",
+    "Summary",
+    "Severity",
+    "Supplier",
+    "Function",
+    "Old Value",
+    "New Value",
+  ]
+  const widths = [12, 22, 50, 12, 25, 25, 20, 20]
+  const rows = events.map((ev) => ({
+    Date: formatDate(ev.date),
+    Type: formatEventType(ev.type),
+    Summary: ev.summary ?? "",
+    Severity: ev.severity ?? "",
+    Supplier: ev.supplierName ?? "",
+    Function: ev.functionName ?? "",
+    "Old Value": ev.oldValue ?? "",
+    "New Value": ev.newValue ?? "",
+  }))
+
+  const worksheet = createSheet(rows, headers, widths)
+  const workbook = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Events")
+  XLSX.writeFile(workbook, buildFilename("events", scope))
+}
+
+export const exportIssuesToExcel = (issues: IssueRecord[], scope: "all" | "filtered") => {
+  const headers = [
+    "Title",
+    "Description",
+    "Category",
+    "Status",
+    "Severity",
+    "Owner",
+    "Supplier",
+    "Function",
+    "Opened",
+    "Last Update",
+    "Closed",
+    "Due",
+    "Follow-ups",
+  ]
+  const widths = [30, 50, 18, 14, 12, 18, 25, 25, 12, 12, 12, 12, 40]
+  const rows = issues.map((issue) => ({
+    Title: issue.title,
+    Description: issue.description,
+    Category: issue.category ?? "",
+    Status: issue.status,
+    Severity: issue.severity ?? "",
+    Owner: issue.owner ?? "",
+    Supplier: issue.supplierName ?? "",
+    Function: issue.functionName ?? "",
+    Opened: formatDate(issue.dateOpened),
+    "Last Update": formatDate(issue.dateLastUpdate),
+    Closed: formatDate(issue.dateClosed ?? undefined),
+    Due: formatDate(issue.dueDate),
+    "Follow-ups": formatFollowUps(issue.followUps),
+  }))
+
+  const worksheet = createSheet(rows, headers, widths)
+  const workbook = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Issues")
+  XLSX.writeFile(workbook, buildFilename("issues", scope))
+}
+
+export const exportCriticalMonitorToExcel = (
+  data: CriticalMonitorView[],
+  scope: string = "all"
+) => {
+  const headers = [
+    "Provider Name",
+    "Function Name",
+    "Category",
+    "Contract",
+    "Criticality Assessment Date",
+    "Suitability Assessment",
+    "Risk Assessment Date",
+    "Audit Reports",
+    "Last Audit Date",
+    "Cloud Officer (CO)",
+    "Resource Operator (RO)",
+    "CO & RO Assessment",
+  ]
+  const widths = [25, 25, 15, 30, 22, 20, 20, 35, 16, 20, 20, 20]
+  const rows = data.map((item) => ({
+    "Provider Name": item.providerName ?? "",
+    "Function Name": item.functionName ?? "",
+    "Category": item.category ?? "",
+    "Contract": item.contract ?? "",
+    "Criticality Assessment Date": formatDate(item.criticalityAssessmentDate),
+    "Suitability Assessment": formatDate(item.suitabilityAssessmentDate),
+    "Risk Assessment Date": formatDate(item.riskAssessment),
+    "Audit Reports": item.auditReports ?? "",
+    "Last Audit Date": formatDate(item.lastAuditDate),
+    "Cloud Officer (CO)": item.cloudOfficer ?? "",
+    "Resource Operator (RO)": item.resourceOperator ?? "",
+    "CO & RO Assessment": formatDate(item.coRoAssessmentDate),
+  }))
+
+  const worksheet = createSheet(rows, headers, widths)
+  const workbook = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Critical Monitor")
+  XLSX.writeFile(workbook, buildFilename("critical-monitor", scope))
+}

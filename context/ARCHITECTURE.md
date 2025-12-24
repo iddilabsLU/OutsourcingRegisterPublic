@@ -1,0 +1,1304 @@
+﻿# Application Architecture
+
+This document explains how the Supplier Register application is structured and how different parts work together.
+
+---
+
+## Table of Contents
+
+1. [High-Level Overview](#high-level-overview)
+2. [Component Hierarchy](#component-hierarchy)
+3. [Data Flow](#data-flow)
+4. [File Structure](#file-structure)
+5. [CSSF Compliance Mapping](#cssf-compliance-mapping)
+6. [Key Patterns & Conventions](#key-patterns--conventions)
+7. [State Management](#state-management)
+8. [Form Architecture](#form-architecture)
+
+---
+
+## High-Level Overview
+
+The Supplier Register is a **desktop Electron application** built with Next.js 15 (App Router) for the renderer and an Electron main process that serves the exported app and handles persistence. Data is stored locally in SQLite via `better-sqlite3` (synchronous) in the Electron main process, accessed from React through IPC calls exposed in `preload.ts`.
+
+### Architecture Layers
+
+```
+┌─────────────────────────────────────────────────────┐
+│  AUTHENTICATION LAYER (Optional, Settings-Enabled)  │
+│  - Login Overlay (username/password, master)        │
+│  - AuthProvider Context (session, permissions)      │
+│  - RBAC enforcement (Admin, Editor, Viewer)         │
+└─────────────────────────────────────────────────────┘
+                     ↓ ↑
+┌─────────────────────────────────────────────────────┐
+│  USER INTERFACE (React Components)                  │
+│  - Supplier Register Table                          │
+│  - Add Supplier Form (4 tabs, 73 fields)           │
+│  - Filter Panel                                      │
+│  - View Navigation (permission-aware)                │
+│  - Settings (auth toggle, user management)          │
+└─────────────────────────────────────────────────────┘
+                     ↓ ↑
+┌─────────────────────────────────────────────────────┐
+│  STATE MANAGEMENT (React State + Context)           │
+│  - Auth state (user, role, session)                 │
+│  - Suppliers array (in-memory)                      │
+│  - Filter state                                      │
+│  - Search context                                    │
+│  - Pending fields tracking                          │
+└─────────────────────────────────────────────────────┘
+                     ↓ ↑
+┌─────────────────────────────────────────────────────┐
+│  BUSINESS LOGIC (TypeScript Functions)              │
+│  - Auth & permission checks (canEdit)               │
+│  - Filter suppliers                                  │
+│  - Check completeness (CSSF validation)            │
+│  - Text highlighting                                 │
+│  - Reference number generation                       │
+└─────────────────────────────────────────────────────┘
+                     ↓ ↑
+┌─────────────────────────────────────────────────────┐
+│  DATA MODEL (TypeScript Types)                      │
+│  - SupplierOutsourcing interface                    │
+│  - User, AuthSettings types                         │
+│  - CSSF enums (Status, Category, Risk, etc.)       │
+│  - Filter types                                      │
+└─────────────────────────────────────────────────────┘
+```
+
+### Key Concepts
+
+1. **Electron + Next.js** - Renderer is the exported Next.js app; main process hosts a static server for packaged builds.
+2. **Local Persistence** - SQLite database managed in Electron main process (`electron/database/*`, `better-sqlite3`); renderer uses IPC via `window.electronAPI`.
+3. **Type Safety** - 100% TypeScript coverage
+4. **CSSF Compliance** - Implements Circular 22/806 Section 4.2.7 (Points 53, 54, 55)
+5. **Two-Layer Validation** - Type safety (Zod) + Business logic (Completeness checker)
+6. **Pending Fields** - Mark incomplete fields for later completion
+7. **Reporting & Issues** - Change log auto-generated from supplier updates (pending-safe) plus lightweight issue tracker stored in SQLite
+8. **Authentication & RBAC** - Optional authentication with three roles (Admin, Editor, Viewer) and frontend permission enforcement
+
+---
+
+## Component Hierarchy
+
+### Page Level (`app/`)
+
+```
+app/layout.tsx (Root Layout)
+└── AuthProvider (Authentication Context)
+    └── app/page.tsx (Main Supplier Register Page)
+        ├── LoginOverlay (if auth enabled and not logged in)
+        │   ├── LoginForm (username/password)
+        │   └── MasterLoginForm (master password recovery)
+        ├── AppLayout (Header + Footer wrapper)
+        │   ├── Header (with user info display)
+        │   └── Footer
+        └── ViewSegmentedControl (Tab Navigation, permission-aware)
+    ├── Register List View
+    │   ├── FilterPanel
+    │   │   ├── QuickFilters (Critical, Cloud)
+    │   │   └── CustomFilterRow (up to 3)
+    │   ├── ActiveFilterBadges
+    │   └── SupplierRegisterTable
+    │       ├── Table Header
+    │       └── SupplierRow (collapsible)
+    │           ├── Compact View (always visible)
+    │           │   ├── Reference & Status badges
+    │           │   ├── Provider name
+    │           │   └── Actions menu (Edit, Duplicate, Delete)
+    │           └── Expanded View (on click)
+    │               └── SupplierDetailTabs (wraps with SearchProvider)
+    │                   ├── BasicInfo (Tab 1)
+    │                   ├── ProviderDetails (Tab 2)
+    │                   ├── CloudServices (Tab 3, conditional)
+    │                   └── CriticalFunctions (Tab 4, conditional)
+    │
+    ├── New Entry View
+    │   └── SupplierForm
+    │       ├── SupplierFormTabNav (Tab navigation)
+    │       ├── BasicInfoTab (4 card sections)
+    │       │   ├── Reference & Status
+    │       │   ├── Dates
+    │       │   ├── Function Description
+    │       │   └── Criticality Assessment
+    │       ├── ServiceProviderTab (2 card sections)
+    │       │   ├── Service Provider Information
+    │       │   └── Location Information
+    │       ├── CloudServicesTab (conditional, Point 54.h)
+    │       │   └── Cloud Service Information
+    │       ├── CriticalFunctionsTab (conditional, Point 55)
+    │       │   ├── Entities Using
+    │       │   ├── Group Relationship
+    │       │   ├── Risk Assessment
+    │       │   ├── Approval
+    │       │   ├── Governing Law & Audit
+    │       │   ├── Sub-Outsourcing (conditional)
+    │       │   ├── Substitutability Assessment
+    │       │   ├── Alternative Providers
+    │       │   ├── Time Criticality
+    │       │   ├── Cost Information
+    │       │   └── Regulatory Notification
+    │       ├── FormActions (Cancel, Save as Draft, Save Supplier)
+    │       └── IncompleteFieldsDialog (confirmation)
+    │
+    ├── Dashboard View
+    │   ├── ComplianceAlerts
+    │   │   ├── Overdue Reviews Alert
+    │   │   ├── Upcoming Reviews Alert
+    │   │   └── Missing Notifications Alert
+    │   ├── MetricsCards
+    │   │   ├── Total Suppliers Card
+    │   │   ├── Critical % Card
+    │   │   ├── Cloud % Card
+    │   │   ├── Pending % Card
+    │   │   └── Completeness Rate Card
+    │   ├── Charts Section
+    │   │   ├── StatusPieChart
+    │   │   └── CategoryBarChart
+    │   ├── Risk Management Section
+    │   │   ├── RiskBarChart
+    │   │   ├── UpcomingReviewsCard
+    │   │   ├── ProviderConcentrationTable
+    │   │   └── GeographicDistributionTable
+    │   └── Deep Dive Analytics Section
+    │       ├── CriticalFunctionsCard
+    │       ├── PendingNotificationsList
+    │       └── DataCompletenessCard
+    │
+    ├── Reporting View (RBAC-enforced)
+    │   ├── Summary Cards (events count, open issues, closed in period, risk changes)
+    │   ├── Events List (change log derived from supplier updates, pending-safe) + manual add/edit/delete (editors only)
+    │   ├── Filters (30/90/all + custom date range + text search across events/issues)
+    │   ├── Issue Composer (editors only: title/description/category/status/severity/owner/dates + optional initial follow-up)
+    │   ├── Issues List (status updates/edit/delete for editors, follow-up history + add follow-up, lifecycle dates)
+    │   └── Critical Monitor Section
+    │       ├── Provider & Category Filters
+    │       ├── Critical Suppliers Table (12 columns, inline editing for 4 fields - editors only)
+    │       └── Export to Excel Button
+    │
+    └── Settings View
+        ├── SettingsView Container
+        ├── DatabaseSettingsCard (visible to all, copy data admin-only)
+        │   ├── Current Path Display (default/custom badge)
+        │   ├── Path Validation (real-time)
+        │   ├── Browse Folder Dialog
+        │   ├── Copy Data Option (admin-only when destination empty)
+        │   └── Reset to Default
+        ├── BackupSettingsCard (backup & restore)
+        │   ├── Create Backup (database + Excel exports to ZIP)
+        │   └── Restore from Backup (hybrid: database or Excel, selective restore)
+        ├── AuthSettingsCard (enable/disable auth, change master password)
+        └── UserManagement (admin-only)
+            ├── Users List (with role badges)
+            └── UserFormDialog (create/edit users)
+                ├── Username, Display Name, Role fields
+                ├── Password field (create) or optional password field (edit)
+                └── ChangeMasterDialog (master password change)
+```
+
+### Reusable Components
+
+**Display Components:**
+- `field-display.tsx` - CSSF-compliant field with label, value, annotations
+- `icon-badge.tsx` - Icon container with variants
+- `not-applicable-placeholder.tsx` - N/A placeholder for conditional fields
+
+**Form Field Components:**
+- `form-text-input.tsx` - Text input with pending toggle
+- `form-select.tsx` - Dropdown select
+- `form-textarea.tsx` - Multi-line text
+- `form-date-picker.tsx` - Calendar date picker
+- `form-radio-group.tsx` - Radio button group
+- `form-multi-text.tsx` - Dynamic array of text inputs
+- `form-country-multi-select.tsx` - Multi-select country dropdown (~195 countries) with badges
+- `form-sub-contractor.tsx` - Complex nested sub-contractor fields
+
+**Navigation & Filtering:**
+- `view-segmented-control.tsx` - Main view switcher (permission-aware, hides "New Entry" for viewers)
+- `filter-panel.tsx` - Collapsible filter UI
+- `active-filter-badges.tsx` - Active filter chips
+
+**Authentication Components:**
+- `auth/login-form.tsx` - Username/password login form
+- `auth/master-login-form.tsx` - Master password recovery form
+- `auth/login-overlay.tsx` - Full-screen login modal overlay
+- `providers/auth-provider.tsx` - Authentication context provider
+
+**Settings Components:**
+- `settings/settings-view.tsx` - Settings container
+- `settings/auth-settings-card.tsx` - Enable/disable auth, master password management
+- `settings/user-management.tsx` - User list with CRUD operations (admin-only)
+- `settings/user-form-dialog.tsx` - Create/edit user form dialog
+- `settings/change-master-dialog.tsx` - Change master password dialog
+
+---
+
+## Data Flow
+
+### Data Persistence & IPC
+- Renderer: exported Next.js app running inside Electron.
+- Preload: `electron/preload.ts` exposes `window.electronAPI` for CRUD (IPC to main process).
+- Main process: `electron/main.ts` hosts static `out/` (packaged) and handles SQLite via `better-sqlite3` (`electron/database/*`).
+- Database file:
+  - Default: `./data/suppliers.db` (dev) or `%APPDATA%/OutsourcingRegister/data.db` (production)
+  - Custom: Configurable via Settings > Database Location (stored in `app-config.json`)
+  - Enables multi-user access via shared network paths (e.g., `\\server\share\data.db`)
+
+### Adding a New Supplier
+
+```
+1. User clicks "New Entry" tab
+   → ViewSegmentedControl updates activeView state
+   → SupplierForm component renders
+
+2. User fills form fields
+   → React Hook Form tracks values
+   → No validation happens during typing
+   → Pending toggle marks fields as pending
+
+3. User clicks "Save Supplier"
+   → form.getValues() collects all form data
+   → checkIncompleteFields() runs (Layer 2 validation)
+   → Skips pending fields
+   → Returns incomplete field list
+
+4a. If incomplete fields found:
+   → IncompleteFieldsDialog shows
+   → User chooses "Mark as Pending & Submit" or "Go Back"
+
+4b. If "Mark as Pending & Submit":
+   → Adds incomplete fields to pendingFields array
+   → Supplier persisted via IPC (`window.electronAPI.addSupplier`) to SQLite
+   → useDatabase hook reloads suppliers from SQLite
+   → View switches back to Register List
+   → Toast notification shows success
+
+5. Table re-renders with new supplier (fetched from SQLite)
+   → Shows amber badge if pending fields exist
+```
+
+### Filtering Suppliers
+
+```
+1. User adds filter (e.g., "Category = Cloud")
+   → FilterPanel updates filters state
+   → Triggers filterSuppliers() function
+
+2. filterSuppliers() processes:
+   → Quick filters (critical, cloud)
+   → Custom filters (up to 3)
+   → Global text search (if present)
+   → Applies AND logic across all filters
+
+3. Filtered suppliers returned
+   → SupplierRegisterTable re-renders
+   → Shows only matching suppliers
+   → ActiveFilterBadges display active filters
+
+4. If text search present:
+   → SearchContext provides searchTerm
+   → SupplierDetailTabs consumes context
+   → FieldDisplay highlights matching text in yellow
+```
+
+### Expanding Supplier Details
+
+```
+1. User clicks supplier row
+   → onClick toggles expandedRowId state
+
+2. Row expands (conditional render)
+   → SupplierDetailTabs renders with SearchProvider
+   → Provider passes searchTerm from filters
+
+3. User switches tabs
+   → Tab navigation updates activeTab state
+   → Content switches between BasicInfo/Provider/Cloud/Critical
+
+4. Tab components (BasicInfo, ProviderDetails, etc.):
+   → Use useSearch() hook to get searchTerm
+   → Pass searchTerm to FieldDisplay components
+   → FieldDisplay highlights matching text
+```
+
+### Dashboard Analytics Flow
+
+The dashboard is a **read-only analytics view** that calculates metrics from the supplier data:
+
+```
+Suppliers Array (from page state)
+      ↓
+Dashboard View Component
+      ↓
+Analytics Functions (lib/utils/dashboard-analytics.ts)
+  ├── getOverdueAssessments()
+  ├── getUpcomingReviews()
+  ├── getKeyMetrics()
+  ├── getPendingFieldsMetrics()
+  ├── getStatusBreakdown()
+  ├── getCategoryBreakdown()
+  ├── getRiskDistribution()
+  ├── getProviderConcentration()
+  ├── getGeographicDistribution()
+  ├── getCriticalFunctionsAnalysis()
+  └── getRegulatoryNotificationStatus()
+      ↓
+Dashboard Components (receive calculated data)
+  ├── ComplianceAlerts
+  ├── MetricsCards
+  ├── Charts (Recharts visualization)
+  └── Tables
+```
+
+**Key Points:**
+- No state mutations (read-only view)
+- Calculations happen on each render (suppliers change → metrics recalculate)
+- Respects active filters (uses filteredSuppliers from page)
+- CSSF compliance checks (Points 54.i, 55.c, 55.f, 55.l)
+
+### Reporting Flow (Events + Issues + Critical Monitor)
+
+```
+Supplier add/update (renderer)
+      ↓
+ipcMain db:addSupplier/db:updateSupplier (electron/main.ts)
+      ↓
+Event builder (electron/database/event-builder.ts)
+  - Diffs previous vs current supplier
+  - Skips fields marked pending
+  - Emits events for status, risk, criticality flag/assessment date, last risk assessment, notification date, start/renewal/end dates, and new supplier creation
+      ↓
+Events table (SQLite, migration migrate-add-events-issues)
+Issues table (SQLite, manual CRUD; follow_ups + category stored as JSON)
+Critical Monitor table (SQLite, migration migrate-add-critical-monitor)
+  - Stores 4 user-input fields: contract, suitability assessment date, audit reports, CO & RO assessment date
+  - Linked to supplier via reference number
+      ↓
+useReporting hook (hooks/use-reporting.ts)
+  - window.electronAPI.getEvents/getIssues/getCriticalMonitorRecords
+  - addEvent/updateEvent/deleteEvent
+  - addIssue/updateIssue/deleteIssue (with follow-ups and category)
+  - upsertCriticalMonitorRecord/deleteCriticalMonitorRecord
+      ↓
+ReportingView (components/shared/reporting/reporting-view.tsx)
+  - Period filter (30/90/all/custom range) + search
+  - KPI cards (events, open issues, closed-in-period, risk changes)
+  - Event list (pending-safe change log) + manual add/edit/delete
+  - Issue composer + lifecycle controls (status updates, edit, delete, due dates, categories) + follow-up add/view
+  - Critical Monitor section:
+    - Shows critical active suppliers with filled Provider Name and Category (no pending)
+    - Combines supplier data (read-only) + user-input fields (inline editable)
+    - Filters: provider name, category (Cloud/Services/All)
+    - Inline editing: contract, suitability assessment date, audit reports, CO & RO assessment date
+    - Excel export
+```
+
+**Key Points:**
+- No duplicate data entry: events derive from supplier data; issues optionally reference supplier/function names without ref numbers.
+- Pending fields suppress event generation (e.g., pending start date change will not create an event).
+- New tables: `events`, `issues` (with `follow_ups` and `category`), and `critical_monitor` created via migrations; auto-created at app startup.
+- Critical Monitor: combines supplier data (from main suppliers table) with user-input tracking fields (from critical_monitor table).
+
+### Authentication & RBAC Flow
+
+The authentication system is **optional** and can be enabled/disabled in Settings.
+
+```
+App Startup
+      ↓
+AuthProvider loads (components/providers/auth-provider.tsx)
+      ↓
+window.electronAPI.getAuthSettings()
+      ↓
+If auth enabled AND no valid session:
+      ↓
+LoginOverlay renders (full-screen modal)
+  ├── LoginForm (username + password)
+  │     ↓
+  │   window.electronAPI.login(username, password)
+  │     ↓
+  │   electron/database/auth.ts: verifyPassword (bcrypt compare)
+  │     ↓
+  │   Returns: { success, user: { id, username, displayName, role }, sessionToken }
+  │     ↓
+  │   If rememberMe: store session in localStorage
+  │     ↓
+  │   AuthProvider updates state: { user, isAuthenticated: true }
+  │
+  └── MasterLoginForm (master password recovery)
+        ↓
+      window.electronAPI.loginWithMaster(password)
+        ↓
+      electron/database/auth.ts: verifyMasterPassword
+        ↓
+      Returns admin session token
+```
+
+**RBAC Permission Enforcement (Frontend):**
+
+```
+Component renders
+      ↓
+useAuth() hook provides:
+  - user (username, displayName, role)
+  - isAuthenticated (boolean)
+  - canEdit (boolean: role === 'admin' || role === 'editor')
+  - canManageUsers (boolean: role === 'admin')
+      ↓
+Conditional rendering based on permissions:
+  - ViewSegmentedControl: hides "New Entry" tab if !canEdit
+  - SupplierRegisterTable: hides 3-dots menu if !canEdit
+  - ReportingView: hides ALL edit controls if !canEdit
+    * "Log Event" card hidden
+    * Event edit/delete buttons hidden
+    * "New Issue" card hidden
+    * Issue status change replaced with badge for viewers
+    * Issue edit/delete buttons hidden
+    * Follow-up add section hidden
+    * Critical Monitor inline editing disabled
+  - Settings: User Management section only visible if canManageUsers
+```
+
+**Database Schema:**
+
+```sql
+-- auth_settings table (singleton)
+CREATE TABLE auth_settings (
+  id INTEGER PRIMARY KEY CHECK (id = 1),  -- Single row enforced
+  is_enabled INTEGER NOT NULL DEFAULT 0,  -- Auth enabled flag
+  master_password_hash TEXT NOT NULL,     -- bcrypt hash
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- users table
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,            -- bcrypt hash (cost factor: 10)
+  display_name TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'editor', 'viewer')),
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Session Management:**
+- Session token stored in localStorage if "Remember me" enabled
+- Session token is just user ID (simple approach for on-premises deployment)
+- No expiration (manual logout only)
+- On app restart: AuthProvider checks localStorage and validates session with backend
+- On logout: localStorage cleared, AuthProvider resets state
+
+**Security Context:**
+- Designed for on-premises, physically-secured environments
+- Frontend RBAC prevents user errors and accidents
+- No backend permission validation (planned for future)
+- Password hashing with bcrypt (cost factor: 10)
+- Master password for emergency access (default: `master123`, change immediately)
+- Default admin credentials: `admin` / `admin` (change on first login)
+
+### Database Configuration Flow
+
+```
+User Opens Settings → Database Location
+      ↓
+DatabaseSettingsCard loads current path info
+      ↓
+window.electronAPI.getDatabasePathInfo()
+      ↓
+electron/database/config.ts: readConfig()
+  - Reads app-config.json (or creates default)
+  - Returns { currentPath, isCustom, defaultPath }
+      ↓
+User enters new path or browses folder
+      ↓
+Real-time validation (debounced 500ms)
+      ↓
+window.electronAPI.validateDatabasePath(path)
+      ↓
+electron/database/config.ts: validateDatabasePath()
+  - Checks path is absolute
+  - Checks ends with .db
+  - Tries to create directory if doesn't exist
+  - Tests write permissions (creates temp file)
+  - Checks if database already exists at path
+  - Returns { valid, error?, exists }
+      ↓
+User clicks "Apply & Restart"
+      ↓
+Confirmation dialog shows:
+  - New path
+  - If database exists: "Will connect to existing database"
+  - If no database AND user is Admin: Checkbox "Copy existing data"
+  - If no database AND user is NOT Admin: Info message about empty database
+      ↓
+User confirms
+      ↓
+window.electronAPI.setDatabasePath(path, copyData)
+      ↓
+electron/main.ts: config:setDatabasePath handler
+  IF copyData && newPath:
+    - electron/database/db.ts: copyDatabaseTo(newPath)
+      * Closes current database
+      * Copies database file + WAL/SHM files
+  - electron/database/config.ts: setDatabasePath(newPath)
+    * Updates app-config.json
+  - Returns { success: true, requiresRestart: true }
+      ↓
+Frontend shows toast: "Database path updated. Restarting..."
+      ↓
+window.electronAPI.restartApp()
+      ↓
+electron/main.ts: app:restart handler
+  - app.relaunch()
+  - app.quit()
+      ↓
+App restarts, reads new config, connects to new database location
+```
+
+**Multi-User Setup:**
+1. Admin installs app, sets shared network path (e.g., `\\server\share\data.db`)
+2. Admin checks "Copy existing data" to migrate current data
+3. App restarts, connects to shared database
+4. Other users install app, point to same network path
+5. They see "existing database found", no copy option needed
+6. All users now share the same database
+
+**Key Points:**
+- Configuration stored in `app-config.json` (separate from database)
+- All users can change database path (to connect to shared database)
+- Only Admins can copy data to new location (when destination is empty)
+- Copy option hidden when database already exists at destination
+- App restart required for database path change to take effect
+- SQLite WAL mode enables concurrent access for multiple users
+
+---
+
+### Backup & Restore Flow
+
+```
+User Initiates Backup (Settings → Backup & Restore)
+      ↓
+File Dialog: Select save location (user chooses path)
+      ↓
+electron/main.ts: backup:showSaveDialog
+  - Suggests filename: OutsourcingRegister_Backup_YYYY-MM-DD.zip
+      ↓
+electron/main.ts: backup:create
+      ↓
+electron/database/backup.ts: createBackupZip(zipPath)
+  1. Create temp directory
+  2. Close database connection
+  3. Copy database file (database.db)
+  4. Reopen database
+  5. Export 4 Excel files:
+     - Suppliers.xlsx (all supplier records)
+     - Events.xlsx (change log)
+     - Issues.xlsx (issue tracker)
+     - CriticalMonitor.xlsx (critical outsourcing monitor)
+  6. Create ZIP archive (archiver library)
+  7. Clean up temp directory
+      ↓
+Success: Toast notification with backup path
+
+---
+
+User Initiates Restore (Settings → Backup & Restore)
+      ↓
+File Dialog: Select backup ZIP file
+      ↓
+Restore Confirmation Dialog:
+  Step 1: Choose restore method
+    - From Database (fast, exact - uses database.db file)
+    - From Excel (manual edits - uses Excel files)
+  Step 2: Select data to restore
+    - ✓ Suppliers
+    - ✓ Events
+    - ✓ Issues
+    - ✓ Critical Monitor
+    (Select/deselect each, or all)
+      ↓
+User confirms: "Restore Selected Data"
+      ↓
+electron/main.ts: backup:restoreFromDatabase OR backup:restoreFromExcel
+      ↓
+electron/database/backup.ts:
+  IF restoreFromDatabase:
+    - Extract ZIP to temp directory
+    - If ALL options selected: Replace entire database (fastest)
+    - If SELECTIVE: Read from backup DB, delete selected tables, import selected data
+  IF restoreFromExcel:
+    - Extract ZIP to temp directory
+    - Parse selected Excel files (XLSX library)
+    - Delete selected tables
+    - Import parsed data
+      ↓
+Return stats: { suppliers: X, events: Y, issues: Z, criticalMonitor: W }
+      ↓
+Success: Toast notification + window.location.reload()
+```
+
+**Key Points:**
+- ZIP format: 1 database file + 4 Excel exports
+- Hybrid restore: Choose between database (fast) or Excel (for manual edits)
+- Selective restore: Choose which data types to restore
+- User controls save/load locations via file dialogs
+- Database connection handling: Close before copy, reopen after
+- Temp directory cleanup: On both success and error
+- Full page reload after restore to reflect new data
+
+---
+
+## File Structure
+
+### `/app` - Next.js App Router Pages
+
+| File | Purpose |
+|------|---------|
+| `layout.tsx` | Root layout wrapped with AuthProvider |
+| `page.tsx` | Main supplier register page with permission checks |
+| `globals.css` | CSS variables (light theme only), Tailwind base |
+| `loading.tsx` | Loading skeleton (shown during page load) |
+| `error.tsx` | Error boundary for route errors |
+| `not-found.tsx` | 404 page |
+
+### `/components/ui` - shadcn/ui Components
+
+26+ components installed via `npx shadcn@latest add <component>`. These are auto-generated and should not be edited unless customizing globally.
+
+**Key Components:**
+- `form.tsx` - React Hook Form integration
+- `card.tsx` - Card container with header/content
+- `table.tsx` - Table primitives
+- `tabs.tsx` - Tab navigation and content
+- `dialog.tsx` - Modal dialog
+- `badge.tsx` - Status/tag badges
+- `button.tsx` - Button variants
+- `input.tsx`, `select.tsx`, `textarea.tsx` - Form inputs
+- `progress.tsx` - Progress bar component (Radix UI primitive, added for dashboard)
+
+### `/components/shared` - Custom Components
+
+#### Register Table & Display
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `supplier-register-table.tsx` | Main register table with expand/collapse | ~600 |
+| `supplier-detail-tabs.tsx` | Tab wrapper with SearchProvider | ~50 |
+| `supplier-detail-tab-nav.tsx` | Tab navigation bar | ~80 |
+| `supplier-basic-info.tsx` | Basic Info tab content | ~300 |
+| `supplier-provider-details.tsx` | Provider Details tab | ~200 |
+| `supplier-cloud-services.tsx` | Cloud Services tab | ~200 |
+| `supplier-critical-functions.tsx` | Critical Functions tab | ~500 |
+| `field-display.tsx` | Field label + value with CSSF annotations | ~100 |
+| `not-applicable-placeholder.tsx` | N/A placeholder | ~30 |
+| `icon-badge.tsx` | Icon container with variants | ~50 |
+
+#### Form Components
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `forms/supplier-form.tsx` | Main form container with tab management | ~400 |
+| `forms/supplier-form-tab-nav.tsx` | Form tab navigation | ~120 |
+| `forms/supplier-form-basic-info.tsx` | Basic Information tab | ~450 |
+| `forms/supplier-form-provider.tsx` | Service Provider tab | ~300 |
+| `forms/supplier-form-cloud.tsx` | Cloud Services tab (conditional) | ~250 |
+| `forms/supplier-form-critical.tsx` | Critical Functions tab (conditional) | ~600 |
+| `forms/form-actions.tsx` | Cancel, Save as Draft, Save Supplier buttons | ~120 |
+| `forms/incomplete-fields-dialog.tsx` | Confirmation dialog for missing fields | ~150 |
+| `forms/pending-toggle.tsx` | Amber pin button for pending fields | ~80 |
+
+#### Form Field Components
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `forms/fields/form-text-input.tsx` | Text input with CSSF label + pending toggle | ~120 |
+| `forms/fields/form-select.tsx` | Dropdown select | ~100 |
+| `forms/fields/form-textarea.tsx` | Multi-line textarea | ~110 |
+| `forms/fields/form-date-picker.tsx` | Calendar date picker | ~130 |
+| `forms/fields/form-radio-group.tsx` | Radio button group | ~90 |
+| `forms/fields/form-multi-text.tsx` | Dynamic array of text inputs | ~150 |
+| `forms/fields/form-sub-contractor.tsx` | Sub-contractor detail group | ~200 |
+
+#### Navigation & Filtering
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `view-segmented-control.tsx` | Main view switcher (Register/New Entry/Dashboard) | ~100 |
+| `filter-panel.tsx` | Collapsible filter panel with quick/custom filters | ~300 |
+| `quick-filters.tsx` | Critical and Cloud toggle buttons | ~60 |
+| `custom-filter-row.tsx` | Individual filter row | ~200 |
+| `active-filter-badges.tsx` | Active filter chips with remove buttons | ~100 |
+
+#### Dashboard Components
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `dashboard/dashboard-view.tsx` | Main dashboard container | ~70 |
+| `dashboard/compliance-alerts.tsx` | Overdue/upcoming reviews alerts | ~280 |
+| `dashboard/metrics-cards.tsx` | Key metrics cards (5 cards) | ~90 |
+| `dashboard/upcoming-reviews-card.tsx` | Timeline of upcoming reviews | ~165 |
+| `dashboard/critical-functions-card.tsx` | Critical supplier analysis | ~180 |
+| `dashboard/data-completeness-card.tsx` | Data quality metrics | ~120 |
+| `dashboard/charts/chart-container.tsx` | Reusable chart wrapper | ~25 |
+| `dashboard/charts/status-pie-chart.tsx` | Status distribution pie chart | ~75 |
+| `dashboard/charts/category-bar-chart.tsx` | Category breakdown bar chart | ~65 |
+| `dashboard/charts/risk-bar-chart.tsx` | Risk level distribution | ~80 |
+| `dashboard/tables/provider-concentration-table.tsx` | Provider concentration risk | ~115 |
+| `dashboard/tables/geographic-distribution-table.tsx` | EU/Non-EU jurisdiction analysis | ~155 |
+| `dashboard/tables/pending-notifications-list.tsx` | CSSF notification tracker | ~165 |
+
+#### Reporting Components
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `reporting/reporting-view.tsx` | Reporting tab with 3 sections: event log, issue tracker (categories/follow-ups), and Critical Monitor (critical active suppliers, inline editing, filters, export) | ~1935 |
+
+#### Authentication Components
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `auth/login-form.tsx` | Username/password login form with remember me | ~120 |
+| `auth/master-login-form.tsx` | Master password recovery form | ~80 |
+| `auth/login-overlay.tsx` | Full-screen login modal overlay | ~100 |
+
+#### Settings Components
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `settings/settings-view.tsx` | Settings container with tabs | ~150 |
+| `settings/database-settings-card.tsx` | Database path configuration (visible to all, copy admin-only) | ~430 |
+| `settings/backup-settings-card.tsx` | Backup & restore with hybrid restore options | ~440 |
+| `settings/auth-settings-card.tsx` | Enable/disable auth, change master password | ~180 |
+| `settings/user-management.tsx` | User list with CRUD operations (admin-only) | ~250 |
+| `settings/user-form-dialog.tsx` | Create/edit user form dialog | ~220 |
+| `settings/change-master-dialog.tsx` | Change master password dialog | ~150 |
+
+#### Providers
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `providers/auth-provider.tsx` | Authentication context provider with session management | ~200 |
+
+### `/lib` - Business Logic & Types
+
+#### `/lib/types` - TypeScript Types
+
+| File | Purpose |
+|------|---------|
+| `supplier.ts` | CSSF-compliant supplier types (SupplierOutsourcing, enums) |
+| `filters.ts` | Filter field types, CustomFilter interface |
+| `dashboard.ts` | Dashboard analytics type definitions (7 indicator types) |
+| `reporting.ts` | EventLog/EventType + IssueRecord/IssueStatus + CriticalMonitorRecord/CriticalMonitorView types for reporting tab |
+| `auth.ts` | Auth types (User, AuthSettings, LoginResult, CreateUserInput, UpdateUserInput, CanDeleteUserResult) |
+
+**Key Type:** `SupplierOutsourcing`
+```typescript
+export interface SupplierOutsourcing extends MandatoryOutsourcingFields {
+  criticalFields?: CriticalOutsourcingFields  // Point 55 (conditional)
+  incompleteFields?: string[]                  // Incomplete field paths
+  pendingFields?: string[]                     // Pending field paths
+}
+```
+
+**Type System Design (Oct 30, 2025):**
+The type definitions in `supplier.ts` are intentionally aligned with CSSF Circular 22/806 requirements:
+- **Mandatory fields** (all except noted) are marked as **required** (no `?`)
+- **CSSF-Optional fields** remain optional: `parentCompany?`, `legalEntityIdentifier?`
+- **Conditional objects** remain optional: `cloudService?` (only when category=Cloud), `criticalFields?` (only when isCritical=true), `subOutsourcing?` (when declared)
+- The type accurately reflects business logic in `checkIncompleteFields()`, which validates these fields as mandatory per CSSF requirements
+- This alignment improves code clarity and eliminates defensive checks for guaranteed-to-exist fields
+
+#### `/lib/data` - Dummy Data
+
+| File | Purpose |
+|------|---------|
+| `suppliers.ts` | 5 sample suppliers (3 critical, 2 non-critical) |
+
+#### `/lib/utils` - Utility Functions
+
+| File | Purpose | Key Functions |
+|------|---------|---------------|
+| `check-completeness.ts` | Validates CSSF mandatory fields | `checkIncompleteFields()`, `generateNextReferenceNumber()` |
+| `filter-suppliers.ts` | Filters suppliers by criteria | `filterSuppliers()` |
+| `highlight-text.tsx` | Highlights search terms in text | `highlightText()` |
+| `formatters.ts` | Date, currency formatting | `formatDate()`, `formatCurrency()` |
+| `validators.ts` | Runtime validators | `isValidEmail()`, `isValidURL()` |
+| `cn.ts` | Tailwind class merger | `cn()` (from clsx + tailwind-merge) |
+| `dashboard-analytics.ts` | Dashboard analytics engine (11 calculation functions) | `getOverdueAssessments()`, `getUpcomingReviews()`, `getKeyMetrics()`, `getPendingFieldsMetrics()`, `getStatusBreakdown()`, `getCategoryBreakdown()`, `getRiskDistribution()`, `getProviderConcentration()`, `getGeographicDistribution()`, `getCriticalFunctionsAnalysis()`, `getRegulatoryNotificationStatus()` |
+
+#### `/lib/validations` - Zod Schemas
+
+| File | Purpose |
+|------|---------|
+| `supplier-schema.ts` | Zod schema for supplier form validation (Layer 1) |
+| `auth-schema.ts` | Zod schemas for auth forms (login, master login, create user, edit user, change password, change master password) |
+
+#### `/lib/contexts` - React Contexts
+
+| File | Purpose |
+|------|---------|
+| `search-context.tsx` | Provides searchTerm for text highlighting |
+
+### `/hooks` - Custom React Hooks
+
+| File | Purpose |
+|------|---------|
+| `use-media-query.ts` | Responsive breakpoint detection |
+| `use-local-storage.ts` | localStorage hook with SSR safety |
+| `use-debounce.ts` | Debounced value updates |
+| `use-api.ts` | API fetch hook (for future backend) |
+| `use-database.ts` | Hook for database CRUD operations via IPC |
+| `use-reporting.ts` | Hook for events, issues, and critical monitor operations |
+
+### `/electron` - Electron Main Process
+
+#### Main Process Files
+
+| File | Purpose |
+|------|---------|
+| `main.ts` | Electron main process entry point, window creation, IPC handlers |
+| `preload.ts` | Context bridge exposing `window.electronAPI` to renderer |
+| `electron.d.ts` | TypeScript declarations for ElectronAPI interface |
+
+#### Database Layer (`/electron/database`)
+
+| File | Purpose |
+|------|---------|
+| `db.ts` | SQLite database initialization, schema creation, CRUD operations for suppliers, copyDatabaseTo() for migration |
+| `config.ts` | App configuration management (database path, app-config.json, path validation) |
+| `auth.ts` | Authentication service layer (login, user management, password hashing with bcrypt) |
+| `backup.ts` | Backup & restore module (ZIP creation, database/Excel restore, selective restore) |
+| `suppliers.ts` | Supplier CRUD operations with deleteAllSuppliers() for restore |
+| `events.ts` | Event CRUD operations with deleteAllEvents() for restore |
+| `issues.ts` | Issue CRUD operations with deleteAllIssues() for restore |
+| `critical-monitor.ts` | Critical monitor CRUD operations with deleteAllCriticalMonitorRecords() for restore |
+| `event-builder.ts` | Auto-generates change log events from supplier updates (pending-safe) |
+| `schema.sql` | Database schema for suppliers, events, issues, critical_monitor, auth_settings, users tables |
+| `migrate-add-events-issues.ts` | Migration to add events and issues tables |
+| `migrate-add-critical-monitor.ts` | Migration to add critical_monitor table |
+| `migrate-add-auth.ts` | Migration to add auth_settings and users tables |
+
+---
+
+## CSSF Compliance Mapping
+
+### Point 53: Status of Outsourcing Arrangement
+
+| Field | Type | Path | Implementation |
+|-------|------|------|----------------|
+| Status | Enum | `supplier.status` | `OutsourcingStatus` enum (Draft, Active, Not Yet Active, Terminated) |
+
+### Point 54: Mandatory for ALL Outsourcing
+
+**Total Fields: 23** (all suppliers must provide these)
+
+| CSSF Point | Field | Type | Path |
+|------------|-------|------|------|
+| 54.a | Reference Number | string | `supplier.referenceNumber` |
+| 54.b | Start Date | string (date) | `supplier.dates.startDate` |
+| 54.b | Next Renewal Date | string? | `supplier.dates.nextRenewalDate` |
+| 54.b | End Date | string? | `supplier.dates.endDate` |
+| 54.b | Service Provider Notice Period | string? | `supplier.dates.serviceProviderNoticePeriod` |
+| 54.b | Entity Notice Period | string? | `supplier.dates.entityNoticePeriod` |
+| 54.c | Function Name | string | `supplier.functionDescription.name` |
+| 54.c | Function Description | string | `supplier.functionDescription.description` |
+| 54.c | Data Description | string | `supplier.functionDescription.dataDescription` |
+| 54.c | Personal Data Involved | boolean | `supplier.functionDescription.personalDataInvolved` |
+| 54.c | Personal Data Transferred | boolean | `supplier.functionDescription.personalDataTransferred` |
+| 54.d | Category | enum | `supplier.category` |
+| 54.e | Provider Name | string | `supplier.serviceProvider.name` |
+| 54.e | Corporate Registration Number | string | `supplier.serviceProvider.corporateRegistrationNumber` |
+| 54.e | LEI (if any) | string? | `supplier.serviceProvider.legalEntityIdentifier` |
+| 54.e | Registered Address | string | `supplier.serviceProvider.registeredAddress` |
+| 54.e | Contact Details | string | `supplier.serviceProvider.contactDetails` |
+| 54.e | Parent Company (if any) | string? | `supplier.serviceProvider.parentCompany` |
+| 54.f | Service Performance Countries | string[] | `supplier.location.servicePerformanceCountries` |
+| 54.f | Data Location Country | string | `supplier.location.dataLocationCountry` |
+| 54.f | Data Storage Location | string? | `supplier.location.dataStorageLocation` |
+| 54.g | Is Critical | boolean | `supplier.criticality.isCritical` |
+| 54.g | Criticality Reasons | string | `supplier.criticality.reasons` |
+| 54.i | Criticality Assessment Date | string (date) | `supplier.criticalityAssessmentDate` |
+
+### Point 54.h: Cloud Services (Conditional - 6 fields)
+
+**Only required when `category === OutsourcingCategory.CLOUD`**
+
+| Field | Type | Path |
+|-------|------|------|
+| Service Model | enum | `supplier.cloudService.serviceModel` |
+| Deployment Model | enum | `supplier.cloudService.deploymentModel` |
+| Data Nature | string | `supplier.cloudService.dataNature` |
+| Storage Locations | string[] | `supplier.cloudService.storageLocations` |
+| Cloud Officer (if any) | string? | `supplier.cloudService.cloudOfficer` |
+| Resource Operator (if any) | string? | `supplier.cloudService.resourceOperator` |
+
+### Point 55: Critical Functions (Conditional - 18+ fields)
+
+**Only required when `criticality.isCritical === true`**
+
+| CSSF Point | Field | Type | Path |
+|------------|-------|------|------|
+| 55.a | In-Scope Entities | string[] | `supplier.criticalFields.entitiesUsing.inScopeEntities` |
+| 55.b | Part of Group | boolean | `supplier.criticalFields.groupRelationship.isPartOfGroup` |
+| 55.b | Owned by Group | boolean | `supplier.criticalFields.groupRelationship.isOwnedByGroup` |
+| 55.c | Risk Level | enum | `supplier.criticalFields.riskAssessment.risk` |
+| 55.c | Last Assessment Date | string (date) | `supplier.criticalFields.riskAssessment.lastAssessmentDate` |
+| 55.c | Summary Results | string | `supplier.criticalFields.riskAssessment.mainResults` |
+| 55.d | Approver Name | string | `supplier.criticalFields.approval.approverName` |
+| 55.d | Approver Role | string | `supplier.criticalFields.approval.approverRole` |
+| 55.e | Governing Law | string | `supplier.criticalFields.governingLaw` |
+| 55.f | Last Audit Date | string? (date) | `supplier.criticalFields.audit.lastAuditDate` |
+| 55.f | Next Scheduled Audit | string? (date) | `supplier.criticalFields.audit.nextScheduledAudit` |
+| 55.g | Sub-Contractors | array | `supplier.criticalFields.subOutsourcing.subContractors` |
+| 55.h | Substitutability Outcome | enum | `supplier.criticalFields.substitutability.outcome` |
+| 55.h | Reintegration Assessment | string | `supplier.criticalFields.substitutability.reintegrationAssessment` |
+| 55.h | Discontinuation Impact | string | `supplier.criticalFields.substitutability.discontinuationImpact` |
+| 55.i | Alternative Providers | string[] | `supplier.criticalFields.alternativeProviders` |
+| 55.j | Time-Critical Function | boolean | `supplier.criticalFields.isTimeCritical` |
+| 55.k | Estimated Annual Cost | number | `supplier.criticalFields.estimatedAnnualCost` |
+| 55.k | Cost Comments | string? | `supplier.criticalFields.costComments` |
+| 55.l | Prior Notification Date | string? (date) | `supplier.criticalFields.regulatoryNotification.notificationDate` |
+
+**Total CSSF Fields: 73** (23 mandatory + 6 cloud + 18+ critical)
+
+---
+
+## Key Patterns & Conventions
+
+### File Naming
+
+- **Components:** kebab-case (e.g., `supplier-form-basic-info.tsx`)
+- **Component Names:** PascalCase (e.g., `SupplierFormBasicInfo`)
+- **Utils:** kebab-case (e.g., `check-completeness.ts`)
+- **Functions:** camelCase (e.g., `checkIncompleteFields`)
+
+### Component Structure
+
+All components follow this structure:
+```tsx
+// 1. Imports (external first, then internal)
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+
+// 2. Types/Interfaces
+interface Props {
+  // ...
+}
+
+// 3. Component
+export function ComponentName({ prop }: Props) {
+  // 4. State & Hooks
+  const [state, setState] = useState()
+
+  // 5. Event Handlers
+  const handleClick = () => {}
+
+  // 6. Render
+  return <div>...</div>
+}
+```
+
+### CSSF Annotations
+
+All field labels include CSSF point references:
+```tsx
+<FormLabel>Provider Name (54.e)</FormLabel>
+<FormLabel>Risk Level (55.c)</FormLabel>
+```
+
+### Semantic Colors
+
+Use CSS variable tokens, not hardcoded colors:
+```tsx
+// ✅ Good
+<div className="bg-primary text-primary-foreground">
+
+// ❌ Bad
+<div className="bg-blue-600 text-white">
+```
+
+**Available Tokens:**
+- `--background` / `--foreground` - Page background and text
+- `--primary` / `--primary-foreground` - Main brand color
+- `--secondary` / `--secondary-foreground` - Secondary actions
+- `--muted` / `--muted-foreground` - Subdued elements
+- `--accent` / `--accent-foreground` - Highlights
+- `--destructive` / `--destructive-foreground` - Errors, critical badges
+
+### Conditional Rendering
+
+**Cloud Services Tab:**
+```tsx
+{category === OutsourcingCategory.CLOUD && (
+  <CloudServicesTab />
+)}
+```
+
+**Critical Functions Tab:**
+```tsx
+{criticality?.isCritical === true && (
+  <CriticalFunctionsTab />
+)}
+```
+
+**Sub-Outsourcing:**
+```tsx
+{criticalFields?.subOutsourcing && (
+  <SubContractorFields />
+)}
+```
+
+---
+
+## State Management
+
+### Current Approach: Component State
+
+**No global state management library** (Redux, Zustand, etc.) - Uses React's built-in state and context.
+
+### State Locations
+
+| State | Location | Purpose |
+|-------|----------|---------|
+| `authState` | `AuthProvider` (Context) | User session (user, isAuthenticated, permissions) |
+| `suppliers` | `app/page.tsx` | Array of all suppliers (in-memory) |
+| `activeView` | `ViewSegmentedControl` | Current view (Register/New Entry/Dashboard/Reporting/Settings) |
+| `filters` | `FilterPanel` | Active filters (quick + custom) |
+| `expandedRowId` | `SupplierRegisterTable` | Which row is expanded |
+| `activeTab` | `SupplierDetailTabs` | Active detail tab (Basic/Provider/Cloud/Critical) |
+| `formValues` | `SupplierForm` (React Hook Form) | All form field values |
+| `pendingFields` | `SupplierForm` | Set of pending field paths |
+| `searchTerm` | `SearchContext` | Global text search term for highlighting |
+
+### Context API Usage
+
+**AuthContext:**
+```tsx
+// components/providers/auth-provider.tsx
+export const AuthContext = createContext<AuthContextType>({
+  user: null,
+  isAuthenticated: false,
+  canEdit: true,  // Default to true when auth disabled
+  canManageUsers: false,
+  // ... methods
+})
+
+// Usage in components:
+const { user, canEdit, canManageUsers } = useAuth()
+{canEdit && <Button>Edit</Button>}
+{canManageUsers && <UserManagement />}
+```
+
+**SearchContext:**
+```tsx
+// lib/contexts/search-context.tsx
+export const SearchContext = createContext<SearchContextType>({
+  searchTerm: null,
+})
+
+// Usage in detail tabs:
+const { searchTerm } = useSearch()
+<FieldDisplay value={value} searchTerm={searchTerm} />
+```
+
+### Future State Management (Phase 2)
+
+When migrating to desktop app:
+- Replace in-memory array with API calls
+- Add React Query or SWR for server state
+- Keep UI state local (expanded rows, active tabs, etc.)
+- Add optimistic updates for better UX
+
+---
+
+## Form Architecture
+
+### React Hook Form Integration
+
+**Why React Hook Form?**
+- Excellent TypeScript support
+- Minimal re-renders (performance)
+- Built-in validation with Zod
+- Uncontrolled by default (better performance)
+
+### Form Setup
+
+```tsx
+// components/shared/forms/supplier-form.tsx
+const form = useForm<SupplierFormData>({
+  resolver: zodResolver(supplierFormSchema),  // Zod schema (Layer 1)
+  defaultValues: {
+    referenceNumber: generateNextReferenceNumber(),
+    status: OutsourcingStatus.DRAFT,
+    // ... 71 more fields
+  },
+})
+```
+
+### Form Field Pattern
+
+All form fields use shadcn's `FormField` wrapper:
+```tsx
+<FormField
+  control={form.control}
+  name="serviceProvider.name"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Provider Name (54.e)</FormLabel>
+      <FormControl>
+        <Input {...field} />
+      </FormControl>
+      <FormMessage />  {/* Error message */}
+    </FormItem>
+  )}
+/>
+```
+
+### Pending Fields Implementation
+
+**Track with Set:**
+```tsx
+const [pendingFields, setPendingFields] = useState<Set<string>>(new Set())
+
+const togglePending = (fieldPath: string) => {
+  setPendingFields(prev => {
+    const next = new Set(prev)
+    if (next.has(fieldPath)) {
+      next.delete(fieldPath)
+    } else {
+      next.add(fieldPath)
+    }
+    return next
+  })
+}
+```
+
+**Pending Toggle Button:**
+```tsx
+<PendingToggle
+  fieldPath="serviceProvider.name"
+  isPending={pendingFields.has("serviceProvider.name")}
+  onToggle={togglePending}
+/>
+```
+
+### Tab Navigation
+
+**All Tabs Always Rendered:**
+```tsx
+// Even if Cloud tab is disabled, it's still in DOM
+<div className={cn(activeTab === "cloud" ? "block" : "hidden")}>
+  <CloudServicesTab />
+</div>
+```
+
+**Why?** React Hook Form needs all fields registered for validation to work across hidden tabs.
+
+### Form Submission Flow
+
+```typescript
+const handleSaveSupplier = () => {
+  // 1. Get all form values
+  const formData = form.getValues()
+
+  // 2. Convert pending Set to array
+  const pendingFieldsArray = Array.from(pendingFields)
+
+  // 3. Run completeness checker (Layer 2)
+  const result = checkIncompleteFields(formData, pendingFieldsArray)
+
+  // 4. If incomplete, show dialog
+  if (!result.isComplete) {
+    setIncompleteFieldsList(result.labels)
+    setShowIncompleteDialog(true)
+    return
+  }
+
+  // 5. Save supplier
+  const newSupplier: SupplierOutsourcing = {
+    ...formData as SupplierOutsourcing,
+    incompleteFields: [],
+    pendingFields: pendingFieldsArray,
+  }
+
+  onAddSupplier(newSupplier)
+  toast.success("Supplier added successfully!")
+}
+```
+
+---
+
+## Performance Considerations
+
+### Current Performance
+
+- **Good:** Small dataset (5 suppliers), fast renders
+- **Good:** Minimal re-renders (React Hook Form uncontrolled)
+- **Good:** No expensive operations (filtering, searching)
+
+### Future Optimizations (When Scaling)
+
+If managing 100+ suppliers:
+
+1. **Virtualized Table** - Use `@tanstack/react-virtual` for large lists
+2. **Memoization** - Wrap expensive components with `React.memo()`
+3. **Debounced Search** - Already have `use-debounce.ts` hook
+4. **Lazy Loading** - Code split form tabs
+5. **Web Workers** - Offload filtering/searching to worker thread
+
+---
+
+## Testing Strategy (Not Implemented Yet)
+
+### Recommended Approach
+
+1. **Unit Tests** (Vitest)
+   - Test `checkIncompleteFields()` logic
+   - Test `filterSuppliers()` with various filters
+   - Test `highlightText()` edge cases
+
+2. **Component Tests** (React Testing Library)
+   - Test form validation flows
+   - Test filter interactions
+   - Test pending field toggle
+
+3. **E2E Tests** (Playwright)
+   - Test full add supplier flow
+   - Test edit/duplicate/delete
+   - Test filter + search combinations
+
+---
+
+## Common Questions
+
+### Q: Why no backend?
+**A:** This is a desktop Electron application with SQLite database in the main process. Data persists locally.
+
+### Q: Why are all Zod fields `.optional()`?
+**A:** To support partial saves and pending fields. Mandatory validation happens in Layer 2 (check-completeness.ts).
+
+### Q: Why are all tabs always rendered?
+**A:** React Hook Form needs all fields registered for cross-tab validation. Hidden tabs use `className="hidden"` not conditional rendering.
+
+### Q: How do pending fields skip validation?
+**A:** The completeness checker accepts a `pendingFields` array and skips those field paths.
+
+### Q: Is authentication mandatory?
+**A:** No, authentication is optional and can be enabled/disabled in Settings. When disabled, all users have full edit access.
+
+### Q: Why is authentication frontend-only?
+**A:** This application is designed for on-premises, physically-secured environments. Frontend RBAC prevents user errors and accidents. Backend permission validation is planned for future enhancement.
+
+### Q: How are passwords stored?
+**A:** Passwords are hashed using bcrypt with cost factor 10 and stored in the local SQLite database. Session tokens are stored in localStorage if "Remember me" is enabled.
+
+### Q: What happens if I forget all passwords?
+**A:** Use the master password (default: `master123`, change immediately) for emergency access. The master password provides admin-level access.
+
+---
+
+**Last Updated:** 2025-12-21
+**Related Files:** VALIDATION.md, ROADMAP.md, supplier.ts, check-completeness.ts, auth.ts, auth-provider.tsx, backup.ts, config.ts, database-settings-card.tsx
