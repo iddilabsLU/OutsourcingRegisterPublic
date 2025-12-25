@@ -19,7 +19,7 @@ A **cross-platform desktop application** for managing supplier outsourcing arran
 ### For End Users (Windows)
 
 1. **Download** the latest installer: `Supplier Outsourcing Register Setup 0.1.0.exe`
-   - [Download from Releases](#) *(Add your download link here)*
+   - [Download from Releases](#) *(https://github.com/iddilabsLU/OutsourcingRegisterPublic/releases)*
 
 2. **Run the installer**
    - Double-click the `.exe` file
