@@ -98,6 +98,7 @@ export interface ElectronAPI {
   setDatabasePath: (path: string | null, copyData: boolean) => Promise<SetPathResult>
   showDatabaseFolderDialog: () => Promise<string | null>
   restartApp: () => Promise<void>
+  startFreshDatabase: () => Promise<{ success: boolean; error?: string }>
 }
 
 // Expose protected methods in the render process
@@ -158,6 +159,7 @@ const electronAPI: ElectronAPI = {
   setDatabasePath: (path: string | null, copyData: boolean) => ipcRenderer.invoke('config:setDatabasePath', path, copyData),
   showDatabaseFolderDialog: () => ipcRenderer.invoke('config:showDatabaseFolderDialog'),
   restartApp: () => ipcRenderer.invoke('app:restart'),
+  startFreshDatabase: () => ipcRenderer.invoke('db:startFresh'),
 }
 
 // Expose the API to the renderer process

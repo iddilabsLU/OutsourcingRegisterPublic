@@ -4,13 +4,13 @@ import { useState, useEffect, useCallback } from "react"
 import {
   Database,
   FolderOpen,
-  RotateCcw,
   Loader2,
   AlertTriangle,
   Info,
   RefreshCw,
   CheckCircle2,
   XCircle,
+  Trash2,
 } from "lucide-react"
 import {
   Card,
@@ -62,7 +62,9 @@ export function DatabaseSettingsCard({ isAdmin = false }: DatabaseSettingsCardPr
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [isApplying, setIsApplying] = useState(false)
   const [copyData, setCopyData] = useState(true)
-  const [isResetting, setIsResetting] = useState(false)
+  const [showStartFreshDialog, setShowStartFreshDialog] = useState(false)
+  const [startFreshConfirmText, setStartFreshConfirmText] = useState("")
+  const [isStartingFresh, setIsStartingFresh] = useState(false)
 
   const isElectron = typeof window !== "undefined" && window.electronAPI
 
@@ -169,31 +171,44 @@ export function DatabaseSettingsCard({ isAdmin = false }: DatabaseSettingsCardPr
     }
   }
 
-  const handleReset = async () => {
-    if (!isElectron || !pathInfo) return
+  const handleStartFresh = async () => {
+    if (!isElectron || startFreshConfirmText !== "DELETE") return
 
-    setIsResetting(true)
+    setIsStartingFresh(true)
     try {
-      const result = await window.electronAPI.setDatabasePath(null, false)
+      const result = await window.electronAPI.startFreshDatabase()
 
       if (result.success) {
-        toast.success("Database path reset to default", {
-          description: "The application will restart now...",
+        toast.success("Database cleared successfully", {
+          description: "All data has been deleted. The application will restart now...",
         })
 
         setTimeout(async () => {
           await window.electronAPI.restartApp()
         }, 1500)
       } else {
-        toast.error("Failed to reset database path", {
+        toast.error("Failed to clear database", {
           description: result.error,
         })
-        setIsResetting(false)
+        setIsStartingFresh(false)
+        setShowStartFreshDialog(false)
+        setStartFreshConfirmText("")
       }
     } catch (error) {
-      console.error("Failed to reset database path:", error)
-      toast.error("Failed to reset database path")
-      setIsResetting(false)
+      console.error("Failed to start fresh:", error)
+      toast.error("Failed to clear database", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      })
+      setIsStartingFresh(false)
+      setShowStartFreshDialog(false)
+      setStartFreshConfirmText("")
+    }
+  }
+
+  const handleCloseStartFreshDialog = () => {
+    if (!isStartingFresh) {
+      setShowStartFreshDialog(false)
+      setStartFreshConfirmText("")
     }
   }
 
@@ -261,9 +276,9 @@ export function DatabaseSettingsCard({ isAdmin = false }: DatabaseSettingsCardPr
                 onChange={(e) => setNewPath(e.target.value)}
                 placeholder="Enter path or browse..."
                 className="font-mono text-sm"
-                disabled={isApplying || isResetting}
+                disabled={isApplying}
               />
-              <Button variant="outline" onClick={handleBrowse} disabled={isApplying || isResetting}>
+              <Button variant="outline" onClick={handleBrowse} disabled={isApplying}>
                 <FolderOpen className="h-4 w-4 mr-2" />
                 Browse
               </Button>
@@ -294,42 +309,20 @@ export function DatabaseSettingsCard({ isAdmin = false }: DatabaseSettingsCardPr
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              <Button onClick={handleApply} disabled={!canApply || isApplying || isResetting}>
-                {isApplying ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Applying...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Apply & Restart
-                  </>
-                )}
-              </Button>
-
-              {pathInfo?.isCustom && (
-                <Button
-                  variant="outline"
-                  onClick={handleReset}
-                  disabled={isApplying || isResetting}
-                >
-                  {isResetting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Resetting...
-                    </>
-                  ) : (
-                    <>
-                      <RotateCcw className="mr-2 h-4 w-4" />
-                      Reset to Default
-                    </>
-                  )}
-                </Button>
+            {/* Action Button */}
+            <Button onClick={handleApply} disabled={!canApply || isApplying}>
+              {isApplying ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Applying...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Apply & Restart
+                </>
               )}
-            </div>
+            </Button>
           </div>
 
           {/* Info Box */}
@@ -356,6 +349,32 @@ export function DatabaseSettingsCard({ isAdmin = false }: DatabaseSettingsCardPr
               </div>
             </div>
           </div>
+
+          {/* Start Fresh Section - Admin only */}
+          {isAdmin && (
+            <>
+              <div className="border-t" />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <span className="text-base font-medium">Start Fresh</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Delete all data and start with an empty database
+                  </p>
+                </div>
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowStartFreshDialog(true)}
+                  disabled={isApplying || isStartingFresh}
+                >
+                  Start Fresh
+                </Button>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -418,6 +437,76 @@ export function DatabaseSettingsCard({ isAdmin = false }: DatabaseSettingsCardPr
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmApply}>Apply & Restart</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Start Fresh Confirmation Dialog */}
+      <AlertDialog open={showStartFreshDialog} onOpenChange={handleCloseStartFreshDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Start Fresh?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <div className="rounded-md bg-red-50 border border-red-200 p-3">
+                  <div className="flex gap-2">
+                    <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                    <div className="text-sm text-red-800">
+                      <p className="font-medium">This action cannot be undone!</p>
+                      <p className="mt-1">
+                        All data in the current database will be permanently deleted:
+                      </p>
+                      <ul className="mt-1 list-disc list-inside">
+                        <li>All suppliers</li>
+                        <li>All events (change log)</li>
+                        <li>All issues</li>
+                        <li>All critical monitor records</li>
+                        <li>All user accounts</li>
+                        <li>Authentication settings will be reset</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Current database location:</p>
+                  <code className="block text-xs bg-muted p-2 rounded break-all">
+                    {pathInfo?.currentPath}
+                  </code>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-delete" className="text-sm font-medium">
+                    Type <code className="bg-muted px-1 rounded">DELETE</code> to confirm:
+                  </Label>
+                  <Input
+                    id="confirm-delete"
+                    value={startFreshConfirmText}
+                    onChange={(e) => setStartFreshConfirmText(e.target.value.toUpperCase())}
+                    placeholder="DELETE"
+                    className="font-mono"
+                    disabled={isStartingFresh}
+                  />
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isStartingFresh}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleStartFresh}
+              disabled={startFreshConfirmText !== "DELETE" || isStartingFresh}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isStartingFresh ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete All Data"
+              )}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

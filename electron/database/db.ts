@@ -225,5 +225,32 @@ export function copyDatabaseTo(destinationPath: string): void {
   console.log(`Database copied from ${currentPath} to ${destinationPath}`)
 }
 
+/**
+ * Start fresh - delete all data from the database
+ * Clears all tables: suppliers, events, issues, critical_monitor, users, auth_settings
+ * Resets the database to a clean state
+ */
+export function startFreshDatabase(): void {
+  const database = getDatabase()
+
+  // Use a transaction to ensure all deletions succeed or none do
+  const startFresh = database.transaction(() => {
+    // Delete data from all tables in order (respecting foreign keys)
+    database.exec('DELETE FROM critical_monitor')
+    database.exec('DELETE FROM events')
+    database.exec('DELETE FROM issues')
+    database.exec('DELETE FROM suppliers')
+    database.exec('DELETE FROM users')
+    database.exec('DELETE FROM auth_settings')
+
+    // Reset auto-increment counters
+    database.exec("DELETE FROM sqlite_sequence WHERE name IN ('suppliers', 'events', 'issues', 'critical_monitor', 'users')")
+
+    console.log('🗑️ Database cleared - all data deleted')
+  })
+
+  startFresh()
+}
+
 // Export types for better TypeScript support
 export type { Database } from 'better-sqlite3'

@@ -193,7 +193,7 @@ export function AuthSettingsCard() {
                         Please change this password immediately after enabling.{" "}
                       </p>
                       <p>
-                        Forgot yourpassword? Use the master password &apos;master123&apos; to
+                        Forgot your password? Use the master password &apos;master123&apos; to
                         recover access.{" "}
                       </p>
                     </div>

@@ -11,6 +11,7 @@ import {
   backupDatabase,
   restoreDatabase,
   copyDatabaseTo,
+  startFreshDatabase,
 } from "./database/db"
 import { validateDatabasePath, setDatabasePath, isUsingCustomPath } from "./database/config"
 import {
@@ -691,4 +692,18 @@ ipcMain.handle("config:showDatabaseFolderDialog", async (): Promise<string | nul
 ipcMain.handle("app:restart", async (): Promise<void> => {
   app.relaunch()
   app.quit()
+})
+
+// Start fresh - delete all data from the database
+ipcMain.handle("db:startFresh", async (): Promise<{ success: boolean; error?: string }> => {
+  try {
+    startFreshDatabase()
+    return { success: true }
+  } catch (error) {
+    console.error("❌ Error starting fresh:", error)
+    return {
+      success: false,
+      error: (error as Error).message,
+    }
+  }
 })

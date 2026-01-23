@@ -34,8 +34,8 @@ export function SettingsView() {
         {/* Database Location - visible to everyone, but copy data is admin-only */}
         <DatabaseSettingsCard isAdmin={!authSettings?.authEnabled || isAdmin} />
 
-        {/* Backup & Restore - always visible */}
-        <BackupSettingsCard />
+        {/* Backup & Restore - visible to all, but restore is admin-only */}
+        <BackupSettingsCard isAdmin={!authSettings?.authEnabled || isAdmin} />
 
         {/* Authentication Settings - always visible */}
         <AuthSettingsCard />

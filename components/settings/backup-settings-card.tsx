@@ -27,7 +27,12 @@ interface RestoreOptions {
   criticalMonitor: boolean
 }
 
-export function BackupSettingsCard() {
+interface BackupSettingsCardProps {
+  /** Whether the current user is an admin (can restore backups) */
+  isAdmin?: boolean
+}
+
+export function BackupSettingsCard({ isAdmin = false }: BackupSettingsCardProps) {
   const [isCreatingBackup, setIsCreatingBackup] = useState(false)
   const [isRestoring, setIsRestoring] = useState(false)
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
@@ -220,34 +225,38 @@ export function BackupSettingsCard() {
             </Button>
           </div>
 
-          <div className="border-t" />
+          {/* Restore Section - Admin only */}
+          {isAdmin && (
+            <>
+              <div className="border-t" />
 
-          {/* Restore Section */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Upload className="h-4 w-4" />
-                <span className="text-base font-medium">Restore from Backup</span>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    <span className="text-base font-medium">Restore from Backup</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Load data from a previously created backup ZIP file
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleSelectBackupFile}
+                  disabled={isCreatingBackup || isRestoring}
+                >
+                  {isRestoring ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Restoring...
+                    </>
+                  ) : (
+                    "Select Backup File"
+                  )}
+                </Button>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Load data from a previously created backup ZIP file
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              onClick={handleSelectBackupFile}
-              disabled={isCreatingBackup || isRestoring}
-            >
-              {isRestoring ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Restoring...
-                </>
-              ) : (
-                "Select Backup File"
-              )}
-            </Button>
-          </div>
+            </>
+          )}
 
           {/* Info box */}
           <div className="rounded-md bg-muted/50 p-4 space-y-3">
@@ -260,15 +269,18 @@ export function BackupSettingsCard() {
               <li><strong>CriticalMonitor.xlsx</strong> — critical outsourcing data</li>
             </ul>
 
-            <div className="border-t pt-3 mt-3">
-              <div className="flex items-start gap-2">
-                <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p><strong>Database restore:</strong> Fastest and most accurate. Restores everything exactly as it was.</p>
-                  <p><strong>Excel restore:</strong> Use only if you manually edited the Excel files in the backup. Always restore from the original ZIP file.</p>
+            {/* Restore info - only shown to admins */}
+            {isAdmin && (
+              <div className="border-t pt-3 mt-3">
+                <div className="flex items-start gap-2">
+                  <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p><strong>Database restore:</strong> Fastest and most accurate. Restores everything exactly as it was.</p>
+                    <p><strong>Excel restore:</strong> Use only if you manually edited the Excel files in the backup. Always restore from the original ZIP file.</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>

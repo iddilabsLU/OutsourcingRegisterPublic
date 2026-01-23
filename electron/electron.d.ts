@@ -92,6 +92,7 @@ export interface ElectronAPI {
   setDatabasePath: (path: string | null, copyData: boolean) => Promise<SetPathResult>
   showDatabaseFolderDialog: () => Promise<string | null>
   restartApp: () => Promise<void>
+  startFreshDatabase: () => Promise<{ success: boolean; error?: string }>
 }
 
 export interface Versions {
