@@ -13,13 +13,19 @@ A **cross-platform desktop application** for managing supplier outsourcing arran
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
+## YouTube video: https://youtu.be/6cZ0UkFOze0?si=iYw-yu3xf_RC5N2Q
+
+## Online demo: https://outsourcing.iddi-labs.com/
+
+## In Depth guide: https://www.iddi-labs.com/blog/outsourcingregister-guidelines
+
 
 ## 📥 Download & Install
 
 ### For End Users (Windows)
 
-1. **Download** the latest installer: `Supplier Outsourcing Register Setup 0.1.0.exe`
-   - [Download from Releases](#) *(Add your download link here)*
+1. **Download**
+  - https://github.com/iddilabsLU/OutsourcingRegisterPublic/releases
 
 2. **Run the installer**
    - Double-click the `.exe` file
